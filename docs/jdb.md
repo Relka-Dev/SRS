@@ -189,5 +189,56 @@ faces, image = detect_faces(image_path)
 
 #### Définition d'un port spécifique
 
-Afin de simplifier le scan du serveur quand il sera à la recherche de camera, il me faut un numéro de port qui est unique à mon projet. J'ai choisi le nombre **4298** de façon aléatoire et j'ai vérifié sur [Wikipedia](https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers) afin d'être certain qu'il soit libre.
-![Ports Libres](./ressources/images/portsLibres.png)
+Afin de simplifier le scan du serveur quand il sera à la recherche de camera, il me faut un numéro de port qui est unique à mon projet. J'ai choisi le nombre **4298** de façon aléatoire. Après vérification sur le site [speedguide.net](https://www.speedguide.net/port.php?port=4298) ce port est prit par d'autres application mais cela n'est pas si important dans le cadre de mon projet de diplôme car le projet ne rentrera pas en production.
+
+#### Sécurisation API
+
+Afin de sécuriser les cameras j'ai décidé d'effectuer un JWT (json web token). Le seul problème c'est que je ne sais pas comment faire. Par conséquent, je vais regarder un [tutoriel youtube](https://www.youtube.com/watch?v=J5bIPtEbS0Q) et adapter mon travail pour mon projet.
+
+##### Code crée grâce à la vidéo
+
+```py
+
+from flask import Flask, jsonify, request, make_response
+import jwt
+import datetime
+
+app = Flask(__name__)
+
+app.config['SECRET_KEY'] = 'thisisthesecretkey'
+ 
+@app.route('/unprotected')
+def unprotected():
+    return ''
+
+@app.route('/protected')
+def protected():
+    return ''
+
+@app.route('/login')
+def login():
+    auth = request.authorization
+
+    if auth and auth.password == 'password':
+        token = jwt.encode({'user': auth.username, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'])
+        return jsonify({'token': token})
+
+    return make_response('could not verify', 401, {'WWW-Authenticate' : 'Basic realm="Login required"'})
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
+```
+
+#### Problème avec JWT
+
+J'avais cette erreur :
+```sh
+token = jwt.encode({'user': auth.username, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'])
+AttributeError: module 'jwt' has no attribute 'encode'
+```
+Le problème vennait de la libraire JWT qui était en confit avec PyJWT.
+
+Grace à cette question sur [Stack Overflow](https://stackoverflow.com/questions/33198428/jwt-module-object-has-no-attribute-encode). J'ai pu résoudre le problème.
+
+## Conclusion
+Aujourd'hui je pense avoir bien avancé, pour un jour prévu initialement à la plannification j'ai quand même bien pu travailler avec mes cameras. Demain, je compte continuer sur cette lancée en implémentant mon système de sécurité puis les tests postman.

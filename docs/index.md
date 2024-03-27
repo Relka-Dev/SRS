@@ -1,4 +1,4 @@
-# Système de reconnaissance spaciale
+# Documentation
 
 ## Architecture de la documentation
 
@@ -11,3 +11,4 @@ docs/
         camera-wifi.md
         serveur.md
 ```
+

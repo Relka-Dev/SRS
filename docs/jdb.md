@@ -242,3 +242,123 @@ Grace à cette question sur [Stack Overflow](https://stackoverflow.com/questions
 
 ## Conclusion
 Aujourd'hui je pense avoir bien avancé, pour un jour prévu initialement à la plannification j'ai quand même bien pu travailler avec mes cameras. Demain, je compte continuer sur cette lancée en implémentant mon système de sécurité puis les tests postman.
+
+## 28.03.2024
+
+#### Bilan de la veille
+Hier je me suis concentré sur d'abord la **plannification** puis sur le développment du **serveur flask** pour les **cameras wifi**. Je me suis arrêté lors de la mise en place de la sécrurité avec les **JWT**.  
+
+#### Plannification du jour
+Chez moi je me suis rendu compte que pour que mon système soit fonctionnel, je dois absolument pouvoir détecter des **profils** et des **arrières de têtes** en plus des faces afin de pouvoir trouver dans l'espace où se situe la personne. Je vais commencer par ajouter cette fonctionnalité puis je vais continuer mon travail sur les **JWT**.
+
+### Detection de profils
+J'ai commencé par ajouter la Haar cascade des profils :
+```py
+profile_cascade = cv2.CascadeClassifier('haarcascade_profileface.xml')
+```
+Puis la détection :
+```py
+profiles = profile_cascade.detectMultiScale(gray, 1.1, 4)
+```
+
+Une fois cela fait je détecte la position et la taille du profil :
+```py
+profiles_data = []
+    for (x, y, w, h) in profiles:
+        profile_info = {
+            'x': int(x),
+            'y': int(y),
+            'width': int(w),
+            'height': int(h)
+        }
+        profiles_data.append(profile_info)
+```
+
+Et j'ajoute ces données dans la réponse json.
+
+```py
+return jsonify({
+        'nb_faces': len(faces),
+        'faces_data': faces_data,
+        'nb_profiles': len(profiles),
+        'profiles_data': profiles_data
+    })
+```
+
+### Détection des arrières de tête
+Après avoir fait des recherches, je n'ai pas trouvé de cascade pour des arrière de crâne. J'ai donc demandé à ChatGPT. Il m'a confirmé qu'il était **complexe** de faire de la reconnaissance d'arrière de crâne. Cela est dût au **manque de caractèristiques propres**. Mais c'était possible en entrainnant directement un modèle comme le **CNN**. Cependant, je préfère uniquement utiliser les **algorithmes de Haar** pour l'instant pour des question **d'optimisation de temps**.  
+[Prompt ChatGPT](https://chat.openai.com/share/d28196ba-28f8-40c1-931e-4defa925785b)
+
+### Suite du travail sur les JWT
+J'ai continué à suivre le [tutoriel youtube](https://www.youtube.com/watch?v=J5bIPtEbS0Q). Grâce à ce dernier, je suis à présent capable de sécuriser les routes par système de wrap de fonctions.  
+Fonction qui permet de vérifier les tokens :
+
+```py
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.args.get('token')
+
+        if not token:
+            return jsonify({'message' : 'Token is missing'}), 403
+
+        try:
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            return jsonify({'message': 'Token has expired'}), 403
+        except jwt.InvalidTokenError:
+            return jsonify({'message': 'Token is invalid'}), 403
+        
+        return f(*args, **kwargs)
+        
+    return decorated
+```
+
+Il suffit ensuite que je décore les fonctions qui se doivent d'être protégées.
+```py
+# Route en accès libre
+@app.route('/unprotected')
+def unprotected():
+    return jsonify({'message': 'Anyone can see this'})
+
+# Route protégée par le token
+@app.route('/protected')
+@token_required
+def protected():
+    return jsonify({'message': 'Only available for valid tokens'})
+
+```
+
+Je vais à présent implémenter ce système dans mon API.
+
+#### Implémentation dans l'API
+Je commence par défir les constantes de l'application.  
+⚠️ Je me permet de les mettre dans mon journal de bord mais il est impératif que dans un projet qui pourrait rentrer en production il ne faut pas le faire.
+
+```py
+# Définition de la clé secrète qui sert au chiffrement
+app.config['SECRET_KEY'] = 'dMbgbnTDxK82SE3Bn2XgcMFTqmdLZWn9'
+# Identifiants de connexion du serveur central
+app.config['CLIENT_USERNAME'] = 'SRS-Server'
+app.config['CLIENT_PASSWORD'] = 'QNaAXEjuNBqdhF6HFjggsDmhLZVeWSzT'
+```
+
+La suite de l'implémentation était simple, il suffisait d'ajouter la fonction de login et à décorer la fonction detect pour la sécuriser.
+
+#### Optimisation du code
+Je me suis rendu compte que le code était lent. Il lui prend environ 3 secondes pour faire l'analyse.  
+Premièrement j'ai supprimé la creation d'image intermédaire et passe directement la frame.
+
+```py
+# Code précédent
+image_path = 'capture.jpg' 
+camera = cv2.VideoCapture(0)
+ret, frame = camera.read()
+cv2.imwrite(image_path, frame)
+camera.release()
+
+# Code optimisé
+camera = cv2.VideoCapture(0)
+ret, frame = camera.read()
+camera.release()
+```

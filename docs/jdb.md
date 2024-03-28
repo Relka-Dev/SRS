@@ -345,7 +345,7 @@ app.config['CLIENT_PASSWORD'] = 'QNaAXEjuNBqdhF6HFjggsDmhLZVeWSzT'
 
 La suite de l'implémentation était simple, il suffisait d'ajouter la fonction de login et à décorer la fonction detect pour la sécuriser.
 
-#### Optimisation du code
+### Optimisation du code
 Je me suis rendu compte que le code était lent. Il lui prend environ 3 secondes pour faire l'analyse.  
 Premièrement j'ai supprimé la creation d'image intermédaire et passe directement la frame.
 
@@ -362,3 +362,97 @@ camera = cv2.VideoCapture(0)
 ret, frame = camera.read()
 camera.release()
 ```
+
+#### Multiprocessing
+Ensuite j'ai trouvé interessant d'optimiser la génération des encoding dans le cas où il y a plusieurs visages. Pour ce faire, je vais profiter de l'architecure du raspberry pico et faire du multiprocessing.  
+C'est abosulment crutial pour le traitement de plusieurs visages en même temps.  
+J'avais déjà de l'expérience avec du **multithreading** mais pas spécialement en **multiprocessing** en python. Par conséquent j'ai suivi la [documentation officielle](https://docs.python.org/3/library/multiprocessing.html).  
+J'ai commencé par la création de la **queue** qui me permettra de **récupérer les valeurs de mes process**. Je crée ensuite le **process** avec comme **argument mon worker** et comme **arguments du worker** j'ai passé la **frame donc l'image et la référence de la queue**. Ensuite je **démarre le processus** et récupère les **résultats du worker**.
+
+```py
+if ret:
+        result_queue = Queue()
+        process = Process(target=detect_worker, args=(frame, result_queue))
+        process.start()
+        process.join()
+
+        faces, profiles, faces_encodings = result_queue.get()
+```
+
+
+J'ai ensuite crée le worker qui est la fonction qui sera exécutée en **parallèle**. La fonction reprend la **détection faciale** et la **génération des encodings**. Les résultats sont ensuite **ajoutée** dans la **queue du process princial**.
+```py
+def detect_worker(image, result_queue):
+    faces, profiles, _ = detect_faces_and_profiles(image)
+    faces_encodings = get_face_encodings(image)
+
+    result_data = (faces, profiles, faces_encodings)
+    result_queue.put(result_data)
+```
+
+### Tests Postman
+
+Postman me permet d'avoir un client pour mon API. Les tests se lancent de façon automatique lors des requêtes.
+
+#### Endpoint /login
+Pour tester le endpoint **/login** je mets les identifiants de connexion dans la case **Authorization** :
+
+![Login Test](./ressources/images/capturepostmantestlogin.png)
+
+Ensuite j'écris les tests :
+
+```js
+pm.test("Statut de réponse 200 OK", function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test("La réponse contient un jeton JWT", function () {
+    pm.response.to.have.jsonBody('token');
+});
+```
+
+#### Endpoint /detect
+
+Le problème avec ce endpoint c'est qu'il me faut impérativement le JWT qui m'est fournit lors de l'appel du login. Les tests sont par conséquent dépendants de la validité du token.
+
+```js
+pm.test("Statut de réponse 200 OK", function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test("La réponse contient les données attendues", function () {
+    var jsonData = pm.response.json();
+
+    pm.expect(jsonData.nb_faces).to.be.above(-1);
+    pm.expect(jsonData.nb_profiles).to.be.above(-1);
+    pm.expect(jsonData.faces_data).to.be.an("array");
+    pm.expect(jsonData.profiles_data).to.be.an("array");
+});
+
+```
+
+#### Problème avec les tests
+J'ai pas réussi à faire les tests que je voulais. Pour le login, j'aimerais avoir un login fonctionnel et un autre sans identifiants etc. J'aimerais tester chaque cas pour éviter les failles sauf que j'y arrive pas avec les exemples de postman, selon moi il faudrait créer une requête pour chaque cas mais j'ai demandé confirmation à mes suiveurs par mail.  
+**Question :**
+![Question mail](./ressources/images/questionMail1.png)
+**Réponse :**
+![Réponse mail](./ressources/images/questionMail2.png)
+##### Solution
+Je vais essayer de mettre les varialbes d'authentification dans la séquence de test, je ne sais pas le faire cependant.  
+J'ai pas trouvé en cherchant dans la [documentation officielle](https://learning.postman.com/docs/sending-requests/authorization/specifying-authorization-details/) j'ai du demander à chatGPT et en effet on peut faire des requêtes personnalisés dans les tests, cela va également m'aider lors du moment où je vais développer mon propre client pour mon API.  
+[Prompt ChatGPT](https://chat.openai.com/share/82b7a446-9f7f-4dfe-9310-22668b566353)  
+De plus, à présent que je sais que l'on peut faire des requête depuis les tests, je peux essayer de récupérer dynamiquement le token lors du test du endpoint **/detect**.  
+
+J'ai fais un tests pour les scenarios suivants (code attentu : 401) :
+1. identifiants incorrects
+2. mot de passe manquant (identifiants incorrects)
+2. mot de passe manquant (identifiants corrects)
+3. username manquant (identifiants incorrects)
+3. username manquant (identifiants corrects)
+4. username correct - mdp erroné
+5. username erroné - mdp correct
+
+Je ne pense pas qu'il y aie plus d'erreurs possibles de la part de l'utilisateur. Les tests fonctionnent.
+
+### Conclusion
+J'ai bien pu travailler aujourd'hui j'ai pu mettre en application des concepts interessants comme les tests postman et le multiprocessing pour la première fois. La prochaine fois je vais me concentrer sur la documentation de l'api.

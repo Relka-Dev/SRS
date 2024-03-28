@@ -1,0 +1,243 @@
+{
+	"info": {
+		"_postman_id": "a086861f-b328-4d9a-b7ed-d4239e0044fa",
+		"name": "SRS-cameras",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "33065575"
+	},
+	"item": [
+		{
+			"name": "Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Statut de réponse 200 OK\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"La réponse contient un jeton JWT\", function () {",
+							"    pm.response.to.have.jsonBody('token');",
+							"});",
+							"",
+							"pm.test(\"Erreur d'authentification - identifiants incorrects\", function () {",
+							"    pm.sendRequest({",
+							"        url: 'http://localhost:4298/login',",
+							"        method: 'GET',",
+							"        auth: {",
+							"            type: 'basic',",
+							"            username: 'John Doe',",
+							"            password: 'Ceci est un faux mdp'",
+							"        }",
+							"    }, function (err, res) {",
+							"        pm.expect(res).to.have.status(401);",
+							"    });",
+							"});",
+							"",
+							"pm.test(\"Erreur d'authentification - mot de passe manquant (identifiants incorrects)\", function () {",
+							"    pm.sendRequest({",
+							"        url: 'http://localhost:4298/login',",
+							"        method: 'GET',",
+							"        auth: {",
+							"            type: 'basic',",
+							"            username: 'John Doe',",
+							"        }",
+							"    }, function (err, res) {",
+							"        pm.expect(res).to.have.status(401);",
+							"    });",
+							"});",
+							"",
+							"pm.test(\"Erreur d'authentification - mot de passe manquant (identifiants corrects)\", function () {",
+							"    pm.sendRequest({",
+							"        url: 'http://localhost:4298/login',",
+							"        method: 'GET',",
+							"        auth: {",
+							"            type: 'basic',",
+							"            username: 'SRS-Server',",
+							"        }",
+							"    }, function (err, res) {",
+							"        pm.expect(res).to.have.status(401);",
+							"    });",
+							"});",
+							"",
+							"",
+							"pm.test(\"Erreur d'authentification - username manquant (identifiants incorrects)\", function () {",
+							"    pm.sendRequest({",
+							"        url: 'http://localhost:4298/login',",
+							"        method: 'GET',",
+							"        auth: {",
+							"            type: 'basic',",
+							"            password: 'QNaAXEjuNBqdhF6HFjggsDmhLZVeWSzT'",
+							"        }",
+							"    }, function (err, res) {",
+							"        pm.expect(res).to.have.status(401);",
+							"    });",
+							"});",
+							"",
+							"pm.test(\"Erreur d'authentification - username manquant (identifiants incorrects)\", function () {",
+							"    pm.sendRequest({",
+							"        url: 'http://localhost:4298/login',",
+							"        method: 'GET',",
+							"        auth: {",
+							"            type: 'basic',",
+							"            password: 'Ceci est un faux mdp'",
+							"        }",
+							"    }, function (err, res) {",
+							"        pm.expect(res).to.have.status(401);",
+							"    });",
+							"});",
+							"",
+							"",
+							"pm.test(\"Erreur d'authentification - username correct - mdp erroné\", function () {",
+							"    pm.sendRequest({",
+							"        url: 'http://localhost:4298/login',",
+							"        method: 'GET',",
+							"        auth: {",
+							"            type: 'basic',",
+							"            username: 'SRS-Server',",
+							"            password: 'Ceci est un faux mdp'",
+							"        }",
+							"    }, function (err, res) {",
+							"        pm.expect(res).to.have.status(401);",
+							"    });",
+							"});",
+							"",
+							"pm.test(\"Erreur d'authentification - username erroné - mdp correct\", function () {",
+							"    pm.sendRequest({",
+							"        url: 'http://localhost:4298/login',",
+							"        method: 'GET',",
+							"        auth: {",
+							"            type: 'basic',",
+							"            username: 'Ceci est un faux username',",
+							"            password: 'QNaAXEjuNBqdhF6HFjggsDmhLZVeWSzT'",
+							"        }",
+							"    }, function (err, res) {",
+							"        pm.expect(res).to.have.status(401);",
+							"    });",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "QNaAXEjuNBqdhF6HFjggsDmhLZVeWSzT",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "SRS-Server",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:4298/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4298",
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Detect",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Statut de réponse 200 OK\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"La réponse contient les données attendues\", function () {",
+							"    var jsonData = pm.response.json();",
+							"",
+							"    pm.expect(jsonData.nb_faces).to.be.above(-1);",
+							"    pm.expect(jsonData.nb_profiles).to.be.above(-1);",
+							"    pm.expect(jsonData.faces_data).to.be.an(\"array\");",
+							"    pm.expect(jsonData.profiles_data).to.be.an(\"array\");",
+							"});",
+							"",
+							"pm.test(\"Erreur de Params - Token manquant\", function () {",
+							"    pm.sendRequest({",
+							"        url: 'http://192.168.1.26:4298/detect',",
+							"        method: 'GET',",
+							"    }, function (err, res) {",
+							"        pm.expect(res).to.have.status(403);",
+							"    });",
+							"});",
+							"",
+							"pm.test(\"Réponse correcte - \", function () {",
+							"    pm.sendRequest({",
+							"        url: 'http://localhost:4298/login',",
+							"        method: 'GET',",
+							"        auth: {",
+							"            type: 'basic',",
+							"            username: 'SRS-Server',",
+							"            password: 'QNaAXEjuNBqdhF6HFjggsDmhLZVeWSzT'",
+							"        }",
+							"    }, function (err, res) {",
+							"        pm.expect(res).to.have.status(403);",
+							"    });",
+							"});",
+							"",
+							"pm.test(\"Erreur de Params - Faux token\", function () {",
+							"    pm.sendRequest({",
+							"        url: 'http://192.168.1.26:4298/detect?token=ceciestuntokenincorrect',",
+							"        method: 'GET',",
+							"    }, function (err, res) {",
+							"        pm.expect(res).to.have.status(403);",
+							"    });",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://192.168.1.26:4298/detect?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiU1JTLVNlcnZlciIsImV4cCI6MTcxMTcwMzQ0Mn0.vAfcOwS0BXCsbI24gaqu3EIJmd6gv5DysVuvzfseq0w",
+					"protocol": "http",
+					"host": [
+						"192",
+						"168",
+						"1",
+						"26"
+					],
+					"port": "4298",
+					"path": [
+						"detect"
+					],
+					"query": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiU1JTLVNlcnZlciIsImV4cCI6MTcxMTcwMzQ0Mn0.vAfcOwS0BXCsbI24gaqu3EIJmd6gv5DysVuvzfseq0w"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

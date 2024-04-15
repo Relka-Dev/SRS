@@ -12,3 +12,6 @@ docs/
         serveur.md
 ```
 
+
+## Navigation
+[Cameras Wifi](./composants/camera-wifi.md)

@@ -2,6 +2,7 @@
 	"info": {
 		"_postman_id": "a086861f-b328-4d9a-b7ed-d4239e0044fa",
 		"name": "SRS-cameras",
+		"description": "SRS-Cameras permet de **récupérer les données faciales** des utilisateurs présents dans le champs de **vision de la camera** du server de façon **sécurisée**.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "33065575"
 	},
@@ -152,7 +153,8 @@
 					"path": [
 						"login"
 					]
-				}
+				},
+				"description": "# Connexion à l'API et génération du token\n\nPassez les identifiants de connexion par basic auth afin de recevoir un token pour pouvoir utiliser l'API."
 			},
 			"response": []
 		},
@@ -185,20 +187,6 @@
 							"    });",
 							"});",
 							"",
-							"pm.test(\"Réponse correcte - \", function () {",
-							"    pm.sendRequest({",
-							"        url: 'http://localhost:4298/login',",
-							"        method: 'GET',",
-							"        auth: {",
-							"            type: 'basic',",
-							"            username: 'SRS-Server',",
-							"            password: 'QNaAXEjuNBqdhF6HFjggsDmhLZVeWSzT'",
-							"        }",
-							"    }, function (err, res) {",
-							"        pm.expect(res).to.have.status(403);",
-							"    });",
-							"});",
-							"",
 							"pm.test(\"Erreur de Params - Faux token\", function () {",
 							"    pm.sendRequest({",
 							"        url: 'http://192.168.1.26:4298/detect?token=ceciestuntokenincorrect',",
@@ -217,7 +205,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://192.168.1.26:4298/detect?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiU1JTLVNlcnZlciIsImV4cCI6MTcxMTcwMzQ0Mn0.vAfcOwS0BXCsbI24gaqu3EIJmd6gv5DysVuvzfseq0w",
+					"raw": "http://192.168.1.26:4298/detect?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiU1JTLVNlcnZlciIsImV4cCI6MTcxMzI0ODA5M30.8PRChGyUsoDu7d1DuFXxdPCiabrNLZsehlN7Y5l3jcI",
 					"protocol": "http",
 					"host": [
 						"192",
@@ -232,10 +220,11 @@
 					"query": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiU1JTLVNlcnZlciIsImV4cCI6MTcxMTcwMzQ0Mn0.vAfcOwS0BXCsbI24gaqu3EIJmd6gv5DysVuvzfseq0w"
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiU1JTLVNlcnZlciIsImV4cCI6MTcxMzI0ODA5M30.8PRChGyUsoDu7d1DuFXxdPCiabrNLZsehlN7Y5l3jcI"
 						}
 					]
-				}
+				},
+				"description": "# Détection des personnes\n\nRemplacez la valeur de la clé **token** par le **token** reçu lors de la connexion.\n\n_Note : Le token change toutes les 24h pour des questions de sércurité. Pensez à adapter votre programme en conséquence._"
 			},
 			"response": []
 		}

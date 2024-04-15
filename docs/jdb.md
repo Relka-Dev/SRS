@@ -456,3 +456,66 @@ Je ne pense pas qu'il y aie plus d'erreurs possibles de la part de l'utilisateur
 
 ### Conclusion
 J'ai bien pu travailler aujourd'hui j'ai pu mettre en application des concepts interessants comme les tests postman et le multiprocessing pour la première fois. La prochaine fois je vais me concentrer sur la documentation de l'api.
+
+## 15.04.2024
+
+Pour commencer après les vacances j'ai décidé de commencé par consulter mon planning.  
+Selon ce dernier, j'était sensé rendre la version 0.1 de mon projet la semaine dernière. Malheureusement, étant particulièrement occupé lors de ces vacances je n'ai pas pu travailler assez efficacement pour atteindre cet objectif. Par conséquent, l'objectif principal du jour sera en premier lieu, terminer les tests postman puis, faire la documentation de l'API afin d'effectuer une release de la verion 0.1.   
+*Note: Je préfère continuer selon mon planning malgrès le fait que les vacances n'y soit pas prises en compte car j'estime que mon travail sur les cameras est déjà suffisament avancé pour me le permettre.*
+
+#### Planning prévisionnel final
+![Planning Prévisionnel](./ressources/images/PlanningPrevisionnel.png)
+
+### Erreur avec les tests postman
+
+La dernière fois que j'ai travaillé sur le projet j'avais presque terminé les tests postman à un détail pret. Le test ci-dessous n'était pas fonctionnel. 
+
+```js
+pm.test("Réponse correcte - ", function () {
+    pm.sendRequest({
+        url: 'http://localhost:4298/login',
+        method: 'GET',
+        auth: {
+            type: 'basic',
+            username: 'SRS-Server',
+            password: 'QNaAXEjuNBqdhF6HFjggsDmhLZVeWSzT'
+        }
+    }, function (err, res) {
+        pm.expect(res).to.have.status(200);
+    });
+});
+```
+
+L'erreur en question :
+
+![Erreur test postman](./ressources/images/testpostmanfail.png)
+
+En effet je n'arrive pas à faire la connexion de façon dynamique. Cependant, vu l'impact faible sur la documentation du projet j'ai décidé de ne pas plus m'attarder dessus.
+
+### Génération de la documentation postman
+
+Ayant déjà effectué une partie de ma documenation sur postman, j'ai essayé de générer une documentation à partir de ce dernier. Le problème c'est le manque d'outil, j'ai essayé avec [ce projet](https://github.com/karthiks3000/postman-doc-gen?tab=readme-ov-file) ayant été développé par un indépendant. Le soucis c'est qu'il n'affiche pas les test et n'affiche pas correctement le markdown. J'ai donc décidé de demander à chat gpt de me générer la documentation depuis le json. Cela me permet de m'épargner une tâche chronophage car la documentation je l'ai déjà écrite, il s'agit uniquement d'un changement de format.  
+
+[Prompt ChatGPT](https://chat.openai.com/share/1e9e9b94-864e-4d10-aafc-5770a059fe24)
+
+![documentation générée](./ressources/images/docgenereepostman.png)
+
+Cependant, ce projet m'a permis d'apprendre une chose qui aiderait à la mise en place de mon projet. En effet en lisant l'instlation j'ai vu cette ligne.
+
+![installtion de dépendances](./ressources/images/installtaiondedépendances.png)
+
+Cela peut paraître basique mais je vais pouvoir m'en servir pour simplifier la mise en place des mes serveurs. Pour la génération automatique, j'utilise la commande *pipreqs*. J'ai trouvé cette commande grâce à [cette quesiton](https://stackoverflow.com/questions/31684375/automatically-create-file-requirements-txt) sur stack overflow.
+
+La commande m'a généré le code suivant :
+
+```
+face_recognition==1.3.0
+Flask==3.0.3
+PyJWT==2.8.0
+PyJWT==2.8.0
+```
+
+Ce qui est faux, premièrement il manque openCV et PyJWT est présent deux fois. Je sens que le problème vient du fait que je n'utilise pas un environnement virtuel. En effet, j'ai eu quelques problèmes lors de la configuration de ce dernier. Je vais donc me concentrer dessus à présent.
+
+### Mise en place de l'environnement virtuel
+

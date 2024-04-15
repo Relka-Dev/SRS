@@ -14,7 +14,11 @@ Utilisez ces liens pour naviguer entre les répertoires du projet.
 - [Journal de bord](./docs/jdb.md)  
 
 ### Sources
-⚠️ Ajouter une fois l'arborescance terminée.
+Lien vers les sources des différents composants ainsi que leurs tests.
+
+#### Cameras Wifi
+- [Sources Cameras Wifi](./src/cameras_wifi/src/)
+- [Tests](./src/cameras_wifi/tests/)
 
 ## Normalisation des push
 
@@ -22,7 +26,7 @@ La normalisation des push permet d'augementer la lisibilité dans l'historique d
 | **Syntaxe** | **Domaine de modification**                                    |
 |-------------|----------------------------------------------------------------|
 | Code        | Code / Fonctionnalités                                         |
-| Docs        | Documentation / Lisibilité du projet (ReadMe, etc.)             |
+| Docs        | Documentation / Lisibilité du projet (ReadMe, etc.)            |
 | Struct      | Structure                                                      |
 | Mixed       | Plusieurs domaines changés (Description détaillée recommandée) |
 | Hotfix      | Modification rapide visant à réparer une erreur ou un bug      |

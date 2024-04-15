@@ -1,0 +1,18 @@
+{
+	"info": {
+		"_postman_id": "79096cef-8103-4487-873b-2ce85a3d6df9",
+		"name": "SRS-serveur",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "33065575"
+	},
+	"item": [
+		{
+			"name": "initialize",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		}
+	]
+}

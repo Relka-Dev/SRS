@@ -5,7 +5,7 @@ Date        : 28.03.2024
 
 Script      : app.py
 Description : Code pour les cameras Wifi du projet SRS
-Version     : 0.1
+Version     : 1.0
 """
 
 from flask import Flask, jsonify, request, make_response

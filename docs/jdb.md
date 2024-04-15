@@ -515,7 +515,203 @@ PyJWT==2.8.0
 PyJWT==2.8.0
 ```
 
-Ce qui est faux, premièrement il manque openCV et PyJWT est présent deux fois. Je sens que le problème vient du fait que je n'utilise pas un environnement virtuel. En effet, j'ai eu quelques problèmes lors de la configuration de ce dernier. Je vais donc me concentrer dessus à présent.
+Ce qui est faux, premièrement il manque openCV et PyJWT est présent deux fois. Je sens que le problème vient du fait que je n'utilise pas un environnement virtuel. En effet, j'ai eu quelques problèmes lors de la configuration de ce dernier. Je vais essayer de le mettre en place une nouvelle fois et pendant l'installation des dépendance je vais travailler sur la documentation.  
 
-### Mise en place de l'environnement virtuel
+Mise à part ce problème de dépendance, j'ai terminé la documentation ainsi que le code. J'ai envoyé un mail à$ mes accompaganteurs afin de me faire un retour. À présent, je vais commencer le développement de mon serveur central.
 
+### Début du travail sur le serveur central
+
+Pour commencer, je dois effectuer une recherche automatique pour trouver les adresses ip avec mon port ouvert. Pour ce faire, je vais utiliser le code que j'ai eu l'occasion  de réaliser lors de mon POC.
+
+Voici le code en question. Après execution, je me suis rendu compte qu'il n'était pas asyncrone :
+
+```py
+class NetworkScanner:
+    def __init__(self, network):
+        self.network = ipaddress.IPv4Network(network)
+
+    def scan_worker(self, port, result_queue,  timeout=0.01):
+        for ip in self.network.hosts():
+            print(str(ip))
+            if self.check_port(ip, port, timeout):
+                result_queue.put(ip)
+
+
+    def scan_port(self, port, timeout=1, max_threads=100):
+        """
+        Scan tous les adresses du réseau.
+
+        Args:
+            port (int): Port à scanner
+            timeout (float): Le temps maximum en secondes à attendre pour une réponse.
+            max_threads (int): Nombre maximum d'excutions sur les ip en même temps.
+
+        Returns:
+            Liste Ports (Array): Retrourne le tableau des adresses ip avec le port ouvert
+            
+        """
+        open_ips = []
+        print("Recherche en cours!")
+
+        result_queue = Queue()
+        process = Process(target=self.scan_worker, args=(port, result_queue))
+        process.start()
+        process.join()
+
+        return result_queue.get()
+
+    def check_port(self, ip, port, timeout):
+        """
+        Vérifie si un port spécifié sur une adresse IP donnée est ouvert.
+
+        Args:
+            ip (str): L'adresse IP à tester.
+            port (int): Le numéro de port à vérifier.
+            timeout (float): Le temps maximum en secondes à attendre pour une réponse.
+
+        Returns:
+            bool: Renvoie True si le port est ouvert, sinon False.
+        """
+        try:
+            # Vérification de l'ouverture du port
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(timeout)
+                s.connect((str(ip), port))
+                return True
+        except (socket.timeout, socket.error):
+            return False
+```
+
+Pour remédier à cela je me suis rendu sur la [page de la documentation officielle](https://docs.python.org/3/library/multiprocessing.html) pour essayer de trouver une alternative.
+Malheureusement, je ne pense pas encore avoir le niveau en python pour gérer ce genre de problème. Cependant j'ai trouvé une autre solution. J'ai simplement réduit le timeout. Après plusieurs test, je n'ai pas constaté d'erreur. J'ai donc simplifié le code.
+
+```py
+class NetworkScanner:
+    def __init__(self, network):
+        self.network = ipaddress.IPv4Network(network)
+
+    def scan_ips(self, port,  timeout=0.01):
+        ip_with_port_open = []
+        for ip in self.network.hosts():
+            print(str(ip))
+            if self.check_port(ip, port, timeout):
+                ip_with_port_open.append(ip)
+
+        return ip_with_port_open
+
+    def check_port(self, ip, port, timeout):
+        """
+        Vérifie si un port spécifié sur une adresse IP donnée est ouvert.
+
+        Args:
+            ip (str): L'adresse IP à tester.
+            port (int): Le numéro de port à vérifier.
+            timeout (float): Le temps maximum en secondes à attendre pour une réponse.
+
+        Returns:
+            bool: Renvoie True si le port est ouvert, sinon False.
+        """
+        try:
+            # Vérification de l'ouverture du port
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(timeout)
+                s.connect((str(ip), port))
+                return True
+        except (socket.timeout, socket.error):
+            return False
+
+```
+#### Application multiplateforme après ou pendant le développement du serveur central ?
+
+En réféchissant quoi faire ensuite, je me suis posé la question s'il ne serait pas meilleur de développer l'application multiplateforme en même temps que le serveur central. Cela me permettrait d'avoir un client et avancer plus vite. De plus, quand j'ai développé des API par le passé, j'ai constaté que quand je développait mon client, il me manquait souvent des fonctionnalités et des endpoint notamment quand je faisait des crud. Pour l'instant je vais me concentrer sur le serveur mais je vais poser la question à mes suiveurs dès que possible.
+
+#### Architecture du serveur central
+
+Pour le développement de mon serveur central il faut que je réfléchisse comment il va fonctionner ainsi que son intéraction avec l'utilisateur. Je sais qu'en premier lieu, je dois faire un système de connexion qui pour les utilisateurs. Je pense qu'il serait interessant de commencer par une connexion par défault avec un nom d'utilisateur basique comme *admin* et un mot de passe comme *mdp*. Une fois l'utilisateur connecté, il ne peut rien faire sauf ajouter un nouvel utilisateur et un mot de passe qui eux seront sécurisé et permettront de communiquer avec ce système. 
+
+##### Première connexion
+
+L'utilisateur rentre ses identifiants dans la page de login, si les identifiants sont corrects, un jwt de 15 min est crée et passé à l'application.  
+![première connexion](./ressources/images/premiereconnexion.png)
+
+##### Ajout des identifiants
+Une fois l'application en possession du JWT. L'utilisateur se trouve devant la page permettant d'ajouter des utilisateurs. On fois les nouveaux identifiants administrateurs entrés. Les identifiants chiffrés ainsi que le JWT sont passés dans la requête vers le serveur. Après vérification de la conformité des données, les identifiants de connexion sont ajoutés dans la BDD. Si tout s'est bien passé, l'utilisateur reçoit un message sur l'application et est redirigé vers la page de connexion.
+
+![ajout d'utilisateur](./ressources/images/ajoututilisateur.png)
+
+##### Seconde connexion
+Cette fois-ci, l'utilisateur doit se connecter avec les identifiants sécurisés. Une fois qu'il a rentré ces derniers, les données sont chiffrés et envoyés vers le serveur. Le serveur fait ensuite une vérification au-prêt de la base de données. Si les identifiants sont corrects, le serveur crée un JWT temporaire de 24 heures permettant de se connecter aux autres fonctionnalités. Du côté de l'utilisateur, il est redirigé vers la page d'acceuil de l'application.
+
+![seconde connexion](./ressources/images/secondeconnexion.png)
+
+#### Gestion de la première connexion
+
+Afin de créer cet endpoint, il faut en premier lieu que je sache s'il s'agit bel et bien de la première connexion. Pour ce faire, j'ai décidé de vérifier si la base de données est bel et bien vide. J'ai donc crée une classe `DatabaseClient` qui me servira de client de base de données.
+
+```py
+class DatabaseClient:
+    pass
+```
+
+Je crée une première route `initalize` qui servira à la première connexion.
+
+```py
+def initialize(self):
+        self.db_client = DatabaseClient(self.DB_HOST, self.DB_NAME, self.DB_USER, self.DB_PASSWORD)
+
+        self.app.add_url_rule('/initialize', 'initialize', self.intialize, methods=['GET'])
+
+    def initialize(self):
+        if self.db_client.isAdminTableEmpty():
+            pass
+        else:
+            return jsonify({'erreur': 'Impossible d\'ajouter l\'admin quand un autre est déjà présent.'}), 402
+```
+
+Et je vérifie que la table est vide.
+
+```py
+def isAdminTableEmpty(self):
+        self.cursor.execute("SELECT * FROM Admin")
+        results = self.cursor.fetchall()
+    
+        if len(results) == 0:
+            return True
+        else:
+            return False
+```
+
+J'ai ensuite créer une classe jwt_library qui me servira de bibliothèque pour les fonctionnalités liés aux JWT.
+
+```py
+class JwtLibrary:
+    @staticmethod
+    def GenerateJwtForInitialization(username):
+        SECRET_KEY = 'S[26dF9RmVM/#{GT'
+        token = jwt.encode({'user': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=15)}, SECRET_KEY)
+
+        return token
+```
+
+Et pour terminer, j'implémente cette fonction dans ma route.
+
+```py
+def initialize(self):
+        auth = request.authorization
+        if auth and auth.password == self.DEFAULT_PASSWORD and auth.username == self.DEFAULT_USERNAME:
+            if self.db_client.isAdminTableEmpty():
+                return jsonify({'message': JwtLibrary.GenerateJwtForInitialization(auth.username)}), 200
+            else:
+                return jsonify({'erreur': 'Impossible d\'ajouter l\'admin quand un autre est déjà présent.'}), 402
+        else:
+            return jsonify({'erreur': 'Identifiants de connexion manquants ou erronés'}), 403
+```
+
+Il ne me reste plus qu'à tester avec postman.
+
+![Test initialize postman](./ressources/images/testinitiallizepostman.png)
+
+Avec cela, j'ai terminé la génération des JWT de 15 min pour les initializations.
+
+### Conclusion
+Je pense avoir bien avancé aujourd'hui, non seulement j'ai terminé les serveur des cameras wifi mais j'ai également débuté le travail sur le serveur central. Demain je vais me concentrer sur la doc des partie que j'ai développé puis je vais continuer le développement du serveur central en commançant par le endpoint login.

@@ -2,6 +2,7 @@
 	"info": {
 		"_postman_id": "79096cef-8103-4487-873b-2ce85a3d6df9",
 		"name": "SRS-serveur",
+		"description": "Le serveur sert de logique, de base de données ainsi que de API pour le projet SRS. Il reçoit les données des cameras les interprête et les mets à disposition grâce à des endpoints dédiés.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "33065575"
 	},
@@ -11,6 +12,68 @@
 			"request": {
 				"method": "GET",
 				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "first_admin",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:4299/first_admin?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJleHAiOjE3MTMyNTI3NjR9.BZnTv4Pmvi77J-bm_CJNkUlLMC9Ag9RelbvTdwuGF58&username=Karel&password=1B3231655CEBB7A1F783EDDF27D254CA",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4299",
+					"path": [
+						"first_admin"
+					],
+					"query": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJleHAiOjE3MTMyNTI3NjR9.BZnTv4Pmvi77J-bm_CJNkUlLMC9Ag9RelbvTdwuGF58"
+						},
+						{
+							"key": "username",
+							"value": "Karel"
+						},
+						{
+							"key": "password",
+							"value": "1B3231655CEBB7A1F783EDDF27D254CA"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "New Request",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:4299/admin_login?username=Karel&password=haha",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4299",
+					"path": [
+						"admin_login"
+					],
+					"query": [
+						{
+							"key": "username",
+							"value": "Karel"
+						},
+						{
+							"key": "password",
+							"value": "haha"
+						}
+					]
+				}
 			},
 			"response": []
 		}

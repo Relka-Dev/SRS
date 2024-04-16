@@ -14,4 +14,5 @@ docs/
 
 
 ## Navigation
-[Cameras Wifi](./composants/camera-wifi.md)
+[Cameras Wifi](./composants/camera-wifi.md)  
+[Serveur Central](./composants/serveur.md)

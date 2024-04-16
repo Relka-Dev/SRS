@@ -715,3 +715,90 @@ Avec cela, j'ai terminé la génération des JWT de 15 min pour les initializati
 
 ### Conclusion
 Je pense avoir bien avancé aujourd'hui, non seulement j'ai terminé les serveur des cameras wifi mais j'ai également débuté le travail sur le serveur central. Demain je vais me concentrer sur la doc des partie que j'ai développé puis je vais continuer le développement du serveur central en commançant par le endpoint login.
+
+## 16.04.2024
+Pour débuter la journée je vais commencer par documenter la création des token JWT pour l'initialization du serveur. Ensuite, je vais continuer à travailler sur la procédure d'ajout du premier utilisateur.
+
+Après réflexion, je vais uniquement débuter la structure de ma documentation car je préfère mettre en place le système d'initialisation au complet et m'assurer que ce dernier fonctionne avant de me lancer dans la doc.
+
+#### Suite de l'initialisation
+À présent, il me faut implémenter la seconde partie, l'ajout d'intifiants. Après réflexion, je ne peux pas faire en sorte que le serveur force des critères de mot de passe car cela voudrait dire que ces derniers passerait en clair depuis le client. Je vais donc implémenter cette partie dans l'application direcement. 
+
+Je commance par implémenter la route qui permettra d'ajouter le premier admin. Je l'ai appleé `/first_admin` et mit en méthode POST.
+![ajout d'utilisateur](./ressources/images/ajoututilisateur.png)
+
+Pour la gestion et la vérification du token JWT, j'utilise encore une fois la fonction décoratrice et l'ajoute dans ma classe jwt_library.
+
+##### Vérification du mot de passe
+Comme précisé avant, je ne peux pas vérifier la force des mots de passes (nombre de charatères, diversité etc.) cependant, je me demande s'il y a pas une façon de vérifier si un string, le mot de passe, est crypté ou non. J'ai trouvé une question correspondante sur Stack Overflow. Je vais essayer d'implémenter le code fournit.
+
+[Question Stack Overflow](https://stackoverflow.com/questions/7000885/python-is-there-a-good-way-to-check-if-text-is-encrypted)
+
+Après avoir effectuer plusieurs tests sur Postman avec des methodes de chiffrement différentes, je n'ai pas réussi à faire fonctionner la fonction. Par conséquent, je décide de ne pas l'implémenter.
+
+##### Implémetantion du second token JWT
+Je commance par créer une autre clé secrète pour ajouter de la sécurité ainsi qu'une seconde fonction de génération et un décorateur. Je donne une expiration de 24 heures au token.
+
+```py
+__SECRET_KEY_FOR_API = 'qEcYfxQzC3bS'
+
+@staticmethod
+    def generateJwtForAPI(username):
+        token = jwt.encode({'user': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, JwtLibrary.__SECRET_KEY_FOR_API)
+
+        return token
+
+def API_token_required(f):
+        """
+        Fonction décoratrice permettant de forcer une autre fonction d'être identifié par JWT
+
+        Args:
+            f : Fonction à décorer
+
+        Returns:
+            f : Fonction décorée
+        """
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            
+            token = request.args.get('token')
+            if not token:
+                return jsonify({'message' : 'Token is missing'}), 403
+            # Try catch car jwt.decode retourne une erreur en cas de non correspondance
+            try:
+                data = jwt.decode(token, JwtLibrary.__SECRET_KEY_FOR_INITIALIZATION, algorithms=["HS256"])
+            except jwt.ExpiredSignatureError:
+                return jsonify({'message': 'Token has expired'}), 403
+            except jwt.InvalidTokenError:
+                return jsonify({'message': 'Token is invalid'}), 403
+            return f(*args, **kwargs)
+
+        return decorated
+        
+```
+
+Les nouvelles fonctionnalités ajoutée, je peux à présent implémenter la connexion.
+
+### Connexion administrateur
+
+Pour la connexion de l'administrateur je crée la route `admin_login`. Si l'utilisateur transmet le bon mot de passe et le bon nom d'utilisateur, un JWT est créé.
+
+```py
+def admin_login(self):
+        if not self.db_client.isAdminTableEmpty():
+            username = request.args.get('username')
+            password = request.args.get('password')
+            
+            if not username or not password:
+                return jsonify({'erreur': 'Mauvais paramètres, utilisez (username, password) pour le nom d\'utilisateur et le mot de passe respectivement.'}), 400
+            
+            if self.db_client.adminLogin(username, password):
+                return jsonify({'token': JwtLibrary.generateJwtForAPI(username)}), 200
+            else:
+                return jsonify({'erreur': 'Les identifiants de connexion sont erronés'}), 400
+        else:
+            return jsonify({'erreur': 'Aucun administrateur n\'est présent dans le système.'}), 403
+```
+![JWT admin](./ressources/images/jwtadmin.png)
+
+À présent que j'ai terminer l'initialisation, je vais la documenter.

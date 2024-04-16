@@ -2,7 +2,7 @@
 
 Le système vise à mettre en place des caméras WiFi compactes pour la surveillance ou pour d'autres applications nécessitant la capture et la diffusion en temps réel de flux vidéo. Le cœur du système, un Raspberry Pi Zero 2 W, exécute un serveur Python Flask.
 
-## Informations sur le serveur
+## Informations sur l'ordinateur
 ```
 PRETTY_NAME="Raspbian GNU/Linux 11 (bullseye)"
 NAME="Raspbian GNU/Linux"

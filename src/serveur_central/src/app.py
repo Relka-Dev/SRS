@@ -12,6 +12,8 @@ Version     : 0.1
 from flask import Flask, jsonify, request
 from database_client import DatabaseClient
 from jwt_library import JwtLibrary
+from camera_server_client import CameraServerClient
+from network_scanner import NetworkScanner
 
 class ServeurCentral:
     # Constantes de l'application
@@ -27,6 +29,7 @@ class ServeurCentral:
     def __init__(self):
         self.app = Flask(__name__)
         self.db_client = None
+        self.cameraServerClient = None
         self.initialize_routes()
 
     
@@ -38,6 +41,8 @@ class ServeurCentral:
         self.app.add_url_rule('/first_admin', 'first_admin', self.first_admin, methods=['POST'])
         self.app.add_url_rule('/admin_login', 'admin_login', self.admin_login, methods=['POST'])
         # Routes sécurisés disponibles uniquement pour les administrateurs
+        self.app.add_url_rule('/add_network', 'add_network', self.add_network, methods=['POST'])
+        self.app.add_url_rule('/cameras_data', 'cameras_data', self.cameras_data, methods=['GET'])
 
     # Routes liées à l'initialisation
     def initialize(self):
@@ -58,7 +63,7 @@ class ServeurCentral:
     @JwtLibrary.initialization_token_required    
     def first_admin(self):
         """
-        Route permettant d'ajouter le premier admistrateur, requert le token du premier login
+        Route permettant d'ajouter le premier administrateur, requert le token du premier login
         """
         if self.db_client.isAdminTableEmpty():
             username = request.args.get('username')
@@ -93,6 +98,37 @@ class ServeurCentral:
             return jsonify({'erreur': 'Aucun administrateur n\'est présent dans le système.'}), 403
         
     # Routes sécurisés disponibles uniquement pour les administrateurs
+
+    @JwtLibrary.API_token_required
+    def add_network(self):
+        ip = request.args.get('ip')
+        subnetMask = request.args.get('subnetMask')
+
+        if not ip or not subnetMask:
+            return jsonify({'erreur': 'Mauvais paramètres, utilisez (ip, subnetMask) pour l\ip du réseau et le masque de sous-réseau respectivement.'}), 400
+        
+        if not NetworkScanner.is_network_valid("{n}/{sub}".format(n = ip, sub = subnetMask)):
+            return jsonify({'erreur': 'Le réseau fournit n\'est pas valide ou n\'est pas accessible'}), 400
+        
+        if not self.db_client.addNetwork(ip, subnetMask):
+            return jsonify({'erreur': 'Le réseau fournit est est déjà dans la base de données'}), 400
+        
+        return jsonify({'tkt': 'ok'}), 200
+
+    @JwtLibrary.API_token_required
+    def cameras_data(self):
+        ip = request.args.get('ip')
+        subnetMask = request.args.get('subnetMask')
+
+        if not ip or not subnetMask:
+            return jsonify({'erreur': 'Mauvais paramètres, utilisez (ip, subnetMask) pour l\ip du réseau et le masque de sous-réseau respectivement.'}), 400
+
+        self.cameraServerClient = CameraServerClient(ip, subnetMask)
+
+        self.cameraServerClient.lookForCameras()
+        print(self.cameraServerClient.getCamerasTokens())
+
+        return jsonify({'message' : 'yé'})
 
 
     def run(self):

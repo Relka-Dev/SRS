@@ -1,16 +1,17 @@
 import socket
 import ipaddress
+import subprocess
+import re
     
 class NetworkScanner:
     def __init__(self, network):
         self.network = ipaddress.IPv4Network(network)
 
-    def scan_ips(self, port,  timeout=0.01):
+    def scan_ips(self, port,  timeout=0.005):
         ip_with_port_open = []
         for ip in self.network.hosts():
-            print(str(ip))
             if self.check_port(ip, port, timeout):
-                ip_with_port_open.append(ip)
+                ip_with_port_open.append(str(ip))
 
         return ip_with_port_open
 
@@ -34,9 +35,35 @@ class NetworkScanner:
                 return True
         except (socket.timeout, socket.error):
             return False
+        
+    @staticmethod
+    def is_network_valid(network : str):
+        """
+        Vérifie si un réseau spécifié est valide.
 
-# Exemple d'utilisation
-network = "192.168.1.0/24"
-scanner = NetworkScanner(network)
-open_ips = scanner.scan_ips(4298)
-print("\nAdresses IP avec le port ouvert:", open_ips)
+        La fonction commence par vérifier si le réseau est conforme puis ping le routeur pour vérifier que le réseau est disponible.
+
+        Args:
+            network (str): réseau à vérifier.
+
+        Returns:
+            bool: Renvoie True si le réseau est valide, sinon False.
+        """
+
+        try:
+            ipaddress.IPv4Network(network)
+        except ValueError:
+            return False
+        
+        # Ajout de 1 au dernier charactère
+        ip, mask = network.split('/')
+
+        router_ip = ip[:-1] + '1'
+
+        try:
+            # Ping du routeur
+            timeout = 0.1
+            result = subprocess.run(['ping', '-c', '1', '-W', str(timeout), router_ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
+            return result.returncode == 0
+        except subprocess.TimeoutExpired:
+            return False

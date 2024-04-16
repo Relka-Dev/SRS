@@ -20,7 +20,6 @@ class DatabaseClient:
             database=database
         )
         self.cursor = self.dbConnexion.cursor()
-        self.isAdminTableEmpty()
     
     def isAdminTableEmpty(self):
         """
@@ -73,5 +72,34 @@ class DatabaseClient:
         except Exception as e:
             print(f"Error during login: {e}")
             return False
+        
+    def checkIfNetworkExists(self, ip: str):
+        try:
+            self.cursor.execute("SELECT * FROM Network WHERE ip = %s", (ip,))
+            results = self.cursor.fetchall()
+    
+            if len(results) == 0:
+                return False
+            else:
+                return True
+        except Exception as e:
+            print(f"Error: {e}")
+            return False
+
+    
+    def addNetwork(self, ip : str, submask : str):
+        # Réseau déjà présent
+        if self.checkIfNetworkExists(ip):
+            return False
+        
+        try:
+            self.cursor.execute("INSERT INTO srs.Network (ip, subnetMask) VALUES (%s, %s);", (ip, submask))
+            self.dbConnexion.commit()
+            return True
+        except Exception as e:
+            print(f"Erreur lors de l'insertion dans la base de données: {e}")
+        
+
+
 
 

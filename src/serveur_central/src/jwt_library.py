@@ -94,7 +94,7 @@ class JwtLibrary:
                 return jsonify({'message' : 'Token is missing'}), 403
             # Try catch car jwt.decode retourne une erreur en cas de non correspondance
             try:
-                data = jwt.decode(token, JwtLibrary.__SECRET_KEY_FOR_INITIALIZATION, algorithms=["HS256"])
+                data = jwt.decode(token, JwtLibrary.__SECRET_KEY_FOR_API, algorithms=["HS256"])
             except jwt.ExpiredSignatureError:
                 return jsonify({'message': 'Token has expired'}), 403
             except jwt.InvalidTokenError:

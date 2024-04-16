@@ -802,3 +802,117 @@ def admin_login(self):
 ![JWT admin](./ressources/images/jwtadmin.png)
 
 À présent que j'ai terminer l'initialisation, je vais la documenter.
+
+### Recherche automatique des cameras
+Ayant terminé l'initialisation, je peux me concentrer sur la recherche automatique des cameras ainsi que l'appel automatique de leurs endpoint. Il me faut trouver une façon pour stocker les adresses ip quand le serveur trouve les cameras. Je pensais de stocker les réseaux dans une table dédiées avec un *timestamp* indiquant le dernier scan effectué ainsi que les cameras reliés dans une autre table. Chaque fois que le endpoint est appelé. une vérification au niveau du timestamp est effectuée et si ce timestamp est dépassé de disons... 10 minutes, une nouvelle recherche est effectuée permettant de mettre de à jour la bade de données des cameras. La même chose se produit s'il y a une erreur de communication avec une des cameras. Pour résumer donc :
+
+À chaque appel, l'utilisateur envoie son réseau.
+
+#### Si la base de données est vide (Pas de correspondance au niveau du network)
+
+1. Recherche dans la table network une correspondance.
+2. Recherche des cameras sur le réseau.
+3. Ajout des ip des cameras dans la base de données.
+4. Appel des endpoint des camera.
+5. Interprétation des données.   
+
+*Note : Si aucune camera n'est trouvée alors l'opération est intérompue et l'API retourne le message correspondant.*  
+
+![Scan réseau sans correspondance](./ressources/images/scanreseausanscorrespondance.png)
+
+
+##### Implémentation
+Je commence par créer une nouvelle classe `camera_server_client.py` qui me servira à intéragir avec les apis des cameras. Je crée ensuite les constantes avec les identifiants de connexion ainsi que le port.
+
+```py
+class CameraServerClient():
+    __CLIENT_USERNAME = 'SRS-Server'
+    __CLIENT_PASSWORD = 'QNaAXEjuNBqdhF6HFjggsDmhLZVeWSzT'
+    __CAMERAS_SERVER_PORT = 4298
+```
+
+J'ajoute une fonction qui me permet de scanner les cameras sur le réseau.
+
+```py
+def lookForCameras(self):
+        self.camerasIPs = self.networkScanner.scan_ips(self.__CAMERAS_SERVER_PORT)
+        return self.camerasIPs
+```
+
+Ensuite, une fonction me permettant d'appeler automatiquement les endpoint permettant d'obtenir les Tokens de toutes les cameras.
+
+```py
+def getCamerasTokens(self):
+        if len(self.camerasIPs) == 0:
+            return None
+
+        tokens = []
+        for cameraip in self.camerasIPs:
+            camera_url = "http://{ip}:{port}".format(ip = cameraip, port = self.__CAMERAS_SERVER_PORT)
+            print(camera_url)
+            auth = (self.__CLIENT_USERNAME, self.__CLIENT_PASSWORD)
+            response = requests.get(f"{camera_url}/login", auth=auth)
+
+            if response.status_code == 200:
+                tokens.append(response.json().get('token'))
+            else:
+                print("Échec de l'obtention du token JWT pour l'ip : {ip}:".format(ip=cameraip), response.status_code)
+            
+        return tokens
+```
+
+### Maj de la base de données
+
+J'ai bien avancé sur la logique de mon application cependant, afin de pouvoir continuer je dois réfléchir sur la structure de la ma base de données afin en premier lieu, l'adapter à l'utilisation des JWT des camera en ajoutant un champs à leur table.
+
+#### Ajustement de la position des cameras par l'utilisateur
+Afin de pouvoir effectuer les calcul de la position des utilisateurs je dois connaitre la position des cameras. Pour ce faire, je dois ajouter les champs **position** qui indiquera la position relative par rapport au mur et **orientation** qui déterminera l'orientation de la camera. Cependant, je veux faire en sorte que les camera puisse se situer dans le réeau sans forcément avoir de position indiquées afin de laisser la possibiliter à l'utilisateur de les ajuster.
+
+#### Ajout de réseau
+J'ai crée le endpoint `/add_network` permettant d'ajouter un réseau à la base de données. J'ai fais en sorte d'éviter les erreurs et les duplications.
+
+##### Route
+```py
+@JwtLibrary.API_token_required
+    def add_network(self):
+        ip = request.args.get('ip')
+        subnetMask = request.args.get('subnetMask')
+
+        if not ip or not subnetMask:
+            return jsonify({'erreur': 'Mauvais paramètres, utilisez (ip, subnetMask) pour l\ip du réseau et le masque de sous-réseau respectivement.'}), 400
+        
+        if not NetworkScanner.is_network_valid("{n}/{sub}".format(n = ip, sub = subnetMask)):
+            return jsonify({'erreur': 'Le réseau fournit n\'est pas valide ou n\'est pas accessible'}), 400
+        
+        if not self.db_client.addNetwork(ip, subnetMask):
+            return jsonify({'erreur': 'Le réseau fournit est est déjà dans la base de données'}), 400
+        
+        return jsonify({'tkt': 'ok'}), 200
+```
+
+##### Vérification de la conformité du réseau
+
+Afin de m'assurer que le réseau passé par l'utilisateur est confirme et existe bel et bien j'ai créé la fonction `is_network_valid` fans la classe `network_scanner`.  
+Je commence par vérifier la confirmité du format.
+```py
+        try:
+            ipaddress.IPv4Network(network)
+        except ValueError:
+            return False
+```
+Puis je vérifie l'existance du réseau grâce à un ping sur le routeur
+```py
+        try:
+            # Ping du routeur
+            timeout = 0.1
+            result = subprocess.run(['ping', '-c', '1', '-W', str(timeout), router_ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
+            return result.returncode == 0
+        except subprocess.TimeoutExpired:
+            return False
+```
+
+Une fois toutes ces confition remplies, le réseau est ajouté dans la base de données.
+
+### Conclusion
+J'ai réussi à continuer sur ma lancée des jours précédents, cependant, je sens que je suis un peu brouillon dans ma façon de penser. Il faut que je plannifie plus mes actions dans le futur.  
+Demain je vais me conctrer sur l'ajout des cameras de façon dynamique dans la base de données.

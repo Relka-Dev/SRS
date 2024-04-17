@@ -916,3 +916,146 @@ Une fois toutes ces confition remplies, le réseau est ajouté dans la base de d
 ### Conclusion
 J'ai réussi à continuer sur ma lancée des jours précédents, cependant, je sens que je suis un peu brouillon dans ma façon de penser. Il faut que je plannifie plus mes actions dans le futur.  
 Demain je vais me conctrer sur l'ajout des cameras de façon dynamique dans la base de données.
+
+## 17.04.2024
+Comme précisé hier, aujourd'hui je vais commencer par ajouter les cameras de façon dynamique dans la base de données. Ensuite, je vais procéder à l'installation de la seconde camera.
+
+### Ajout dynamique des cameras dans la base de données
+Pour ce faire, je vais continuer à développer mon endpont `cameras_data` qui ne serais pas réelement utilisé dans le projet final, il me permet juste de développer les fonctionnalités que je vais implémenter une fois l'architecture de mon projet terminée.  
+Je récupère les tokens dans un dictionnaire dans la fonction `getCamerasTokens`.
+```py
+tokens_for_ip = {}
+        for cameraip in self.camerasIPs:
+        [...]
+        if response.status_code == 200:
+                tokens_for_ip[camera_url] = response.json().get('token').
+```
+![réussite dict](./ressources/images/reussitedict.png)
+
+J'ajoute ensuite trois fonctions dans ma classe `DatabaseClient`.
+1. `getNetworkIdByIpAndSubnetMask` qui me permettra de récupérer l'id du réseau en utilisant l'adresse IP et le masque de sous réseau.
+2. `addCameras` qui ajoutera les cameras dans la base et utilisera la fonction au dessus pour trouver le réseau relié. Pour l'ajout de camera, uniquement cette fonction sera appelée par la route.
+3. `checkIfCameraExists` qui vérifira si une camera est déjà présente dans la base en se basant sur son ip et le réseau.
+
+J'ai implémenté les fonctions et le résultat fonctionne. L'ajout dynamique des cameras dans la base est terminée.
+
+![db camera implementation](./ressources/images/dbCameraImplémentation.png)
+
+### Ajout d'une seconde camera
+
+Afin de vérifier que mon système fonctionne, il faut que je créer une seconde camera. Cependant, le temps d'installtion de opencv est conséquent. J'en profite pour réfléchir à l'architecture de l'application.
+
+### Discussion avec Monsieur Zanardi
+1. Il m'a confirmé qu'il serait meilleur de développer l'application multiplateforme en parallèle de l'API afin de terminer un maximum de fonctionnalités avant la fin du projet.
+2. Il m'a consillé d'ajouter la date d'expiration avec les JWT dans la base de données avec les cameras, comme ça on peut appeler automatiquement le endpoint pour les regénérer en cas de besoin.
+3. Il m'a consiller de créer un diagramme général de mon projet et de spécifier dans la document de quel partie il s'agissait.
+4. Trouver un outil afin de générer un disgramme de classes.
+
+### Début du développment de l'application multiplateforme
+L'application sera développée en Kivy python. Pour l'implémentation, j'ai decidé de faire deux user story afin de m'aider dans l'organisation de mon développement.
+
+#### Initialisation
+
+![initialisation](./ressources/images/userstory1_intialisation.jpg)
+
+##### Page 1 : Recherche de serveur
+
+Cette page va servir d'indication visual à l'utilisateur que le système est à la recherche d'un serveur. Une fois le serveur trouvé, il sera automatiquement redirigé.
+
+###### Implémentation graphique
+
+![](./ressources/images/recherchedeserveurform.png)
+
+```
+<ServerResearchWindow>
+    name: "Research"
+    
+    GridLayout:
+        cols: 1
+        
+        Label:
+            text: "Recherche de serveur"
+            font_size: '24sp' 
+            bold: True
+        Image:
+            source: 'Ressources/logo.png'
+        Label:
+            text: "Veuillez patienter"
+```
+
+###### Implémentation
+
+Je commence par créer la classe `NetworkScanner`. Je vais reprendre le code que j'ai utilisé dans mon serveur. Cependant j'ajoute une fonction statique me permettant de récupérer le réseau local de l'utilisateur.
+
+```py
+@staticmethod
+    def get_local_network():
+        ip = socket.gethostbyname(socket.gethostname())
+        return '.'.join(ip.split('.')[:-1]) + '.0/24'
+```
+
+J'ajoute la recherche en asyncrone du réseau.
+
+```py
+def on_enter(self):
+    Clock.schedule_once(self.run_network_scan)
+
+def run_network_scan(self, dt):
+    self.networkScanner = NetworkScanner()
+    Clock.schedule_once(lambda dt: self.async_scan_ips(self.SERVER_PORT), 0)
+
+def async_scan_ips(self, port):
+    ip_serveur = self.networkScanner.scan_ips(port)
+```
+Si un réseau est trouvé, il est redirigé vers la page suivante, sinon, un message d'erreur apparait et un bouton s'active lui permettant de réessayer. L'ip du serveur est stockée dans une variable de l'application.
+
+```py
+if ip_serveur:
+            app = App.get_running_app()
+            app.ip_serveur = ip_serveur
+            self.manager.current = "main"
+        else:
+            self.ids.state_label.text = "Erreur: Aucun serveur SRS trouvé sur votre réseau."
+            self.ids.state_label.color = (1, 0, 0, 1) 
+            self.ids.retry_button.disabled = False
+```
+
+###### Vérification de l'initialisation
+J'ai ajouté un endpoint permettant de savoir si le serveur est initialisé.
+
+```py
+def is_set_up(self):
+        if self.db_client.isAdminTableEmpty():
+            return jsonify({'erreur': 'Le serveur n\'est pas configuré'}), 400
+        else:
+            return jsonify({'message': 'Le serveur est configuré'}), 200
+```
+Je l'appèle ensuite afin de choisir vers quel page j'envoie l'utilisateur.
+
+```py
+if serverClient.is_server_set_up():
+                self.manager.current = "main"
+            else:
+                self.manager.current = "initializeLogin"
+```
+
+##### Transmission des données
+Je devais trouver une façon de transmettre l'ip du serveur de façon globale dans l'application. J'ai donc crée une propriété à la classe main et je la met à jour quand il y en a le besoin.
+
+```py
+class MyMainApp(App):
+    server_ip = None
+
+    def build(self):
+        # Retourne l'interface utilisateur chargée à partir du fichier app.kv
+        return kv
+
+    def set_server_ip(self, server_ip):
+        self.server_ip = server_ip
+
+    def get_server_ip(self):
+        return self.server_ip
+```
+
+### Conclusion
+Je pense avoir bien avancé aujourd'hui. J'ai débuté le développement de l'application en parallèle à l'api et je pense que c'était le bon choix. J'ai l'impression de progresser bien plus vite et ça m'a enlevé une pression liée au rendu de l'api. Demain je vais faire la suite de l'initialisation.

@@ -35,6 +35,10 @@ class ServeurCentral:
     
     def initialize_routes(self):
         self.db_client = DatabaseClient(self.DB_HOST, self.DB_NAME, self.DB_USER, self.DB_PASSWORD)
+
+        # Routes ping
+        self.app.add_url_rule('/ping', 'ping', self.ping, methods=['GET'])
+        self.app.add_url_rule('/is_set_up', 'is_set_up', self.is_set_up, methods=['GET'])
         
         # Routes liées à l'initialisation
         self.app.add_url_rule('/initialize', 'initialize', self.initialize, methods=['GET'])
@@ -43,6 +47,17 @@ class ServeurCentral:
         # Routes sécurisés disponibles uniquement pour les administrateurs
         self.app.add_url_rule('/add_network', 'add_network', self.add_network, methods=['POST'])
         self.app.add_url_rule('/cameras_data', 'cameras_data', self.cameras_data, methods=['GET'])
+
+
+    
+    def ping(self):
+        return jsonify({'Ping Success': 'SRS server'}), 200
+    
+    def is_set_up(self):
+        if self.db_client.isAdminTableEmpty():
+            return jsonify({'erreur': 'Le serveur n\'est pas configuré'}), 400
+        else:
+            return jsonify({'message': 'Le serveur est configuré'}), 200
 
     # Routes liées à l'initialisation
     def initialize(self):
@@ -126,9 +141,11 @@ class ServeurCentral:
         self.cameraServerClient = CameraServerClient(ip, subnetMask)
 
         self.cameraServerClient.lookForCameras()
-        print(self.cameraServerClient.getCamerasTokens())
+        tokens_for_ip = self.cameraServerClient.getCamerasTokens()
 
-        return jsonify({'message' : 'yé'})
+        self.db_client.addCameras(tokens_for_ip, ip, subnetMask)
+
+        return jsonify({'tokens' : tokens_for_ip})
 
 
     def run(self):

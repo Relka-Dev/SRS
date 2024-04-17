@@ -7,7 +7,7 @@ class NetworkScanner:
     def __init__(self, network):
         self.network = ipaddress.IPv4Network(network)
 
-    def scan_ips(self, port,  timeout=0.005):
+    def scan_ips(self, port,  timeout=0.01):
         ip_with_port_open = []
         for ip in self.network.hosts():
             if self.check_port(ip, port, timeout):

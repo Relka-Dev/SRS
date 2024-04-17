@@ -1,0 +1,69 @@
+WindowManager:
+    ServerResearchWindow:
+    InitializeLoginWindow:
+    MainWindow:
+
+<MainWindow>:
+    name: "main"
+    
+    GridLayout:
+        cols: 1
+        
+        Label:
+            text: "FaceScan"
+            
+
+        GridLayout:
+            cols: 3
+
+            Button:
+                text: "Effectuer un scan"
+                on_release: 
+                    app.root.current = "scan"
+                    root.manager.transition.direction = "left"
+            Button:
+                text: "Voir la liste des données"
+                on_release:
+                    app.root.current = "list"
+                    root.manager.transition.direction = "left"
+            Button:
+                text: "Reconnnaitre les visages"
+                on_release: 
+                    app.root.current = "recognition"
+                    root.manager.transition.direction = "left"
+
+<ServerResearchWindow>
+    name: "research"
+    
+    GridLayout:
+        cols: 1
+        
+        Label:
+            text: "Recherche de serveur"
+            font_size: '24sp' 
+            bold: True
+        Image:
+            source: 'Ressources/logo.png'
+        Label:
+            id: state_label
+            text: "Veuillez patienter"
+        
+        Button:
+            id: retry_button
+            size_hint: 0.5, 0.5
+            font_size: '15sp' 
+            text: "Réessayer"
+            on_release: root.retry()
+            disabled: True
+
+<InitializeLoginWindow>
+    name: "initializeLogin"
+
+    GridLayout:
+        cols: 1
+        
+        Label:
+            id: test_label
+            text: "Première connexion"
+            font_size: '24sp' 
+            bold: True

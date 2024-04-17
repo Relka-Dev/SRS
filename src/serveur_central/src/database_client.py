@@ -98,6 +98,50 @@ class DatabaseClient:
             return True
         except Exception as e:
             print(f"Erreur lors de l'insertion dans la base de données: {e}")
+    
+    def getNetworkIdByIpAndSubnetMask(self, ip : str, submask : str):
+        try:
+            self.cursor.execute("SELECT idNetwork FROM Network WHERE ip = %s AND subnetMask = %s", (ip, submask,))
+            results = self.cursor.fetchone()
+    
+            if results:
+                return results[0]
+            else:
+                return None
+        except Exception as e:
+            print(f"Error: {e}")
+            return False
+    
+    def addCameras(self, cameras_ips_with_token : dict, networkIP : str, networkSubnetMask : str):
+        networkId = self.getNetworkIdByIpAndSubnetMask(networkIP, networkSubnetMask)
+
+        try:
+            for camera in cameras_ips_with_token:
+                
+                if not self.checkIfCameraExists(camera, networkId):               
+                    self.cursor.execute("INSERT INTO srs.Cameras (ip, idNetwork, JWT) VALUES(%s, %s, %s);", (camera, networkId, cameras_ips_with_token[camera]))
+                    self.dbConnexion.commit()
+
+            return True
+        except Exception as e:
+            print(f"Erreur lors de l'insertion dans la base de données: {e}")
+
+        print(networkIP)
+
+    def checkIfCameraExists(self, camera_ip: str, network_id : int):
+        try:
+            self.cursor.execute("SELECT * FROM Cameras WHERE ip = %s AND idNetwork = %s", (camera_ip, network_id))
+            results = self.cursor.fetchall()
+    
+            if len(results) == 0:
+                return False
+            else:
+                return True
+        except Exception as e:
+            print(f"Error: {e}")
+            return False
+
+
         
 
 

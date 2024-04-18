@@ -1,36 +1,47 @@
 WindowManager:
     ServerResearchWindow:
     InitializeLoginWindow:
+    AddFirstAdminWindow:
     MainWindow:
+    NavigationFaceManagementWindow:
+    LoginWindow:
+    AddUserWindow:
 
 <MainWindow>:
     name: "main"
     
     GridLayout:
         cols: 1
-        
-        Label:
-            text: "FaceScan"
-            
 
         GridLayout:
             cols: 3
 
+            Label:
+                id: ip_server_label
+            
+            Label:
+                text: "SRS : Page Principale"
+                bold: True
+
+            Image:
+                source: 'Ressources/logo.png'
+        
+        GridLayout:
+            cols: 1
+
             Button:
-                text: "Effectuer un scan"
-                on_release: 
-                    app.root.current = "scan"
-                    root.manager.transition.direction = "left"
-            Button:
-                text: "Voir la liste des données"
+                id: retry_button
+                size_hint: 0.5, 0.5
+                font_size: '15sp' 
+                text: "Gestion des données faciales"
                 on_release:
-                    app.root.current = "list"
+                    app.root.current = "navigationFaceManagement"
                     root.manager.transition.direction = "left"
-            Button:
-                text: "Reconnnaitre les visages"
-                on_release: 
-                    app.root.current = "recognition"
-                    root.manager.transition.direction = "left"
+        
+        GridLayout:
+            cols: 1
+            
+            
 
 <ServerResearchWindow>
     name: "research"
@@ -60,10 +71,206 @@ WindowManager:
     name: "initializeLogin"
 
     GridLayout:
+        rows: 2
+
+        GridLayout:
+            cols: 1
+
+            Label:
+                font_size: '30sp' 
+                text: "Page d'initialisation"
+                bold: True
+
+
+            Image:
+                source: 'Ressources/logo.png'
+
+        GridLayout:
+            cols: 1
+        
+            Label:
+                id: status_label
+                text: "Veuillez entrer les identifiants d'initialisation."
+                font_size: '24sp' 
+                bold: True
+
+            TextInput:
+                id: username_textInput
+                hint_text: "Nom d'utilisateur"
+                font_size: '20sp'
+                on_text: root.update_boutton()
+
+            TextInput:
+                id: password_textInput
+                hint_text: "Mot de passe"
+                font_size: '20sp' 
+                password: True
+                on_text: root.update_boutton()
+
+            Button:
+                id: submit_button
+                text: "Se connecter"
+                bold: True
+                disabled: True
+                on_release: root.connect()
+
+<AddFirstAdminWindow>
+    name: "addFirstAdmin"
+
+    GridLayout:
+        rows: 2
+
+        GridLayout:
+            cols: 1
+
+            Label:
+                font_size: '30sp' 
+                text: "Page d'ajout du premier administrateur"
+                bold: True
+
+
+            Image:
+                source: 'Ressources/logo.png'
+            
+            Label:
+                text: "Veuillez entrer les identifiants du premier administrateur."
+                font_size: '24sp' 
+                bold: True
+                
+            
+        GridLayout:
+            cols: 1
+
+            Label:
+                id: status_label
+                text: "Attention : Une fois le premier utilisateur ajouté, il est impossible de refaire cette procédure."
+                bold: True
+
+            TextInput:
+                id: username_textInput
+                hint_text: "Nom d'utilisateur"
+                font_size: '20sp'
+                on_text: root.update_boutton()
+
+            TextInput:
+                id: password_textInput
+                hint_text: "Mot de passe"
+                font_size: '20sp' 
+                password: True
+                on_text: root.update_boutton()
+
+            Button:
+                id: submit_button
+                text: "Ajouter l'administrateur"
+                bold: True
+                disabled: True
+                on_release: root.add_admin()
+
+<LoginWindow>
+    name: "login"
+
+    GridLayout:
+        rows: 2
+
+        GridLayout:
+            cols: 1
+
+            Label:
+                font_size: '30sp' 
+                text: "Page de connexion"
+                bold: True
+
+
+            Image:
+                source: 'Ressources/logo.png'
+
+        GridLayout:
+            cols: 1
+
+            Label:
+                id: status_label
+                text: "Veuillez entrer vos identifiants"
+                font_size: '24sp' 
+                bold: True
+
+            TextInput:
+                id: username_textInput
+                hint_text: "Nom d'utilisateur"
+                font_size: '20sp'
+                on_text: root.update_boutton()
+
+            TextInput:
+                id: password_textInput
+                hint_text: "Mot de passe"
+                font_size: '20sp' 
+                password: True
+                on_text: root.update_boutton()
+
+            Button:
+                id: submit_button
+                text: "Se connecter"
+                bold: True
+                disabled: True
+                on_release: root.login()
+
+<NavigationFaceManagementWindow>
+    name: "navigationFaceManagement"
+    GridLayout:
+        cols: 1
+        GridLayout:
+            cols: 2
+
+            Button:
+                text: "Ajouter une personnes"
+                bold: True
+                on_release:
+                    app.root.current = "addUser" 
+                    root.manager.transition.direction = "left"
+
+            Button:
+                text: "Supprimer / Modifier une personne"
+                bold: True
+                disabled: True
+
+        GridLayout:
+            cols: 1
+
+            Button:
+                text: "Retourner au menu principal"       
+                on_release:
+                    app.root.current = "main" 
+                    root.manager.transition.direction = "right"
+
+<AddUserWindow>:
+    name: "addUser"
+
+    GridLayout:
         cols: 1
         
-        Label:
-            id: test_label
-            text: "Première connexion"
-            font_size: '24sp' 
-            bold: True
+        Camera:
+            id: qrcam
+            resolution: (640, 480)
+
+        GridLayout:
+            cols: 1
+
+            Button:
+                id: camera_button
+                text: "Prendre une photo"       
+                on_release: root.camera_button_pressed()
+
+            TextInput:
+                id: username_textInput
+                hint_text: "Nom de la personne"
+            
+            Spinner:
+                id: function_spinner
+                text: "Sélectionnez une fonction"
+                values: ["Fonction 1", "Fonction 2", "Fonction 3"]
+            
+            Button:
+                text: "Ajouter l'utilisateur"       
+                on_release: root.camera_button_pressed()
+                disabled: True
+                bold: True
+

@@ -27,7 +27,7 @@ Afin de partir sur de bonnes bases j'ai demandé à ChatGPT l'architecture adéq
 
 ## 27.03.2024
 
-Aujourd'hui j'ai décidé de dédier ma journée à la plannification de mon projet et à mettre en place mon environnement de développement.
+Aujourd'hui j'ai décidé de dédier ma journée à la planification de mon projet et à mettre en place mon environnement de développement.
 
 ### MkDocs
 J'ai voulu commencer par reprendre la documentation que j'avais commencé sur mkdocs chez moi. J'ai cependant rencontré une erreur que je n'arrivais pas à résoudre. 
@@ -56,9 +56,9 @@ mkdocs-with-pdf            0.9.3
 
 ```
 
-### Plannification
+### planification
 
-Pour avoir une plannification précise et efficace j'ai décidé de me baser sur un système de jalons en utilisant les **diagrammes de Gantt**.
+Pour avoir une planification précise et efficace j'ai décidé de me baser sur un système de jalons en utilisant les **diagrammes de Gantt**.
 
 Afin d'optimiser mon temps j'ai demandé à un modèle d'IA entrainé dans les diagrammes de gantt. J'ai utilisé les test ainsi que les différentes fonctionnalités prévues dans mes composants comme prompt. L'IA m'a donné un résultat satisfaisant pour les tâche cependant, pour les jalons et tâche *maîte* elle n'a pas réussi à me donner un résultat convaincant.  
 [Prompt Gantt Chart GPT](https://chat.openai.com/share/f782bdf4-607b-4a6e-885a-709bcd14bebd)
@@ -79,7 +79,7 @@ Pour chacun des jalon, je vais effectuer une release du gitlab.
 ![Planning Prévisionnel](./ressources/images/PlanningPrevisionnel.png)
 
 ### Caméras wifi
-Ayant terminé la plannification, je vais à présent me concacrer au travail avec mes cameras wifi. Je vais commencer par les démarrer et essayer d'y accèder par ssh.
+Ayant terminé la planification, je vais à présent me concacrer au travail avec mes cameras wifi. Je vais commencer par les démarrer et essayer d'y accèder par ssh.
 
 Lors du POC du trimestre précédent j'ai développé un serveur de camera en python flask qui permettait de récupérer en temps réel le flux video de ces dernières. Je vais directement mettre la documentation dans le rapport. Le problème avec mon projet c'est l'optimisation. Il serait meilleur en théorie, de mettre le système de détection facile directement sur les camera wifi afin de simplifier le traitement sur le serveur.  
 Je vais donc utiliser le temps supplémentaire que j'ai à disposition aujourd'hui pour essayer de faire fonctionner cette partie.  
@@ -241,14 +241,14 @@ Le problème vennait de la libraire JWT qui était en confit avec PyJWT.
 Grace à cette question sur [Stack Overflow](https://stackoverflow.com/questions/33198428/jwt-module-object-has-no-attribute-encode). J'ai pu résoudre le problème.
 
 ## Conclusion
-Aujourd'hui je pense avoir bien avancé, pour un jour prévu initialement à la plannification j'ai quand même bien pu travailler avec mes cameras. Demain, je compte continuer sur cette lancée en implémentant mon système de sécurité puis les tests postman.
+Aujourd'hui je pense avoir bien avancé, pour un jour prévu initialement à la planification j'ai quand même bien pu travailler avec mes cameras. Demain, je compte continuer sur cette lancée en implémentant mon système de sécurité puis les tests postman.
 
 ## 28.03.2024
 
 #### Bilan de la veille
-Hier je me suis concentré sur d'abord la **plannification** puis sur le développment du **serveur flask** pour les **cameras wifi**. Je me suis arrêté lors de la mise en place de la sécrurité avec les **JWT**.  
+Hier je me suis concentré sur d'abord la **planification** puis sur le développment du **serveur flask** pour les **cameras wifi**. Je me suis arrêté lors de la mise en place de la sécrurité avec les **JWT**.  
 
-#### Plannification du jour
+#### Planification du jour
 Chez moi je me suis rendu compte que pour que mon système soit fonctionnel, je dois absolument pouvoir détecter des **profils** et des **arrières de têtes** en plus des faces afin de pouvoir trouver dans l'espace où se situe la personne. Je vais commencer par ajouter cette fonctionnalité puis je vais continuer mon travail sur les **JWT**.
 
 ### Detection de profils
@@ -1059,3 +1059,351 @@ class MyMainApp(App):
 
 ### Conclusion
 Je pense avoir bien avancé aujourd'hui. J'ai débuté le développement de l'application en parallèle à l'api et je pense que c'était le bon choix. J'ai l'impression de progresser bien plus vite et ça m'a enlevé une pression liée au rendu de l'api. Demain je vais faire la suite de l'initialisation.
+
+## 18.04.2024
+Comme indiqué hier, aujourd'hui je vais commencer par terminer la séquence de l'initialisation.
+
+### Page 2 : Première connexion
+
+#### Interface
+
+J'ai commencé par développer l'interface graphique.
+
+![Page d'initialisation](./ressources/images/pageinitialisation.png)
+```
+<InitializeLoginWindow>
+    name: "initializeLogin"
+
+    GridLayout:
+        rows: 2
+
+        GridLayout:
+            cols: 1
+
+            Label:
+                font_size: '30sp' 
+                text: "Page d'initialisation"
+                bold: True
+
+
+            Image:
+                source: 'Ressources/logo.png'
+
+        GridLayout:
+            cols: 1
+        
+            Label:
+                text: "Veuillez entrer les identifiants d'initialisation."
+                font_size: '24sp' 
+                bold: True
+
+            TextInput:
+                id: username_textInput
+                hint_text: "Nom d'utilisateur"
+                font_size: '20sp' 
+
+            TextInput:
+                id: password_textInput
+                hint_text: "Mot de passe"
+                font_size: '20sp' 
+
+            Button:
+                id: submit_button
+                text: "Se connecter"
+                bold: True
+
+```
+
+#### Sécurisation du input
+
+J'ajoute ensuite la désactivation du bouton *Se connecter* si un des input est vide.
+```py
+    def update_boutton(self):
+        username = self.ids.username_textInput.text
+        password = self.ids.password_textInput.text
+
+        if username == "" or password == "":
+            self.ids.submit_button.disabled = True
+        else:
+            self.ids.submit_button.disabled = False
+```
+
+Et j'appelle cette fonction à chaque changement de texte.
+```
+TextInput:
+    id: username_textInput
+    [...]
+    on_text: root.update_boutton()
+
+TextInput:
+    id: password_textInput
+    [...]
+    on_text: root.update_boutton()
+```
+
+#### Appel du création du client api
+
+Je commence par ajouter une fonction dans la classe `ServerClient` qui appellera le endpoint et réagira en fonction de la réponse http. Si la connection est réussi, elle stockera les données dans une variable d'instance de la classe.
+
+```py
+def initialize_login(self, username, password):
+        if not self.server_ip:
+            return False
+        
+        endpoint_url = f"{self.server_url}/initialize"
+        auth = (username, password)
+        
+        response = requests.get(endpoint_url, auth=auth)
+
+        if response.status_code == 200:
+            print("Initialisation réussie.")
+            self.initialize_token = response.json().get("token")
+            return True
+        elif response.status_code == 403:
+            print("Identifiants de connexion manquants ou erronés.")
+            return False
+        elif response.status_code == 402:
+            print("Impossible d'ajouter l'admin quand un autre est déjà présent.")
+            return False
+        else:
+            print(f"Erreur inattendue: {response.status_code}")
+            return False
+```
+
+En passant, j'ajoute le masquage du input de mot de passe.
+```py
+TextInput:
+    [...]
+    password: True
+```
+
+Avec cette partie terminée, je peux passer à la troisième page, l'ajout du premier admin.
+
+### Page 3 : Ajout du premier admin
+Je commence encore une fois par développer l'interface graphique. Cette fois-ci, je reprends basiquement la page précédente mais j'ajoute quelques indications pour l'administrateur.
+
+![page d'ajout admin](./ressources/images/pageajoutpremieradmin.png)
+```
+<AddFirstAdminWindow>
+    name: "addFirstAdmin"
+
+    GridLayout:
+        rows: 2
+
+        GridLayout:
+            cols: 1
+
+            Label:
+                font_size: '30sp' 
+                text: "Page d'ajout du premier administrateur"
+                bold: True
+
+
+            Image:
+                source: 'Ressources/logo.png'
+            
+            Label:
+                text: "Veuillez entrer les identifiants du premier administrateur."
+                font_size: '24sp' 
+                bold: True
+                
+            
+        GridLayout:
+            cols: 1
+
+            Label:
+                id: status_label
+                text: "Attention : Une fois le premier utilisateur ajouté, il est impossible de refaire cette procédure."
+                bold: True
+
+            TextInput:
+                id: username_textInput
+                hint_text: "Nom d'utilisateur"
+                font_size: '20sp'
+                on_text: root.update_boutton()
+
+            TextInput:
+                id: password_textInput
+                hint_text: "Mot de passe"
+                font_size: '20sp' 
+                password: True
+                on_text: root.update_boutton()
+
+            Button:
+                id: submit_button
+                text: "Se connecter"
+                bold: True
+                disabled: True
+```
+
+Je crée la classe `AddFirstAdmin` et garde globalement la même structure pour mon application que dans le formulaire d'initialisation. La partie qui change c'est la classe `ServerClient`.
+J'ajoute la fonction `add_first_admin` permettant d'appeler le endpoint eponyme.
+
+```py
+def add_first_admin(self, admin_name: str, clear_password: str):
+        if not self.server_ip:
+            return False
+
+        hashed_password = ServerClient.hash_password(clear_password)
+        endpoint_url = f"{self.server_url}/first_admin"
+        params = {
+            "username": admin_name,
+            "password": hashed_password,
+            "token": self.initialize_token
+        }
+
+        response = requests.post(endpoint_url, params=params)
+
+        if response.status_code == 201:
+            print("Admin ajouté avec succès.")
+            return True
+        else:
+            return response.json().error
+```
+
+Je crée une fonction de hashage de mot de passe que j'appelle dans ma fonction d'ajout.
+
+```py
+@staticmethod
+    def hash_password(password : str):
+        password_bytes = password.encode('utf-8')
+        hasher = hashlib.sha256()
+        hasher.update(password_bytes)
+        hashed_password = hasher.hexdigest()
+        return hashed_password
+```
+
+À présent, je dois créer la fonction de vérification de rebustesse du mot de passe. J'utilise les critères suivants :
+1. Au moins 8 charactères
+2. Au moins une majuscule et une minuscule
+3. Au moins un chiffre
+4. Au moins un charactère spécial.  
+
+Pour ce faire je vais utiliser la librairie re me permettant de trouver des correspondances dans ma chaine.
+
+```py
+@staticmethod
+def check_password_strength(password):
+    # Au moins 8 charactères
+    if len(password) < 8:
+        return False, "Le mot de passe doit contenir au moins 8 caractères."
+    # Au moins une majuscule et une minuscule
+    if not re.search("[a-z]", password) or not re.search("[A-Z]", password):
+        return False, "Le mot de passe doit contenir au moins une lettre majuscule et une lettre minuscule."
+    # Au moins un chiffre
+    if not re.search("[0-9]", password):
+        return False, "Le mot de passe doit contenir au moins un chiffre."
+    # Au moins un charactère spécial.
+    if not re.search("[!@#$%^&*()-_=+{};:,<.>]", password):
+        return False, "Le mot de passe doit contenir au moins un caractère spécial parmi !@#$%^&*()-_=+{};:,<.>."
+    return True, "Le mot de passe est robuste."
+```
+
+### Page 4 : Connexion
+
+Après l'initialisation, l'utilisateur est renvoyé vers la page de connexion. Cette page va servir pour cette procédure mais également comme login classique. Encore une fois, la page ressemble aux autres formulaires.
+
+![Login Page](./ressources/images/loginpage.png)
+
+```
+<LoginWindow>
+    name: "login"
+
+    GridLayout:
+        rows: 2
+
+        GridLayout:
+            cols: 1
+
+            Label:
+                font_size: '30sp' 
+                text: "Page de connexion"
+                bold: True
+
+
+            Image:
+                source: 'Ressources/logo.png'
+
+        GridLayout:
+            cols: 1
+
+            Label:
+                id: status_label
+                text: "Veuillez entrer vos identifiants"
+                font_size: '24sp' 
+                bold: True
+
+            TextInput:
+                id: username_textInput
+                hint_text: "Nom d'utilisateur"
+                font_size: '20sp'
+                on_text: root.update_boutton()
+
+            TextInput:
+                id: password_textInput
+                hint_text: "Mot de passe"
+                font_size: '20sp' 
+                password: True
+                on_text: root.update_boutton()
+
+            Button:
+                id: submit_button
+                text: "Se connecter"
+                bold: True
+                disabled: True
+                on_release: root.login()
+```
+
+#### Passage en Basic auth
+J'avais développé mon api pour fonctionner avec des paramêtres. Cependant, je trouve plus propre que l'authentifaction se fasse par **Basic auth**
+
+##### Modificaiton de la route
+```py
+def admin_login(self):
+        """
+        Permet à l'administrateur de se connecter. Retourne un JWT si tout est ok.
+        """
+        if self.db_client.isAdminTableEmpty():
+            return jsonify({'erreur': 'Aucun administrateur n\'est présent dans le système.'}), 403
+        
+        auth = request.authorization
+
+        # Vérification des données de connexion
+        if self.db_client.adminLogin(auth.username, auth.password):
+            return jsonify({'token': JwtLibrary.generateJwtForAPI(auth.username)}), 200
+        else:
+            return jsonify({'erreur': 'Les identifiants de connexion sont erronés'}), 400
+```
+
+### Fin de l'implémentation de la première user story
+J'ai terminé le travail sur l'initialisation. À présent, je vais développer la page principale qui servira de navigation entre les différentes fonctionnalités de l'application.
+
+### Première fonctionnalité : Gestion des données faciales
+
+Afin de pouvoir commencer à développer la recherche de personnes dans l'espace je dois d'abord avoir les données des personnes en question.
+
+#### Ajout d'une personne
+Je commance par l'ajout afin que je puisse développer la reconnaissance spaciale au plus vite.
+
+##### Interface
+Pour l'interface je dois premièrement avoir les éléments suivants :
+1. Retour de la camera en temps réel.
+2. Un bouton qui permet de prendre une photo.
+3. Un text input permettant d'indiquer le nom de la personne.
+4. Un spinner afin de séléctionner une "fonction" pour la personne.
+
+![Page ajout personne](./ressources/images/pageajoutpersonne.png)
+
+##### Récupération du flux
+Grâce au composant [`Camera` de Kivy](https://kivy.org/doc/stable/api-kivy.uix.camera.html) je suis en capacité de récupérer assez facilement le flux.
+
+Pour lancer la capture il faut définir la propriété `self.ids.qrcam.play` à `True`. Grace à cela, je suis capacité de prendre des "photos".
+
+Pour le passage de Kivy texture en frame de opencv j'ai trouvé [ce sujet](https://stackoverflow.com/questions/68416721/kivy-camera-get-image) sur Stack Overflow.
+
+J'ai ensuite demandé à ChatGPT s'il y a une solution pour convertir un tableau de pixel pour l'utiliser avec OpenCV.  
+
+[Prompt ChatGPT](https://chat.openai.com/share/a9213221-d300-4392-8338-407b3bc951f0)
+
+### Conslusion
+J'ai réussi à implémenter les fonctionnalités que je voulais aujourd'hui. Pour l'instant la communication entre l'application et l'api se passe bien, je n'ai rencontré aucun problème majeur. Demain je vais commencer par l'ajout d'utilisateur.

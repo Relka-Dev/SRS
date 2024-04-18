@@ -27,11 +27,12 @@ class ServerResearchWindow(Screen):
 
         if ip_serveur:
             self.app.set_server_ip(ip_serveur)
+            self.app.set_server_client(ServerClient(ip_serveur))
 
             serverClient = ServerClient(ip_serveur)
 
             if serverClient.is_server_set_up():
-                self.manager.current = "main"
+                self.manager.current = "login"
             else:
                 self.manager.current = "initializeLogin"
         else:

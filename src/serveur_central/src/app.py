@@ -69,7 +69,7 @@ class ServeurCentral:
         if auth and auth.password == self.DEFAULT_PASSWORD and auth.username == self.DEFAULT_USERNAME:
             # Vérification si la table administrateur est libre pour des question de sécurité
             if self.db_client.isAdminTableEmpty():
-                return jsonify({'message': JwtLibrary.generateJwtForInitialization(auth.username)}), 200
+                return jsonify({'token': JwtLibrary.generateJwtForInitialization(auth.username)}), 200
             else:
                 return jsonify({'erreur': 'Impossible d\'ajouter l\'admin quand un autre est déjà présent.'}), 402
         else:
@@ -97,20 +97,17 @@ class ServeurCentral:
         """
         Permet à l'administrateur de se connecter. Retourne un JWT si tout est ok.
         """
-        if not self.db_client.isAdminTableEmpty():
-            username = request.args.get('username')
-            password = request.args.get('password')
-            
-            if not username or not password:
-                return jsonify({'erreur': 'Mauvais paramètres, utilisez (username, password) pour le nom d\'utilisateur et le mot de passe respectivement.'}), 400
-            
-            # Vérification des données de connexion
-            if self.db_client.adminLogin(username, password):
-                return jsonify({'token': JwtLibrary.generateJwtForAPI(username)}), 200
-            else:
-                return jsonify({'erreur': 'Les identifiants de connexion sont erronés'}), 400
-        else:
+        if self.db_client.isAdminTableEmpty():
             return jsonify({'erreur': 'Aucun administrateur n\'est présent dans le système.'}), 403
+        
+        auth = request.authorization
+
+        # Vérification des données de connexion
+        if self.db_client.adminLogin(auth.username, auth.password):
+            return jsonify({'token': JwtLibrary.generateJwtForAPI(auth.username)}), 200
+        else:
+            return jsonify({'erreur': 'Les identifiants de connexion sont erronés'}), 400
+            
         
     # Routes sécurisés disponibles uniquement pour les administrateurs
 

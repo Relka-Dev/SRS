@@ -1,7 +1,8 @@
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen 
 
-class InitializeLoginWindow(Screen):
+class AddFirstAdminWindow(Screen):
+    server_ip = None
     server_client = None
 
     username = None
@@ -11,7 +12,7 @@ class InitializeLoginWindow(Screen):
         super().on_enter()
         self.app = App.get_running_app()
         self.server_client = self.app.get_server_client()
-
+    
     def update_boutton(self):
         username = self.ids.username_textInput.text
         password = self.ids.password_textInput.text
@@ -20,23 +21,15 @@ class InitializeLoginWindow(Screen):
             self.ids.submit_button.disabled = True
         else:
             self.ids.submit_button.disabled = False
-
-
-    def connect(self):
+    
+    def add_admin(self):
         username = self.ids.username_textInput.text
         password = self.ids.password_textInput.text
+        
+        result, response = self.server_client.add_first_admin(username, password)
 
-        if username is None or password is None:
-            return False
-    
-        result, response = self.server_client.initialize_login(username, password)
-    
-        print(result)
         if result:
-            self.manager.current = "addFirstAdmin"
+            self.manager.current = "login"
         else:
             self.ids.status_label.text = response
             self.ids.status_label.color = (1, 0, 0, 1) 
-            
-        
-    

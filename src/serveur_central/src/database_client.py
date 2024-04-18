@@ -63,6 +63,7 @@ class DatabaseClient:
         """
         try:
             self.cursor.execute("SELECT * FROM Admin WHERE Name = %s AND Password = %s", (name, password))
+            
             results = self.cursor.fetchall()
 
             if len(results) == 0:

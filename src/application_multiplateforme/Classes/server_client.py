@@ -1,6 +1,7 @@
 import requests
 import hashlib
 import re
+import json
 
 class ServerClient:
     __SERVER_PORT = 4299
@@ -98,6 +99,64 @@ class ServerClient:
         else:
             return False, "Erreur inattendue lors de la tentative de connexion."
         
+    def get_person_types(self):
+        if not self.server_ip:
+            return False
+        
+        params = {
+            "token": self.API_token
+        }
+        
+        endpoint_url = f"{self.server_url}/person_types"
+        response = requests.get(endpoint_url, params=params)
+
+        if response.status_code == 200:
+            return True, response.json()
+        else:
+            return False, response
+    
+    def add_user(self, username, idPersonType, encodings):
+        if not self.server_ip:
+            return False, "ip du serveur manquante"
+
+        endpoint_url = f"{self.server_url}/add_user"
+
+        encodings_list = [encoding.tolist() for encoding in encodings]
+
+        data = {
+            "username": username,
+            "idPersonType": idPersonType,
+            "encodings": encodings_list,
+        }
+
+        # Encoder les données en JSON
+        data_json = json.dumps(data)
+
+        url_with_token = f"{endpoint_url}?token={self.API_token}"
+
+        response = requests.post(url_with_token, data=data_json)
+
+        if response.status_code == 200:
+            return True, response.json()
+        else:
+            return False, response.json()
+    
+    def get_person_types_by_name(self, typeName : str):
+        if not self.server_ip:
+            return False
+        
+        params = {
+            "token": self.API_token,
+            "typeName": typeName
+        }
+        
+        endpoint_url = f"{self.server_url}/person_type_by_name"
+        response = requests.get(endpoint_url, params=params)
+
+        if response.status_code == 200:
+            return True, response.json()['message']['idPersonType']
+        else:
+            return False, response
 
         
     @staticmethod
@@ -128,3 +187,4 @@ class ServerClient:
             return False, "Le mot de passe doit contenir au moins un caractère spécial parmi !@#$%^&*()-_=+{};:,<.>."
 
         return True, "Le mot de passe est robuste."
+    

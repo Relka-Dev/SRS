@@ -9,7 +9,7 @@ Description : Serveur central du projet SRS
 Version     : 0.1
 """
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, json
 from database_client import DatabaseClient
 from jwt_library import JwtLibrary
 from camera_server_client import CameraServerClient
@@ -47,6 +47,10 @@ class ServeurCentral:
         # Routes sécurisés disponibles uniquement pour les administrateurs
         self.app.add_url_rule('/add_network', 'add_network', self.add_network, methods=['POST'])
         self.app.add_url_rule('/cameras_data', 'cameras_data', self.cameras_data, methods=['GET'])
+        self.app.add_url_rule('/person_types', 'person_types', self.person_types, methods=['GET'])
+        self.app.add_url_rule('/person_type_by_name', 'person_type_by_name', self.person_type_by_name, methods=['GET'])
+        self.app.add_url_rule('/add_user', 'add_user', self.add_user, methods=['POST'])
+
 
 
     
@@ -124,8 +128,6 @@ class ServeurCentral:
         
         if not self.db_client.addNetwork(ip, subnetMask):
             return jsonify({'erreur': 'Le réseau fournit est est déjà dans la base de données'}), 400
-        
-        return jsonify({'tkt': 'ok'}), 200
 
     @JwtLibrary.API_token_required
     def cameras_data(self):
@@ -143,6 +145,44 @@ class ServeurCentral:
         self.db_client.addCameras(tokens_for_ip, ip, subnetMask)
 
         return jsonify({'tokens' : tokens_for_ip})
+    
+    @JwtLibrary.API_token_required
+    def person_types(self):
+        return jsonify(self.db_client.getPersonTypes()), 200
+    
+    @JwtLibrary.API_token_required
+    def add_user(self):
+        try:
+            data_json = request.data.decode('utf-8')
+            data = json.loads(data_json)
+
+            idPersonType = data.get('idPersonType')
+            encodings = data.get('encodings')
+            username = data.get('username')
+
+            result, response = self.db_client.addUser(idPersonType, json.dumps(encodings), username)
+
+            if result:
+                return jsonify({'message' : response}), 200
+            else:
+                return jsonify({'erreur' : response}), 400
+        except Exception as e:
+            # Afficher l'erreur précise
+            print(f"Erreur lors de l'ajout de l'utilisateur : {e}")
+            # Retourner une réponse avec un code de statut 500 (Erreur interne du serveur)
+            return jsonify({'erreur' : str(e)}), 500
+
+    
+    @JwtLibrary.API_token_required
+    def person_type_by_name(self):
+        typeName = request.args.get('typeName')
+
+        result, response = self.db_client.getPersonTypeByName(typeName)
+
+        if result:
+            return jsonify({'message' : response}), 200
+        else:
+            return jsonify({'erreur' : response}), 400
 
 
     def run(self):

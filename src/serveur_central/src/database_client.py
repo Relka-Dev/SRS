@@ -142,8 +142,78 @@ class DatabaseClient:
             print(f"Error: {e}")
             return False
 
-
+    def getPersonTypes(self):
+        try:
+            self.cursor.execute("SELECT * FROM PersonTypes")
+            return self.cursor.fetchall()
+        except Exception as e:
+            print(f"Error: {e}")
+    
+    def checkIfIdPersonTypeExist(self, idPersonType):
+        try:
+            
+            self.cursor.execute("SELECT * FROM PersonTypes WHERE idPersonType = %s", (idPersonType,))
+            print(idPersonType)
+            results = self.cursor.fetchall()
+    
+            if len(results) == 0:
+                return False
+            else:
+                return True
+        except Exception as e:
+            print(f"Error: {e}")
+            return False
         
+    def checkIfUsername(self, username):
+        try:
+            self.cursor.execute("SELECT * FROM Users WHERE username = %s", (username,))
+            results = self.cursor.fetchall()
+    
+            if len(results) == 0:
+                return False
+            else:
+                return True
+        except Exception as e:
+            print(f"Error: {e}")
+            return False
+
+    
+    def addUser(self, idPersonType, encodings, username):
+        
+        try:
+            
+            if not self.checkIfIdPersonTypeExist(idPersonType):
+                return False, f"Impossible d'ajouter l'utilisateur : Le type de personne n'existe pas."
+            
+            if self.checkIfUsername(username):
+                return False, f"Impossible d'ajouter l'utilisateur : Un utilisateur avec le même nom existe déjà dans la base"
+            
+            self.cursor.execute("INSERT INTO srs.Users (idPersonType, encodings, username) VALUES(%s, %s, %s);", (int(idPersonType), encodings, username))
+            
+            self.dbConnexion.commit()
+            return True, "L'utilisateur a été ajouté avec succès."
+        except Exception as e:
+            print(f"Error: {e}")
+            return False, f"Impossible d'ajouter l'utilisateur : {e}"
+
+    def getPersonTypeByName(self, typeName: str):
+        try:
+            self.cursor.execute("SELECT idPersonType FROM PersonTypes WHERE typeName = %s", (typeName,))
+            result = self.cursor.fetchone()
+
+            if result is None:
+                return False, "Aucune correspondance trouvée"
+            else:
+                # Extracting the relevant data from the result
+                idPersonType = result[0]
+
+                # Returning a JSON serializable object
+                return True, {'idPersonType': idPersonType}
+        except Exception as e:
+            print(f"Error: {e}")
+            return False, str(e)
+
+
 
 
 

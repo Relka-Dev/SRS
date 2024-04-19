@@ -19,6 +19,8 @@ class NetworkScanner:
                 if ServerClient(ip).ping_srs_server():
                     ip_with_port_open.append(str(ip))
 
+        if len(ip_with_port_open) == 0:
+            return ip_with_port_open
         return ip_with_port_open[0]
 
     def check_port(self, ip, port, timeout):

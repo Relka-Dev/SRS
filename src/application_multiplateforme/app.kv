@@ -231,6 +231,7 @@ WindowManager:
                 text: "Supprimer / Modifier une personne"
                 bold: True
                 disabled: True
+            
 
         GridLayout:
             cols: 1
@@ -244,33 +245,59 @@ WindowManager:
 <AddUserWindow>:
     name: "addUser"
 
-    GridLayout:
-        cols: 1
-        
-        Camera:
-            id: qrcam
-            resolution: (640, 480)
+    FloatLayout:  # Utilisation d'un FloatLayout comme conteneur principal
+        GridLayout:
+            cols: 3
+            size_hint: 1, 0.1  
+            pos_hint: {'top': 1} 
+
+            Button:
+                text: "<- Retour"       
+                on_release:
+                    app.root.current = "navigationFaceManagement" 
+                    root.manager.transition.direction = "right"
+
+            Label:
+                text: "Ajout de personnes"
+                bold: True
+
+            Image:
+                source: 'Ressources/logo.png'
 
         GridLayout:
             cols: 1
+            size_hint_y: 0.9  # Ajustement de la taille restante en fonction des dimensions parentes
 
-            Button:
-                id: camera_button
-                text: "Prendre une photo"       
-                on_release: root.camera_button_pressed()
+            Camera:
+                id: qrcam
+                resolution: (640, 480)
 
-            TextInput:
-                id: username_textInput
-                hint_text: "Nom de la personne"
-            
-            Spinner:
-                id: function_spinner
-                text: "Sélectionnez une fonction"
-                values: ["Fonction 1", "Fonction 2", "Fonction 3"]
-            
-            Button:
-                text: "Ajouter l'utilisateur"       
-                on_release: root.camera_button_pressed()
-                disabled: True
-                bold: True
+            GridLayout:
+                cols: 1
+
+                Button:
+                    id: camera_button
+                    text: "Prendre une photo"       
+                    on_release: 
+                        root.camera_button_pressed()
+                        root.enable_add_button()
+
+                TextInput:
+                    id: username_textInput
+                    hint_text: "Nom de la personne"
+                    on_text: root.enable_add_button()
+                Spinner:
+                    id: function_spinner
+                    text: "Sélectionnez une fonction"
+                    values: ["Fonction 1", "Fonction 2", "Fonction 3"]
+                    on_text: root.enable_add_button()
+                Button:
+                    id: add_user_button
+                    text: "Ajouter l'utilisateur"
+                    on_release: root.add_user_button_pressed()
+                    disabled: True
+                    bold: True
+
+
+        
 

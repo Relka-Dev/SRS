@@ -1407,3 +1407,309 @@ J'ai ensuite demandé à ChatGPT s'il y a une solution pour convertir un tableau
 
 ### Conslusion
 J'ai réussi à implémenter les fonctionnalités que je voulais aujourd'hui. Pour l'instant la communication entre l'application et l'api se passe bien, je n'ai rencontré aucun problème majeur. Demain je vais commencer par l'ajout d'utilisateur.
+
+## 19.04.2024
+
+#### Bilan de la veille
+J'avais oublié de faire ce rapport journalier cette semaine malhueureusement.
+Hier j'ai travaillé sur les pages de mon application en utilisant les user story que j'ai créer par avance. Je me suis arrêté au moment où j'allais implémenter l'ajout des utilisateurs.
+
+#### Plannification de la journée
+Je vais commencer par créer la base de données des utilisateurs, une fois cela fait, je vais ajouter le endpoint et enfin l'implémenter dans mon application
+
+
+
+### Ajout d'utilisateurs
+
+![Page ajout story](./ressources/images/pageajoutstory.jpg)
+
+##### Chemin rouge
+Ce chemin représente la récupération des types des personnes (associés, danger etc.) afin de pouvoir les ajouter dans le spinner.
+1. Appel du endpoint.  
+2. Vérification JWT.
+3. Query vers la bdd.
+4. Récupération des données.
+5. Passage des données dans la http response.
+6. Ajout des types dans le spinner.
+
+##### Chemin noir
+Ce chemin permet d'ajouter une personnes dans la base.
+1. Prise de la photo.
+2. Séléction du type dans le spinner.
+3. Indication du nom de la personne.
+4. Vérification de la conformité des données faciales.
+5. Récupération des encodages.
+6. Appel du endpoint.
+7. Vérification du JWT du serveur.
+8. Ajout des données dans la bdd.
+9. Retour via Http response et code.
+
+#### Base de données
+Je commence par l'implémentation de la base de données. J'étais incertain du type de stockage pour les encodages. J'ai donc posé la question à ChatGPT et selon lui le type `BLOB` correspondait le mieux.  
+[Prompt ChatGPT](https://chat.openai.com/share/9ada3d6b-826e-4f31-95ae-ef39722dc492)
+
+![UML types et personnes](./ressources/images/umlTablePersonnesEtTypes.png)
+
+#### Ajout des routes dans l'API
+
+##### Route rouge
+
+Dans la classe `DatabaseClient` je crée la query.
+
+```py
+def getPersonTypes(self):
+    try:
+        self.cursor.execute("SELECT * FROM PersonTypes")
+        return self.cursor.fetchall()
+    except Exception as e:
+        print(f"Error: {e}")
+```
+
+J'ajoute la route dans `app.py`.
+```py
+self.app.add_url_rule('/person_types', 'person_types', self.person_types, methods=['GET'])
+
+[...]
+
+@JwtLibrary.API_token_required
+def person_types(self):
+    return jsonify(self.db_client.getPersonTypes()), 200
+```
+
+##### Route noir
+
+Pour l'ajout d'utilisateurs, je commence par créer la query. Et je me rend compte que j'ai oublié d'ajouter le nom des utilisateurs. Je corrige mon erreur.
+
+Afin d'éviter les erreurs, j'ajoute une vérification si le type de personne existe ainsi qu'un test si l'utilisateur existe déjà.
+
+```py
+    def checkIfIdPersonTypeExist(self, idPersonType):
+        try:
+            self.cursor.execute("SELECT * FROM PersonTypes WHERE idPersonType = %s", (idPersonType))
+            results = self.cursor.fetchall()
+    
+            if len(results) == 0:
+                return False
+            else:
+                return True
+        except Exception as e:
+            print(f"Error: {e}")
+            return False
+        
+    def checkIfUsername(self, username):
+        try:
+            self.cursor.execute("SELECT * FROM Users WHERE username = %s", (username))
+            results = self.cursor.fetchall()
+    
+            if len(results) == 0:
+                return False
+            else:
+                return True
+        except Exception as e:
+            print(f"Error: {e}")
+            return False
+```
+
+J'implémente ensuite la query complète.
+
+```py
+    def addUser(self, idPersonType, encodings, username : str):
+        try:
+            if not self.checkIfIdPersonTypeExist(idPersonType):
+                return False, f"Impossible d'ajouter l'utilisateur : Le type de personne n'existe pas."
+            
+            if self.checkIfUsername(username):
+                return False, f"Impossible d'ajouter l'utilisateur : Un utilisateur avec le même nom existe déjà dans la base"
+            
+            self.cursor.execute("INSERT INTO srs.Users (idPersonType, encodings, username) VALUES(%s, %s, %s);", (idPersonType, encodings, username))
+            self.dbConnexion.commit()
+            return True, "L'utilisateur a été ajouté avec succès."
+        except Exception as e:
+            print(f"Error: {e}")
+            return False, f"Impossible d'ajouter l'utilisateur : {e}"
+```
+
+Et pour terminer, j'ajoute la route.
+
+```py
+    @JwtLibrary.API_token_required
+    def add_user(self):
+        idPersonType = request.args.get('idPersonType')
+        encodings = request.args.get('encodings')
+        username = request.args.get('username')
+
+        result, response = self.db_client.add_user(idPersonType, encodings, username)
+
+        if result:
+            return jsonify({'message' : response}), 200
+        else:
+            return jsonify({'erreur' : response}), 400
+```
+
+### Implémentation dans l'application
+
+#### Route rouge
+
+Je fais l'appel du endpoint avec le token de l'API. Si la requête a fonctionné, la réponse en json, cet a dire un tableau de résultat est retourné, si c'est un echec, la réponse complète est envoyée.
+
+```py
+def get_person_types(self):
+        if not self.server_ip:
+            return False
+        
+        params = {
+            "token": self.API_token
+        }
+        
+        endpoint_url = f"{self.server_url}/person_types"
+        response = requests.get(endpoint_url, params=params)
+
+        if response.status_code == 200:
+            return True, response.json()
+        else:
+            return False, response
+```
+
+Pour ajouter les données dans le spinner, je commence par faire une liste des fonctions puis je la transmet au spinner.
+
+```py
+    def get_person_types(self):
+        result, response = self.server_client.get_person_types()
+
+        if result:
+            for data in response:
+                self.personTypes.append(data[1])
+                self.ids.function_spinner.values = self.personTypes
+            return True, response
+        else:
+            return False, response
+```
+
+Avec ces fonctionnalités implémentée, la récupération dynamique des noms des fonctions est implémentée.
+
+![résultat route rouge](./ressources/images/resultrouterouge.png)
+
+#### Route noir
+Pour implémenter l'ajout, il faut que je commence par ajouter la sécurisation des input. L'objectif est que la possibilité d'ajouter l'utilisateur s'active si :
+1. La video est en pause
+2. Un élément du spinner est séléctionné
+3. Un nom est indiqué.
+
+J'ai implémenté une fonction qui est appellée à chaque fois qu'un élément subit une modification.
+
+```py
+    def enable_add_button(self):
+        username = self.ids.username_textInput.text.strip()
+        function_selected = self.ids.function_spinner.text != "Sélectionnez une fonction"
+        
+        if username and function_selected and not self.ids.qrcam.play:
+            self.ids.add_user_button.disabled = False
+        else:
+            self.ids.add_user_button.disabled = True
+```
+Une fois cela fait, dans la classe `ServerClient` j'ajoute le client du endpoint
+
+```py
+    def add_user(self, username, idPersonType, encodings):
+        if not self.server_ip:
+            return False, "ip du serveur manquante"
+
+        endpoint_url = f"{self.server_url}/add_user"
+        params = {
+            "username": username,
+            "idPersonType": idPersonType,
+            "encodings": encodings,
+            "token": self.API_token
+        }
+
+        response = requests.post(endpoint_url, params=params)
+
+        if response.status_code == 201:
+            return True, response.json()
+        else:
+            return False, response.json()
+```
+
+Pendant l'implémentation dans la route je me suis posé une question, si les fonction changent, récupérer les id du spinner afin de l'ajouter dans la base ne serait pas suffisant car ils serait erronées. Par conséquent, je développe un nouvel endpoint qui me permettera de récupérer l'id d'une fonction par son nom.
+
+```py
+@JwtLibrary.API_token_required
+    def person_type_by_name(self):
+        typeName = request.args.get('typeName')
+
+        result, response = self.db_client.getPersonTypeByName(typeName)
+
+        if result:
+            return jsonify({'message' : response}), 200
+        else:
+            return jsonify({'erreur' : response}), 400
+```
+
+J'ai eu un problème lors du passage des encodings dans l'url. Premièrement, j'ai trouvé ça assez brouillon et les données était formées de façon étrange. J'ai donc décidé de passer les encodage des visage dans le body. Je passe également le nom de la personne et id du type de la personne. Le token je le passe toujours par url pour des quesiton d'intégration.
+
+```py
+def add_user(self, username, idPersonType, encodings):
+        if not self.server_ip:
+            return False, "ip du serveur manquante"
+
+        endpoint_url = f"{self.server_url}/add_user"
+
+        encodings_list = [encoding.tolist() for encoding in encodings]
+
+        data = {
+            "username": username,
+            "idPersonType": idPersonType,
+            "encodings": encodings_list,
+        }
+
+        # Encoder les données en JSON
+        data_json = json.dumps(data)
+
+        url_with_token = f"{endpoint_url}?token={self.API_token}"
+
+        response = requests.post(url_with_token, data=data_json)
+
+        if response.status_code == 200:
+            return True, response.json()
+        else:
+            return False, response.json()
+```
+
+### Résultat de l'ajout
+Avec l'intégration dans les différents composant, l'ajout de personnes est fonctionnel.
+
+#### Application
+
+Je remplis toutes les données, dans cet exemple, je m'appelle **Jackes** et je suis **dangereux**. Après la pression du bouton d'ajout, la requête est envoyé vers le serveur.
+
+![Application d'ajout](./ressources/images/applicationajout.png)
+
+#### Base de données
+
+Mes données ont été ajoutées dans la base, les données faciales sont dans le champs encodings et mon nom dans username.  
+![Bdd Ajout](./ressources/images/bddajout.png)
+
+### Page de modification des cameras
+
+À présent que j'ai terminé l'ajout des utilisateurs, je peux commencer l'a modification des données des cameras. L'objectif est de pouvoir définir l'emplacement de la camera dans une pièce afin d'effectuer les calculs. Comme d'habitude je vais effectuer une user story en premier lieu.  
+J'ai continué avec mon système de deux routes séparées.
+
+**Route bleue :** Point d'entrée d'obtention des données des cameras.  
+1. L'application cherche à afficher les cameras disponibles sur le réseau.
+2. L'application appelle l'endpoint afin de récupérer les données
+3. L'endoit vérifie si les JWT sont toujours valides via les dates d'expiration.
+4. Si le JWT est valide, il recherche les adresses ip dans la bdd.
+5. Si le JWT est expiré, le serveur scanne le réseau et met à jour les informations des cameras.
+6. Retour des données des cameras dans la réponse.  
+
+**Route Rouge :** Point d'entrée de mise à jour des données des cameras. Utile si l'admin veut mettre à jour le système de caméras.  
+1. L'utilisateur appuye sur actualiser.
+2. Le serveur fait directement une mise à jour des cameras.
+3. Recherche des cameras sur le réseau.
+4. Mise à jour des données dans la base.
+6. Retour des données des cameras dans la réponse.
+
+![](./ressources/images/recherchecamerastory.jpg)
+
+#### Conclusion
+J'ai terminé l'ajout des personnes, bien que ce processus a pu paraître long, j'ai appris à mieux gérer mes différentes technologies alors je pense que le était bien investi. La prochaine fois, je vais me concentrer au développement de la user story suivante.

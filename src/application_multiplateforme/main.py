@@ -9,6 +9,7 @@ from Pages.add_first_admin_window import AddFirstAdminWindow
 from Pages.login_window import LoginWindow
 from Pages.navigation_face_management import NavigationFaceManagementWindow
 from Pages.add_user_window import AddUserWindow
+from Pages.cameras_management_window import CamerasManagementWindow
 
 from Classes.server_client import ServerClient
 

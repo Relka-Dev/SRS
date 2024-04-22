@@ -157,6 +157,22 @@ class ServerClient:
             return True, response.json()['message']['idPersonType']
         else:
             return False, response
+        
+    def get_walls(self):
+        if not self.server_ip:
+            return False
+        
+        params = {
+            "token": self.API_token
+        }
+        
+        endpoint_url = f"{self.server_url}/walls"
+        response = requests.get(endpoint_url, params=params)
+
+        if response.status_code == 200:
+            return True, response.json()
+        else:
+            return False, response
 
         
     @staticmethod

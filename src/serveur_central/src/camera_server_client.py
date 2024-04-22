@@ -23,7 +23,6 @@ class CameraServerClient:
         for cameraip in self.camerasIPs:
             camera_url = "http://{ip}:{port}".format(ip = cameraip, port = self.__CAMERAS_SERVER_PORT)
             tokens_for_ip = {}
-            print(camera_url)
             auth = (self.__CLIENT_USERNAME, self.__CLIENT_PASSWORD)
             response = requests.get(f"{camera_url}/login", auth=auth)
 
@@ -33,3 +32,8 @@ class CameraServerClient:
                 print("Échec de l'obtention du token JWT pour l'ip : {ip}:".format(ip=cameraip), response.status_code)
             
         return tokens_for_ip
+
+    def getCamerasData(self):
+        cameras = []
+
+        

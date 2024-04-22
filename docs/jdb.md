@@ -1713,3 +1713,224 @@ J'ai continué avec mon système de deux routes séparées.
 
 #### Conclusion
 J'ai terminé l'ajout des personnes, bien que ce processus a pu paraître long, j'ai appris à mieux gérer mes différentes technologies alors je pense que le était bien investi. La prochaine fois, je vais me concentrer au développement de la user story suivante.
+
+## 22.04.2024
+
+#### Bilan de la semaine dernière
+La dernière fois que j'ai travaillé j'ai terminé l'ajout de personnes dans la base de données. Ensuite, j'ai créé une nouvelle *User Story* pour la gestion des cameras.
+
+#### Planificaiton de la journée
+J'ai eu l'occasion de réfléchir à mon système et je me suis rendu compte que je ne gérairais pas le cas où une des camera ne serait plus disponible. Je vais commencer par ça.
+
+### Vérification de l'identité des cameras Wifi
+
+Je vais ajouter une vérification de la disponibilité des cameras en faisant un appel à l'endpoint `/ping`. Cela me permettra de vérifier l'identité des serveurs des cameras lors de la recherche.  
+L'endpoint est très basique car la vérification du token est dans la fonction décoratrice `@token_required`.
+
+```py
+@app.route('/ping', methods=['GET'])
+@token_required
+def ping():
+    return jsonify({'Status du serveur' : 'Disponible'}), 200
+```
+
+### Ajout de la position des cameras
+Afin de pouvoir définir la position des cameras, je dois prendre en compte deux facteurs - la position relative au mur et l'emplacement du mur. En suivant les conseils de Monsieur Zanardi, je dois me concentrer à ce que mon système fonctionne dans les pièces carrées. Cependant, je dois réfléchir à comment mon système fonctionne.  
+J'ai décidé de fonctionner par le modèle suivant, l'utilisateur servant de point d'intersection entre les différents axes X des cameras. Si les cameras ne sont pas tout à fait au milieu des murs, suffira d'ajuster l'axe X de la camera.
+
+![Modèle reconnaissance spaciale](./ressources/images/modeleReconnaissanceSpaciale.jpg)
+
+J'ai commencé par créer une nouvelle table `Walls` qui contiendra des 4 postion des murs (Nord, Est, Sud et Ouest). J'ai ensuite ajouté une relation vers la table camera.  
+![](./ressources/images/umlWalls.png)  
+![](./ressources/images/wallsValues.png)
+
+#### Interface
+
+Pour l'interface, je voulais qu'elle comporte les éléments suivants :
+
+1. *Spinner* : Permet de séléctionner une camera
+2. *Scroll View* : Permet de séléctionne la position de la camera relative au mur.
+3. *Spinner* : Permet d'afficher sur quel mur la camera se situe.
+4. *?* : Un élément permettant de voir la postion en temps réel de la camera en fonction des données de l'utilisteur. Je compte implémenter cette vue plus tard.
+5. *Button* : Permettant de mettre à jour les données des cameras.
+
+##### Maquette
+
+![](./ressources/images/maquetteGestionCamera.jpg)
+
+##### Implémentation
+
+J'ai affiché l'affichage de la valeur de la position.
+
+![](./ressources/images/interfaceGestionCamera.png)
+
+```
+<CamerasManagementWindow>:
+    name: "camerasManagement"
+
+    FloatLayout:
+        GridLayout:
+            cols: 3
+            size_hint: 1, 0.1  
+            pos_hint: {'top': 1} 
+
+            Button:
+                text: "<- Retour"       
+                on_release:
+                    app.root.current = "main" 
+                    root.manager.transition.direction = "right"
+
+            Label:
+                text: "Gestion des cameras"
+                bold: True
+
+            Image:
+                source: 'Ressources/logo.png'
+
+        GridLayout:
+            cols: 1
+            size_hint_y: 0.9
+
+            Spinner:
+                id: camera_spinner
+                text: "Sélectionnez une camera"
+                values: ["Fonction 1", "Fonction 2", "Fonction 3"]
+                on_text: root.camera_changed()
+            
+            Button:
+                id: update_cameras_list_button
+                text: "Mettre à jour la liste des cameras"
+                on_release: root.update_cameras_list()
+
+            GridLayout:
+                cols:2
+            
+                Label:
+                    text: "Position relative au mur :" + str(position_slider.value)
+
+                Slider:
+                    id: position_slider
+                    min: 0
+                    max: 100
+                    step: 1
+                    orientation: 'horizontal'
+
+            Spinner:
+                id: wall_spinner
+                text: "Sélectionnez un mur"
+                values: ["Fonction 1", "Fonction 2", "Fonction 3"]
+                on_text: root.camera_changed()
+            
+            Button:
+                id: update_camera_button
+                text: "Mettre à jour la camera"
+                on_release: root.update_camera()
+                disabled: True
+                bold: True
+```
+
+#### Récupération des types de mur
+
+##### Route 
+```py
+self.app.add_url_rule('/walls', 'walls', self.walls, methods=['GET'])
+
+@JwtLibrary.API_token_required
+def walls(self):
+    try:
+        return jsonify(self.db_client.getWalls()), 200
+    except Exception as e:
+        return jsonify({'erreur' : str(e)}), 500
+```
+
+##### Client BDD
+
+```py
+def getWalls(self):
+    try:
+        self.cursor.execute("SELECT * FROM Walls")
+        return self.cursor.fetchall()
+    except Exception as e:
+        print(f"Error: {e}")
+```
+
+##### Récupération dynamique
+
+```py
+def get_walls(self):
+        result, response = self.server_client.get_walls()
+
+        if result:
+            for data in response:
+                self.walls.append(data[1])
+                self.ids.walls_spinner.values = self.walls
+            return True, response
+        else:
+            return False, response
+```
+
+##### Résultat
+
+![](./ressources/images/recuperationMurs.png)
+
+### Gestion des adresses MAC
+
+Afin de garantir l'identité des cameras wifi, il serait interessant de stocker leurs adresses mac. Pour ce faire, j'adapte la route `ping` et je me sert [de cet article](https://www.geeksforgeeks.org/extracting-mac-address-using-python/). Je vais uniquement récupérer les valeurx hexadéciamales car il me faut uniquement comparer la correspondance. Je me sert de la librairie uuid.
+
+```py
+@app.route('/ping', methods=['GET'])
+@token_required
+def ping():
+    return jsonify({'Mac address' : hex(uuid.getnode())}), 200
+```
+
+![](./ressources/images/macadressping.png)
+
+### Récupération des cameras
+
+Pour la récupération je vais commencer par gérer le cas où le réseau n'est pas dans la base de données. Si c'est le cas il faut :
+1. Vérifier si le réseau existe.
+2. Rechercher les cameras.
+3. Récupérer les tokens et les adresses mac.
+4. Ajouter les caméras et le réseau dans la base.
+5. Récupérer la liste des caméras et l'envoyer dans la résponse.
+
+```py
+@JwtLibrary.API_token_required
+    def cameras(self):
+        ip = request.args.get('ip')
+        subnetMask = request.args.get('subnetMask')
+
+        if not ip or not subnetMask:
+            return jsonify({'erreur': 'Mauvais paramètres, utilisez (ip, subnetMask) pour l\ip du réseau et le masque de sous-réseau respectivement.'}), 400
+
+        if not NetworkScanner.is_network_valid("{n}/{sub}".format(n = ip, sub = subnetMask)):
+            return jsonify({'erreur': 'Le réseau donné est inavalide'}), 400
+        
+
+        self.cameraServerClient = CameraServerClient(ip, subnetMask)
+
+        networkId = self.db_client.getNetworkIdByIpAndSubnetMask(ip, subnetMask)
+
+        # Vérification si le réseau n'existe pas
+        # Recherche automatique de caméras, vérification la présence des caméras et ajout dans la base.
+        if(not self.db_client.checkIfNetworkExists(ip)):
+            # Recherche automatique des cameras
+            self.cameraServerClient.lookForCameras()
+            # Donne la liste des ip des cameras ainsi que leurs tokens
+            tokens_for_ip = self.cameraServerClient.getCamerasTokens()
+
+            if(tokens_for_ip == None):
+                return jsonify({'erreur' : 'Aucune caméra présente sur le réseau'}), 400
+            
+            # Ajoute les cameras dans la base de données
+            self.db_client.addCameras(tokens_for_ip, ip, subnetMask)
+
+            self.db_client.addNetwork(ip, subnetMask)
+
+            return jsonify(self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)), 201
+```
+
+### Conclusion
+
+Je termine la journée avec un petit, problème. En effet les idNetwork ne s'ajoutent pas aux cameras. C'est un problème dont je vais m'occuper demain. Je vais également continuer sur la récupération des données caméras, j'hésite à modifier l'architecture de mon projet pour faire quelque chose de plus propre aux niveaux des classes.

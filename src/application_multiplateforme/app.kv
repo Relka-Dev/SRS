@@ -6,6 +6,7 @@ WindowManager:
     NavigationFaceManagementWindow:
     LoginWindow:
     AddUserWindow:
+    CamerasManagementWindow:
 
 <MainWindow>:
     name: "main"
@@ -40,6 +41,15 @@ WindowManager:
         
         GridLayout:
             cols: 1
+
+            Button:
+                id: retry_button
+                size_hint: 0.5, 0.5
+                font_size: '15sp' 
+                text: "Gestion des cameras wifi"
+                on_release:
+                    app.root.current = "camerasManagement"
+                    root.manager.transition.direction = "left"
             
             
 
@@ -245,7 +255,7 @@ WindowManager:
 <AddUserWindow>:
     name: "addUser"
 
-    FloatLayout:  # Utilisation d'un FloatLayout comme conteneur principal
+    FloatLayout:
         GridLayout:
             cols: 3
             size_hint: 1, 0.1  
@@ -266,7 +276,7 @@ WindowManager:
 
         GridLayout:
             cols: 1
-            size_hint_y: 0.9  # Ajustement de la taille restante en fonction des dimensions parentes
+            size_hint_y: 0.9
 
             Camera:
                 id: qrcam
@@ -298,6 +308,70 @@ WindowManager:
                     disabled: True
                     bold: True
 
+<CamerasManagementWindow>:
+    name: "camerasManagement"
+
+    FloatLayout:
+        GridLayout:
+            cols: 3
+            size_hint: 1, 0.1  
+            pos_hint: {'top': 1} 
+
+            Button:
+                text: "<- Retour"       
+                on_release:
+                    app.root.current = "main" 
+                    root.manager.transition.direction = "right"
+
+            Label:
+                text: "Gestion des cameras"
+                bold: True
+
+            Image:
+                source: 'Ressources/logo.png'
+
+        GridLayout:
+            cols: 1
+            size_hint_y: 0.9
+
+            Spinner:
+                id: camera_spinner
+                text: "Sélectionnez une camera"
+                values: ["Fonction 1", "Fonction 2", "Fonction 3"]
+                on_text: root.camera_changed()
+            
+            Button:
+                id: update_cameras_list_button
+                text: "Mettre à jour la liste des cameras"
+                on_release: root.update_cameras_list()
+
+            GridLayout:
+                cols:2
+            
+                Label:
+                    text: "Position relative au mur :" + str(position_slider.value)
+
+                Slider:
+                    id: position_slider
+                    min: 0
+                    max: 100
+                    step: 1
+                    orientation: 'horizontal'
+
+            Spinner:
+                id: walls_spinner
+                text: "Sélectionnez un mur"
+                values: ["Fonction 1", "Fonction 2", "Fonction 3"]
+                on_text: root.camera_changed()
+            
+            Button:
+                id: update_camera_button
+                text: "Mettre à jour la camera"
+                on_release: root.update_camera()
+                disabled: True
+                bold: True
+
+            
 
         
 

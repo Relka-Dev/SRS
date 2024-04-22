@@ -15,6 +15,8 @@ from jwt_library import JwtLibrary
 from camera_server_client import CameraServerClient
 from network_scanner import NetworkScanner
 
+from Classes.network import Network
+
 class ServeurCentral:
     # Constantes de l'application
     DB_HOST = "127.0.0.1"
@@ -50,6 +52,8 @@ class ServeurCentral:
         self.app.add_url_rule('/person_types', 'person_types', self.person_types, methods=['GET'])
         self.app.add_url_rule('/person_type_by_name', 'person_type_by_name', self.person_type_by_name, methods=['GET'])
         self.app.add_url_rule('/add_user', 'add_user', self.add_user, methods=['POST'])
+        self.app.add_url_rule('/walls', 'walls', self.walls, methods=['GET'])
+        self.app.add_url_rule('/cameras', 'cameras', self.cameras, methods=['GET'])
 
 
 
@@ -151,6 +155,13 @@ class ServeurCentral:
         return jsonify(self.db_client.getPersonTypes()), 200
     
     @JwtLibrary.API_token_required
+    def walls(self):
+        try:
+            return jsonify(self.db_client.getWalls()), 200
+        except Exception as e:
+            return jsonify({'erreur' : str(e)}), 500
+    
+    @JwtLibrary.API_token_required
     def add_user(self):
         try:
             data_json = request.data.decode('utf-8')
@@ -183,6 +194,45 @@ class ServeurCentral:
             return jsonify({'message' : response}), 200
         else:
             return jsonify({'erreur' : response}), 400
+        
+    
+    @JwtLibrary.API_token_required
+    def cameras(self):
+        ip = request.args.get('ip')
+        subnetMask = request.args.get('subnetMask')
+
+        if not ip or not subnetMask:
+            return jsonify({'erreur': 'Mauvais paramètres, utilisez (ip, subnetMask) pour l\ip du réseau et le masque de sous-réseau respectivement.'}), 400
+
+        if not NetworkScanner.is_network_valid("{n}/{sub}".format(n = ip, sub = subnetMask)):
+            return jsonify({'erreur': 'Le réseau donné est inavalide'}), 400
+        
+
+        self.cameraServerClient = CameraServerClient(ip, subnetMask)
+
+        networkId = self.db_client.getNetworkIdByIpAndSubnetMask(ip, subnetMask)
+
+        # Vérification si le réseau n'existe pas
+        # Recherche automatique de caméras, vérification la présence des caméras et ajout dans la base.
+        if(not self.db_client.checkIfNetworkExists(ip)):
+            # Recherche automatique des cameras
+            self.cameraServerClient.lookForCameras()
+            # Donne la liste des ip des cameras ainsi que leurs tokens
+            tokens_for_ip = self.cameraServerClient.getCamerasTokens()
+
+            if(tokens_for_ip == None):
+                return jsonify({'erreur' : 'Aucune caméra présente sur le réseau'}), 400
+            
+            # Ajoute les cameras dans la base de données
+            self.db_client.addCameras(tokens_for_ip, ip, subnetMask)
+
+            self.db_client.addNetwork(ip, subnetMask)
+
+            return jsonify(self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)), 201
+        
+        # Vérification si la durée de vie des JWT des cameras est dépassée
+        if self.db_client.areTheCamerasInTheNetworkInNeedOfAnUpdate(networkId):
+            pass
 
 
     def run(self):

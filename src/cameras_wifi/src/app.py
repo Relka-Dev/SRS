@@ -14,6 +14,7 @@ import jwt
 import datetime
 import cv2
 import face_recognition
+import uuid
 import multiprocessing
 from multiprocessing import Process, Queue
 
@@ -102,6 +103,12 @@ def detect_worker(image, result_queue):
     faces_encodings = Detection.get_face_encodings(image)
     result_data = (faces, profiles, faces_encodings)
     result_queue.put(result_data)
+
+@app.route('/ping', methods=['GET'])
+@token_required
+def ping():
+    return jsonify({'Mac address' : hex(uuid.getnode())}), 200
+
 
 @app.route('/detect', methods=['GET'])
 @token_required

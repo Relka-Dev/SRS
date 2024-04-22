@@ -9,6 +9,7 @@ Version     : 0.1
 """
 
 import mysql.connector
+from datetime import datetime, timedelta
 
 class DatabaseClient:
     
@@ -100,6 +101,19 @@ class DatabaseClient:
         except Exception as e:
             print(f"Erreur lors de l'insertion dans la base de données: {e}")
     
+    def getNetwork(self, idNetwork):
+        try:
+            self.cursor.execute("SELECT * FROM Network WHERE idNetwork = %s", (idNetwork,))
+            results = self.cursor.fetchone()
+    
+            if results:
+                return results
+            else:
+                return None
+        except Exception as e:
+            print(f"Error: {e}")
+            return False
+    
     def getNetworkIdByIpAndSubnetMask(self, ip : str, submask : str):
         try:
             self.cursor.execute("SELECT idNetwork FROM Network WHERE ip = %s AND subnetMask = %s", (ip, submask,))
@@ -145,6 +159,13 @@ class DatabaseClient:
     def getPersonTypes(self):
         try:
             self.cursor.execute("SELECT * FROM PersonTypes")
+            return self.cursor.fetchall()
+        except Exception as e:
+            print(f"Error: {e}")
+    
+    def getWalls(self):
+        try:
+            self.cursor.execute("SELECT * FROM Walls")
             return self.cursor.fetchall()
         except Exception as e:
             print(f"Error: {e}")
@@ -212,6 +233,39 @@ class DatabaseClient:
         except Exception as e:
             print(f"Error: {e}")
             return False, str(e)
+        
+    def getCameras(self):
+        try:
+            self.cursor.execute("SELECT * FROM Cameras")
+            return True, self.cursor.fetchall()
+        except Exception as e:
+            print(f"Error: {e}")
+
+    def getCamerasByNetworkIpAndSubnetMask(self, ip, subnetMask):
+        try:
+            self.cursor.execute("SELECT * FROM Cameras c JOIN Network n ON c.idNetwork AND n.IdNetwork WHERE n.ip = %s AND n.subnetMask = %s", (ip, subnetMask,))
+            results = self.cursor.fetchall()
+    
+            if results:
+                return results
+            else:
+                return None
+        except Exception as e:
+            print(f"Error: {e}")
+            return False
+    
+    
+    def areTheCamerasInTheNetworkInNeedOfAnUpdate(self, idNetwork):
+        network = self.getNetwork(idNetwork)
+
+        return DatabaseClient.isOlderThan24Hours(str(network[3]))
+    
+    @staticmethod
+    def isOlderThan24Hours(timestamp_input):
+        timestamp = datetime.strptime(timestamp_input, "%Y-%m-%d %H:%M:%S")
+        now = datetime.now()
+        diff = now - timestamp
+        return diff > timedelta(hours=24)
 
 
 

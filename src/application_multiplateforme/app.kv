@@ -335,14 +335,16 @@ WindowManager:
             size_hint_y: 0.9
 
             Spinner:
-                id: camera_spinner
-                text: "Sélectionnez une camera"
+                id: cameras_spinner
+                text: "Recherche des cameras en cours..."
+                disabled: True
                 values: ["Fonction 1", "Fonction 2", "Fonction 3"]
                 on_text: root.camera_changed()
             
             Button:
                 id: update_cameras_list_button
                 text: "Mettre à jour la liste des cameras"
+                disabled: True
                 on_release: root.update_cameras_list()
 
             GridLayout:
@@ -353,6 +355,7 @@ WindowManager:
 
                 Slider:
                     id: position_slider
+                    disabled: True
                     min: 0
                     max: 100
                     step: 1
@@ -362,11 +365,13 @@ WindowManager:
                 id: walls_spinner
                 text: "Sélectionnez un mur"
                 values: ["Fonction 1", "Fonction 2", "Fonction 3"]
+                disabled: True
                 on_text: root.camera_changed()
             
             Button:
                 id: update_camera_button
                 text: "Mettre à jour la camera"
+                disabled: True
                 on_release: root.update_camera()
                 disabled: True
                 bold: True

@@ -10,6 +10,7 @@ Version     : 0.1
 
 import mysql.connector
 from datetime import datetime, timedelta
+from network_scanner import NetworkScanner
 
 class DatabaseClient:
     
@@ -127,8 +128,7 @@ class DatabaseClient:
             print(f"Error: {e}")
             return False
     
-    def addCameras(self, cameras_ips_with_token : dict, networkIP : str, networkSubnetMask : str):
-        networkId = self.getNetworkIdByIpAndSubnetMask(networkIP, networkSubnetMask)
+    def addCameras(self, cameras_ips_with_token : dict, networkId : str):
 
         try:
             for camera in cameras_ips_with_token:
@@ -141,7 +141,6 @@ class DatabaseClient:
         except Exception as e:
             print(f"Erreur lors de l'insertion dans la base de données: {e}")
 
-        print(networkIP)
 
     def checkIfCameraExists(self, camera_ip: str, network_id : int):
         try:
@@ -241,6 +240,31 @@ class DatabaseClient:
         except Exception as e:
             print(f"Error: {e}")
 
+    def updateCameraToken(self, idCamera, token):
+        try:
+            self.cursor.execute("UPDATE Cameras SET JWT = %s WHERE idCamera = %s", (str(token), idCamera,))
+            self.dbConnexion.commit()
+            return True, "Token de la caméra mis à jour avec succès."
+        except Exception as e:
+            print(f"Erreur lors de la mise à jour du token de la caméra : {e}")
+            return False, f"Erreur lors de la mise à jour du token de la caméra : {e}"
+
+    def refreshNetworkTimestamp(self, idNetwork):
+        try:
+            self.cursor.execute("UPDATE Network SET lastUpdate = %s WHERE idNetwork = %s", ('CURRENT_TIMESTAMP', idNetwork))
+            self.dbConnexion.commit()
+            return True, "Dernière mise à jour modifiée avec succès"
+        except Exception as e:
+            return False, f"Erreur lors de la mise à jour de la dernière modification : {e}"
+
+
+    def getByIdCameras(self, idCamera):
+        try:
+            self.cursor.execute("SELECT * FROM Cameras WHERE idCamera = %s", (idCamera,))
+            return True, self.cursor.fetchone()
+        except Exception as e:
+            print(f"Error: {e}")
+
     def getCamerasByNetworkIpAndSubnetMask(self, ip, subnetMask):
         try:
             self.cursor.execute("SELECT * FROM Cameras c JOIN Network n ON c.idNetwork AND n.IdNetwork WHERE n.ip = %s AND n.subnetMask = %s", (ip, subnetMask,))
@@ -253,6 +277,7 @@ class DatabaseClient:
         except Exception as e:
             print(f"Error: {e}")
             return False
+
     
     
     def areTheCamerasInTheNetworkInNeedOfAnUpdate(self, idNetwork):

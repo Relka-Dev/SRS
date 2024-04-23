@@ -215,24 +215,43 @@ class ServeurCentral:
         # Vérification si le réseau n'existe pas
         # Recherche automatique de caméras, vérification la présence des caméras et ajout dans la base.
         if(not self.db_client.checkIfNetworkExists(ip)):
-            # Recherche automatique des cameras
-            self.cameraServerClient.lookForCameras()
-            # Donne la liste des ip des cameras ainsi que leurs tokens
-            tokens_for_ip = self.cameraServerClient.getCamerasTokens()
-
-            if(tokens_for_ip == None):
-                return jsonify({'erreur' : 'Aucune caméra présente sur le réseau'}), 400
-            
-            # Ajoute les cameras dans la base de données
-            self.db_client.addCameras(tokens_for_ip, ip, subnetMask)
-
-            self.db_client.addNetwork(ip, subnetMask)
-
-            return jsonify(self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)), 201
+            return self.intialise_network_with_cameras(ip, subnetMask)
+        
+        cameras = self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)
+        # Si aucune camera n'est dans le network, recheche de cameras.
+        if cameras == None:
+            return self.initialize_cameras_in_network(ip, subnetMask)
         
         # Vérification si la durée de vie des JWT des cameras est dépassée
         if self.db_client.areTheCamerasInTheNetworkInNeedOfAnUpdate(networkId):
-            pass
+            for camera in cameras:
+                self.db_client.updateCameraToken(self.db_client.getByIdCameras(camera[0]), self.cameraServerClient.getCameraToken(camera[0]))
+                self.db_client.refreshNetworkTimestamp(networkId)
+        
+        return jsonify(self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)), 201
+    
+    def intialise_network_with_cameras(self, networkip, subnetMask):
+        # Recherche automatique des cameras
+        self.cameraServerClient.lookForCameras()
+        # Donne la liste des ip des cameras ainsi que leurs tokens
+        tokens_for_ip = self.cameraServerClient.getCamerasTokens()
+        if(tokens_for_ip == None):
+            return jsonify({'erreur' : 'Aucune caméra active n\'est présente sur le réseau'}), 400
+        
+        self.db_client.addNetwork(networkip, subnetMask)
+        self.db_client.addCameras(tokens_for_ip, self.db_client.getNetworkIdByIpAndSubnetMask(networkip, subnetMask))
+        return jsonify(self.db_client.getCamerasByNetworkIpAndSubnetMask(networkip, subnetMask)), 201
+    
+    def initialize_cameras_in_network(self, networkip, subnetMask):
+        # Recherche automatique des cameras
+        self.cameraServerClient.lookForCameras()
+        # Donne la liste des ip des cameras ainsi que leurs tokens
+        tokens_for_ip = self.cameraServerClient.getCamerasTokens()
+        if(tokens_for_ip == None):
+            return jsonify({'erreur' : 'Aucune caméra active n\'est présente sur le réseau'}), 400
+        
+        self.db_client.addCameras(tokens_for_ip, self.db_client.getNetworkIdByIpAndSubnetMask(networkip, subnetMask))
+        return jsonify(self.db_client.getCamerasByNetworkIpAndSubnetMask(networkip, subnetMask)), 201
 
 
     def run(self):

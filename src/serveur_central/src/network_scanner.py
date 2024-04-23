@@ -7,11 +7,14 @@ class NetworkScanner:
     def __init__(self, network):
         self.network = ipaddress.IPv4Network(network)
 
-    def scan_ips(self, port,  timeout=0.01):
+    def scan_ips(self, port,  timeout=0.35):
         ip_with_port_open = []
+        
         for ip in self.network.hosts():
+            print(str(ip) + ":" + str(port))
             if self.check_port(ip, port, timeout):
                 ip_with_port_open.append(str(ip))
+                break
 
         return ip_with_port_open
 
@@ -62,7 +65,7 @@ class NetworkScanner:
 
         try:
             # Ping du routeur
-            timeout = 0.1
+            timeout = 0.5
             result = subprocess.run(['ping', '-c', '1', '-W', str(timeout), router_ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
             return result.returncode == 0
         except subprocess.TimeoutExpired:

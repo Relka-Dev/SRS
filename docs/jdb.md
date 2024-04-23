@@ -1934,3 +1934,442 @@ Pour la récupération je vais commencer par gérer le cas où le réseau n'est 
 ### Conclusion
 
 Je termine la journée avec un petit, problème. En effet les idNetwork ne s'ajoutent pas aux cameras. C'est un problème dont je vais m'occuper demain. Je vais également continuer sur la récupération des données caméras, j'hésite à modifier l'architecture de mon projet pour faire quelque chose de plus propre aux niveaux des classes.
+
+## 23.04.2024
+
+#### Bilan de la veille
+
+Hier je me suis concentrer sur la page de gestion des cameras ainsi que sur la procedure liés au cameras et leurs JWT. Je me suis arrêté sur un bug qui m'empêchait de relier la base `Network` et `Cameras`.
+
+#### Objectif de la journée
+
+Demain étant le jour pour l'évaluation intermédiaire, je dois me concentrer sur cet aspect en premier lieu. Je vais commencer par effectuer une analyse de mon travail en utilisant le document fournit et après je vais adapater mon travail si besoin.
+
+### Auto-évaluation intermédiaire
+
+Dans un mail envoyé par mes suiveurs, il m'a été demandé d'effectuer une auto-évalutaion afin de me préparer pour demain.
+
+#### Prestation professionnelle
+
+**Qualité du travail : tavail soigné** Je pense qu'il y a des améliorations à faire au niveau des commentaires, mais je pense que la structure de mon travail via le journal de bord est assez compréhensible, notament grâce à l'utilisation des user story on peut savoir sur quoi je travaille.
+
+**Organisation du travail : logique et très efficace** Je pense que la façon dont j'approche le travail est efficace grâce à des choix rapides et logies comme le changement des jalons (passage en développement parallèle de l'API et de l'application)
+
+**Rythme de travail : rapide** Selon moi j'ai effectué un bon travail niveau quantité. J'avance par point clé, ce qui est motivant car je vois mon travail évoluer concrètement.
+
+**Squelette documentation : encore du travail** Pour le squelette, j'ai une structure pour chaque composant, ayant terminé le premier, je compte faire la même chose pour le reste. Il me reste cependant les tests, pour l'instant je me concentre sur les tests postman et moins les tests fonctionnels.
+
+**Ordre des dossiers fichiers : exemplaire** Selon moi, j'ai trouvé une bonne structure pour que le projet soit compréhensible. Pour cet étape du projet elle me paraît bonne mais je compte tout de même l'améliorer par la suite.
+
+#### Comportement au travail
+
+**Engagement et persévérence : appliqué, persévérent** Le travail effectué tous les jours est plutôt bon pour l'instant, la motivation de voir le projet avancer m'aide beaucoup.
+
+**Intérêt : très intéressé** Je crois fermement que ce projet est interessant même s'il possède des failles dans son idée de départ, j'essayerais de faire mon maximum pour le rendre le meilleur possible.
+
+**Autonomie : totalement indépendant** Cette question est assez vague, il m'arrive de demander de l'aide quand deux chemin se présentent devant moi mais je n'ai pas été bloqué à cause du travail que je dois effectuer.
+
+**Capacité à comprendre : comprend vite et bien** Pour l'instant je n'ai pas eu de problèmes à comprendre des nouvelles technologies, par exemple les jwt sont bien fonctionnels.
+
+**Mise à jour des outils de partage: régulier** Il y a de l'amélioration à faire à ce niveau là, pour l'instant je fais un push par jour alors que je devrais le faire par fonctionnalité. Cependant, j'effectue des release à la fin des jalons.
+
+#### Attitude personnelle
+
+**Collaboration : très bonne, caractère sociable** Je ne suis par certain pour cette question car je ne suis pas connu comme quelqu'un de sociable. Cependant, les critiques de mes suiveurs je les prends avec plaisir.
+
+**Façon d'être : neutre** Pour être honnête, je ne vois pas vraiment la plus value d'être prévenant et serviable dans un travail individuel je n'ai donc malheureusement pas d'exemples à donner.
+
+**Conscience professionnelle : respecte les consignes** Pour l'instant j'effectue mon travail dans les temps et suit le schema typique des documentations et autres journaux de bords.
+
+**Réponse aux communications : rapide** Pour être honnête, je n'ai pas répondu à une question posée par monsieur Zanardi par mail, mais c'était pendant les vacances et je n'étais pas forcément disponible. En temps normal, je suis accessible et répond aux question si besoin.
+
+#### Bilan
+
+Je pense pas que j'ai besoin de faire une mise à jour de mon travail pour mieux correspondre à l'évaluation intermédiaire. Les question sont plutôt orientées vers l'organisation du travail et la façon d'être vis-à-vis du travail. Si des améliorations sont à faire, je vais les effectuer pour l'évaluation d'après.
+
+### Bug lors de l'ajout des cameras
+
+Je vais recherche l'origine du bug qui m'empêche d'ajouter l'ip du réseau dans la table cameras.
+
+Le prpblème provient de la fonction suivante qui retourne None :
+```py
+networkId = self.db_client.getNetworkIdByIpAndSubnetMask(ip, subnetMask)
+```
+
+L'erreur était très simple à trouver, *trop simple*. J'ajoutais pas le réseau par conséquant je n'arrivais pas à récupérer son id. J'essaye d'ajouter le network puis la camera. Avec des modificiation apportés, le code fonctionne.
+#### Table Network
+![](./ressources/images/tableNetworkBug.png)
+
+#### Table Cameras
+![](./ressources/images/tableCameraBug.png)
+
+#### Résultat final fonctionnel
+
+![](./ressources/images/resultatpostmanrecherchedynamique.png)
+
+#### Code adapté
+
+```py
+self.db_client.addNetwork(ip, subnetMask)
+
+self.db_client.addCameras(tokens_for_ip, self.db_client.getNetworkIdByIpAndSubnetMask(ip, subnetMask))
+```
+
+### Récupération et ajout d'un network et caméras
+Pour implémenter cette fonctionnalité, j'ai suivi la logique suivante :
+
+#### Récupéraion du réseau et appel de l'API
+
+##### Vue (cameras_management_window)
+```py
+    def get_cameras(self):
+        result, response = self.server_client.get_cameras()
+```
+
+##### Client API (server_client.py)
+```py
+    def get_cameras(self):
+        if not self.server_ip:
+            return False
+        
+        print(ServerClient.get_netowk_from_ip(self.server_ip))
+        
+        params = {
+            "token": self.API_token,
+            "ip": ServerClient.get_netowk_from_ip(self.server_ip),
+            "subnetMask": 24
+        }
+        
+        endpoint_url = f"{self.server_url}/cameras"
+        response = requests.get(endpoint_url, params=params)
+```
+
+#### Vérification des données et choix de la procédure
+
+Ici, il est testé si le réseau n'est pas présent dans la table, par conséquent, le réseau est ajouté et les caméras sont recherchés dans ce dernier.
+
+##### Récupération des données et choix de la procédure (app.py)
+
+```py
+    @JwtLibrary.API_token_required
+    def cameras(self):
+        ip = request.args.get('ip')
+        subnetMask = request.args.get('subnetMask')
+
+        if not ip or not subnetMask:
+            return jsonify({'erreur': 'Mauvais paramètres, utilisez (ip, subnetMask) pour l\ip du réseau et le masque de sous-réseau respectivement.'}), 400
+
+        if not NetworkScanner.is_network_valid("{n}/{sub}".format(n = ip, sub = subnetMask)):
+            return jsonify({'erreur': 'Le réseau donné est inavalide'}), 400
+        
+
+        self.cameraServerClient = CameraServerClient(ip, subnetMask)
+
+        networkId = self.db_client.getNetworkIdByIpAndSubnetMask(ip, subnetMask)
+
+        # Vérification si le réseau n'existe pas
+        # Recherche automatique de caméras, vérification la présence des caméras et ajout dans la base.
+        if(not self.db_client.checkIfNetworkExists(ip)):
+```
+
+##### Recherche du network (database_client.py)
+
+```py
+def getNetworkIdByIpAndSubnetMask(self, ip : str, submask : str):
+        try:
+            self.cursor.execute("SELECT idNetwork FROM Network WHERE ip = %s AND subnetMask = %s", (ip, submask,))
+            results = self.cursor.fetchone()
+    
+            if results:
+                return results[0]
+            else:
+                return None
+        except Exception as e:
+            print(f"Error: {e}")
+            return False
+```
+
+```py
+def checkIfNetworkExists(self, ip: str):
+    try:
+        self.cursor.execute("SELECT * FROM Network WHERE ip = %s", (ip,))
+        results = self.cursor.fetchall()
+
+        if len(results) == 0:
+            return False
+        else:
+            return True
+    except Exception as e:
+        print(f"Error: {e}")
+        return False
+```
+
+#### Recherche dynamique de camera
+Il est important de noter que j'ai fais exprès de développer cette recherche de façon lente car j'ai eu des problèmes de fiabilité avec un timeout plus bas. Je compte rendre cette fonctionnalité asynchrone.
+
+##### Fonctions de recherche par socket (network_scanner.py)
+
+```py
+    def scan_ips(self, port,  timeout=0.35):
+        ip_with_port_open = []
+        
+        for ip in self.network.hosts():
+            print(str(ip) + ":" + str(port))
+            if self.check_port(ip, port, timeout):
+                ip_with_port_open.append(str(ip))
+                break
+
+        return ip_with_port_open
+
+    def check_port(self, ip, port, timeout):
+        """
+        Vérifie si un port spécifié sur une adresse IP donnée est ouvert.
+
+        Args:
+            ip (str): L'adresse IP à tester.
+            port (int): Le numéro de port à vérifier.
+            timeout (float): Le temps maximum en secondes à attendre pour une réponse.
+
+        Returns:
+            bool: Renvoie True si le port est ouvert, sinon False.
+        """
+        try:
+            # Vérification de l'ouverture du port
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(timeout)
+                s.connect((str(ip), port))
+                return True
+        except (socket.timeout, socket.error):
+            return False
+```
+
+#### Ajout du réseau et des caméras dans la base
+
+1. Ajout du réseau
+2. Ajout des cameras avec l'id du réseau
+
+##### Vue (app.py)
+
+```py
+self.db_client.addNetwork(ip, subnetMask)
+
+self.db_client.addCameras(tokens_for_ip, self.db_client.getNetworkIdByIpAndSubnetMask(ip, subnetMask))
+```
+
+##### Client BDD (database_client.py)
+```py
+    def addNetwork(self, ip : str, submask : str):
+        # Réseau déjà présent
+        if self.checkIfNetworkExists(ip):
+            return False
+        
+        try:
+            self.cursor.execute("INSERT INTO srs.Network (ip, subnetMask) VALUES (%s, %s);", (ip, submask))
+            self.dbConnexion.commit()
+            return True
+        except Exception as e:
+            print(f"Erreur lors de l'insertion dans la base de données: {e}")
+```
+
+#### Envoi de la réponse et traitement
+
+Pour cette partie, les données sont envoyé dans une liste dans la résponse de l'API. Enuite, interprété dans un objet camera pour pouvoir les afficher.
+
+##### Envoi de la réponse (app.py)
+La réponse envoie la liste des données caméras d'un réseau.
+
+```py
+return jsonify(self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)), 201
+```
+##### Interprétation des données (server_client.py)
+
+Si le status est 201, cela veut dire que les nouvelles données ont été crées. On charge ensuite les données et je fait une boucle sur la liste des cameras, puis je crée une liste de cameras.
+
+```py
+if response.status_code == 201
+    response_data = response.content.decode('utf-8')
+    cameras_data = json.loads(response_data
+    cameras = []
+    for camera in cameras_data
+        cameras.append(Camera(camera[0],camera[1],camera[2],camera[3],camera[4],camera[5],camera[6])
+    return True, cameras
+else:
+    return False, response
+```
+
+#### Affichage des données 
+
+##### Interprétation visuelle (cameras_management_window.py)
+
+Si aucune camera n'est trouvée, alors l'application se bloque et affiche le texte correspondant à l'utilisateur.  
+Si une camera est trouvée. L'adresse IP est ajoutée dans le spinner afin que l'utilisateur puisse la séléctionner.
+
+```py
+def get_cameras(self):
+    result, response = self.server_client.get_cameras()
+    
+    cameras_ips = []
+    if result:
+        for camera in response:
+            cameras_ips.append(str(camera.ip))
+        if len(cameras_ips) < 1:
+            self.ids.cameras_spinner.values = []
+            self.ids.cameras_spinner.text = "Aucune camera trouvée sur votre réseau"
+            self.ids.cameras_spinner.disabled = True 
+        else:
+            self.ids.cameras_spinner.text = "Veuillez séléctionner une camera"
+            self.ids.cameras_spinner.values = cameras_ips
+            self.ids.cameras_spinner.disabled = False 
+```
+
+#### Résultats
+
+##### Vue : Application multiplateforme
+![](./ressources/images/recuperationcamerascenario1.png)
+
+##### Table Network : Base de données
+![](./ressources/images/tablenetworkscenario1.png)
+
+##### Table Cameras : Base de données
+![](./ressources/images/tablescenarioscenario1.png)
+
+#### Passage de l'appel de l'API en non bloquant
+
+J'ai commencé par mettre l'appel en thread. Je n'ai pas besoin de le mettre en multiprocessing car c'est un simple appel et non une tache lourde.
+
+```py
+def on_enter(self):
+    super().on_enter()
+    self.app = App.get_running_app()
+    self.server_client = self.app.get_server_client()
+    self.get_walls_thread = threading.Thread(target=self.get_walls)
+    self.get_walls_thread.start()
+    self.get_cameras_thread = threading.Thread(target=self.get_cameras)
+    self.get_cameras_thread.start()
+```
+
+Le problème c'est que j'avais ces erreurs :
+
+```
+File "kivy/graphics/instructions.pyx", line 672, in kivy.graphics.instructions.Canvas.remove
+File "kivy/graphics/instructions.pyx", line 674, in kivy.graphics.instructions.Canvas.remove
+File "kivy/graphics/instructions.pyx", line 88, in kivy.graphics.instructions.Instruction.flag_data_update
+ TypeError: Cannot change graphics instruction outside the main Kivy thread
+```
+
+Et en effet, je me suis rappelé que j'avais une erreur similaire dans un projet précédent. Il faut effectivement ajouter les fonctionnalités qui changent la vue de Kivy sur le main thread en utilisant la librairie `Clock`.
+
+```py
+
+Clock.schedule_once(lambda dt: setattr(self.ids.walls_spinner, 'values', self.walls))
+
+if len(cameras_ips) < 1:
+    Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'values', []))
+    Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'text', "Aucune camera trouvée sur votre réseau"))
+    Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'disabled', True))
+else:
+    Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'values', cameras_ips))
+    Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'text', "Veuillez séléctionner une camera"))
+    Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'disabled', False
+```
+
+### Route bleue
+
+Cette route permet de récupérer les cameras dans un network déjà présent dans la base. Pour ce faire, il faut suivre les étapes suivantes.
+
+1. Vérification de l'expiration des token JWT.
+    - Récupération de la date de la dernière màj dans la table network.
+    - Comparaison avec la date actuelle
+2. Récupération des cameras.
+    - Si le JWT est périmé, nouvel appel vers les cameras est effectué pour les renouveller.
+    - Si valide, passage à l'étape suivante.
+3. Vérification du fonctionnement des cameras.
+    - Appel d'un endpoint, si non fonctionnel, nouveau scan des cameras (chemin rouge).
+
+![](./ressources/images/recherchecamerastory.jpg)
+
+##### Si le network est présent mais sans camera
+
+Je récupère la liste des cameras, et si elle est vide, je met à jour les cameras dans le réseau.
+```py
+cameras = self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)
+# Si aucune camera n'est dans le network, recheche de cameras.
+if cameras == None:
+    return self.initialize_cameras_in_network(ip, subnetMask)
+
+def initialize_cameras_in_network(self, networkip, subnetMask):
+    # Recherche automatique des cameras
+    self.cameraServerClient.lookForCameras()
+    # Donne la liste des ip des cameras ainsi que leurs tokens
+    tokens_for_ip = self.cameraServerClient.getCamerasTokens()
+    if(tokens_for_ip == None):
+        return jsonify({'erreur' : 'Aucune caméra active n\'est présente sur le réseau'}), 400
+    
+    self.db_client.addCameras(tokens_for_ip, self.db_client.getNetworkIdByIpAndSubnetMask(networkip, subnetMask))
+    return jsonify(self.db_client.getCamerasByNetworkIpAndSubnetMask(networkip, subnetMask)), 201
+```
+
+##### Si le network a besoin d'une mise à jour des JWT
+1. Je vérifie si les JWT sont valides
+
+```py
+# Test dans la route
+if self.db_client.areTheCamerasInTheNetworkInNeedOfAnUpdate(networkId):
+
+# Methode de comparaison dans le database_client
+def areTheCamerasInTheNetworkInNeedOfAnUpdate(self, idNetwork):
+network = self.getNetwork(idNetwork
+return DatabaseClient.isOlderThan24Hours(str(network[3]))
+```
+
+2. Si expiré, mise à jour des tokens de toutes les cameras.
+
+```py
+# Dans la route, je fais une boucle sur toutes les cameras.
+for camera in cameras:
+    self.db_client.updateCameraToken(self.db_client.getByIdCameras(camera[0]), self.cameraServerClient.getCameraToken(camera[0]))
+    self.db_client.refreshNetworkTimestamp(networkId)
+
+# Fonctions dans database_client
+def updateCameraToken(self, idCamera, token):
+    try:
+        self.cursor.execute("UPDATE Cameras SET JWT = %s WHERE idCamera = %s", (str(token), idCamera,))
+        self.dbConnexion.commit()
+        return True, "Token de la caméra mis à jour avec succès."
+    except Exception as e:
+        print(f"Erreur lors de la mise à jour du token de la caméra : {e}")
+        return False, f"Erreur lors de la mise à jour du token de la caméra : {e}"
+
+# Recherche d'une camera par l'id
+def getByIdCameras(self, idCamera):
+    try:
+        self.cursor.execute("SELECT * FROM Cameras WHERE idCamera = %s", (idCamera,))
+        return True, self.cursor.fetchone()
+    except Exception as e:
+        print(f"Error: {e}")
+
+# Met à jour la date avec la date actuelle
+def refreshNetworkTimestamp(self, idNetwork):
+try:
+    self.cursor.execute("UPDATE Network SET lastUpdate = %s WHERE idNetwork = %s", ('CURRENT_TIMESTAMP', idNetwork))
+    self.dbConnexion.commit()
+    return True, "Dernière mise à jour modifiée avec succès"
+except Exception as e:
+    return False, f"Erreur lors de la mise à jour de la dernière modification : {e}"
+
+# Fonction dans camera_Server_client
+
+# Permet d'obtenir un token par l'ip de la camera
+@staticmethod
+def getCameraToken(cameraIp):
+    camera_url = "http://{ip}:{port}".format(ip = cameraIp, port = CameraServerClient.__CAMERAS_SERVER_PORT)
+    auth = (CameraServerClient.__CLIENT_USERNAME, CameraServerClient.__CLIENT_PASSWORD)
+    response = requests.get(f"{camera_url}/login", auth=auth)
+    if response.status_code == 200:
+        return response.json().get('token')
+    else:
+        print("Échec de l'obtention du token JWT pour l'ip : {ip}:".format(ip=cameraIp), response.status_code)
+```
+#### Conclusion
+
+Aujourd'hui j'ai réussi à terminer la récupération des cameras. Demain, je vais commencer par la modification des données des cameras.

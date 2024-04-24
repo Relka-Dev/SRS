@@ -298,6 +298,15 @@ class DatabaseClient:
             print(f"Erreur lors de l'ajout des caméras au réseau : {e}")
             return False, f"Erreur lors de l'ajout des caméras au réseau : {e}"
 
+    def updateCameraByIdCameraAndIdNetwork(self, idCamera, idNetwork, positionX, idWall):
+        try:
+            self.cursor.execute("UPDATE srs.Cameras SET positionX = %s, idWall = %s WHERE idCamera = %s AND idNetwork = %s", (positionX, idWall, idCamera, idNetwork,))
+            self.dbConnexion.commit()
+            return True, "Caméra mise à jour avec succès."
+        except Exception as e:
+            print(f"Erreur lors de la mise à jour de la caméra : {e}")
+            return False, f"Erreur lors de la mise à jour de la caméra : {e}"
+
     
     
     def areTheCamerasInTheNetworkInNeedOfAnUpdate(self, idNetwork):

@@ -55,6 +55,7 @@ class ServeurCentral:
         self.app.add_url_rule('/walls', 'walls', self.walls, methods=['GET'])
         self.app.add_url_rule('/cameras', 'cameras', self.cameras, methods=['GET'])
         self.app.add_url_rule('/update_camera_list', 'update_camera_list', self.update_camera_list, methods=['GET'])
+        self.app.add_url_rule('/update_camera', 'update_camera', self.update_camera, methods=['PUT'])
 
 
 
@@ -265,6 +266,24 @@ class ServeurCentral:
             self.db_client.deleteCamerasFromNetwork(cameras_to_remove, networkId)
 
         return jsonify(self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)), 201
+    
+    @JwtLibrary.API_token_required
+    def update_camera(self):
+        idCamera = request.args.get('idCamera')
+        idNetwork = request.args.get('idNetwork')
+        positionX = request.args.get('positionX')
+        idWall = request.args.get('idWall')
+    
+        if not idCamera or not idNetwork or not positionX or not idWall:
+            return jsonify({'erreur': 'Paramètres manquants, veuillez fournir idCamera, idNetwork, positionX et idWall'}), 400
+    
+        result, message = self.db_client.updateCamera(idCamera, idNetwork, positionX, idWall)
+    
+        if result:
+            return jsonify({'message': message}), 200
+        else:
+            return jsonify({'erreur': message}), 500
+
 
     @staticmethod
     def get_cameras_that_are_not_in_database(network_cameras : list, database_cameras : list):

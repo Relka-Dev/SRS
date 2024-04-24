@@ -2658,3 +2658,55 @@ def ask_camera_update(self):
         
     self.ids.update_cameras_list_button.disabled = False
 ```
+
+### Mise à jour des données des caméras
+
+Quand les cameras sont trouvées sur le réseau, elles sont ajoutées dans la base sans leur positionX ni le mur où elle se trouvent. Par conséquent, je vais ajouter un endpoint permettant de les modifier.
+
+#### 1.1 Rédaction de query sql (Serveur central : database_client.py)
+
+J'ai crée cette query permettant de mettre à jour la positionX ainsi que l'id du mur en fonction de l'id de la camera et l'id du network.
+
+```py
+def updateCameraByIdCameraAndIdNetwork(self, idCamera, idNetwork, positionX, idWall):
+    try:
+        self.cursor.execute("UPDATE srs.Cameras SET positionX = %s, idWall = %s WHERE idCamera = %s AND idNetwork = %s", (positionX, idWall, idCamera, idNetwork,))
+        self.dbConnexion.commit()
+        return True, "Caméra mise à jour avec succès."
+    except Exception as e:
+        print(f"Erreur lors de la mise à jour de la caméra : {e}")
+        return False, f"Erreur lors de la mise à jour de la caméra : {e}"
+```
+
+#### 1.2 Création de la route (Serveur Central : app.py)
+
+La route que je viens de créer va permettre de récupérer les paramètres et appeler la fonction dans ma classe `DatabaseClient`.
+
+```py
+self.app.add_url_rule('/update_camera', 'update_camera', self.update_camera, methods=['PUT'])
+
+@JwtLibrary.API_token_required
+def update_camera(self):
+    idCamera = request.args.get('idCamera')
+    idNetwork = request.args.get('idNetwork')
+    positionX = request.args.get('positionX')
+    idWall = request.args.get('idWall')
+
+    if not idCamera or not idNetwork or not positionX or not idWall:
+        return jsonify({'erreur': 'Paramètres manquants, veuillez fournir idCamera, idNetwork, positionX et idWall'}), 400
+
+    result, message = self.db_client.updateCamera(idCamera, idNetwork, positionX, idWall)
+
+    if result:
+        return jsonify({'message': message}), 200
+    else:
+        return jsonify({'erreur': message}), 500
+```
+
+#### 1.3 Test avec Postman
+Comme vous pouvez le voir, j'entre les données dans Postman et les modification sont prises en comptes dans la base.
+![](./ressources/images/testpostmanupdatecamera.png)
+![](./ressources/images/testpostmanupdatecameraresultdb.png)
+
+### Conclusion
+Lors de l'évaluation intermédiaire j'ai pu discuter sur différents points avec mes suiveurs. Dans l'absolut je suis sur la bonne route cependant, je dois absolument réaliser des tests fonctionnels et les mettre à jour régulièrement. De plus, je dois réaliser plus de commit. Pour conclure sur cette journée, j'ai l'impression d'avoir bien avancé. L'intégration de l'algorithmie a été interessante. Demain je vais continuer la mise à jour des caméras en espérant avoir terminé la matinée pour ensuite me concentrer sur les aspects manquants de ma documentation.

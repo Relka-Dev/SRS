@@ -54,6 +54,7 @@ class ServeurCentral:
         self.app.add_url_rule('/add_user', 'add_user', self.add_user, methods=['POST'])
         self.app.add_url_rule('/walls', 'walls', self.walls, methods=['GET'])
         self.app.add_url_rule('/cameras', 'cameras', self.cameras, methods=['GET'])
+        self.app.add_url_rule('/update_camera_list', 'update_camera_list', self.update_camera_list, methods=['GET'])
 
 
 
@@ -229,6 +230,68 @@ class ServeurCentral:
                 self.db_client.refreshNetworkTimestamp(networkId)
         
         return jsonify(self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)), 201
+    
+    @JwtLibrary.API_token_required
+    def update_camera_list(self):
+        ip = request.args.get('ip')
+        subnetMask = request.args.get('subnetMask')
+
+        if not ip or not subnetMask:
+            return jsonify({'erreur': 'Mauvais paramètres, utilisez (ip, subnetMask) pour l\ip du réseau et le masque de sous-réseau respectivement.'}), 400
+
+        if not NetworkScanner.is_network_valid("{n}/{sub}".format(n = ip, sub = subnetMask)):
+            return jsonify({'erreur': 'Le réseau donné est inavalide'}), 400
+        
+        cameraServerClient = CameraServerClient(ip, subnetMask)
+
+        networkId = self.db_client.getNetworkIdByIpAndSubnetMask(ip, subnetMask)
+
+        # Vérification si le réseau n'existe pas
+        # Recherche automatique de caméras, vérification la présence des caméras et ajout dans la base.
+        if(not self.db_client.checkIfNetworkExists(ip)):
+            return self.intialise_network_with_cameras(ip, subnetMask)
+        
+        # Récupération des adresses actuelles des caméras présentes dans le réseau depuis la base
+        cameras_in_db = self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)
+
+        cameras_in_network = cameraServerClient.lookForCameras()
+
+        cameras_to_add = ServeurCentral.get_cameras_that_are_not_in_database(cameras_in_network, cameras_in_db)
+        cameras_to_remove = ServeurCentral.get_cameras_that_are_not_in_network(cameras_in_network, cameras_in_db)
+
+        if cameras_to_add != None:
+            self.db_client.addCamerasToNetwork(cameras_to_add, networkId)
+        if cameras_to_remove != None:
+            self.db_client.deleteCamerasFromNetwork(cameras_to_remove, networkId)
+
+        return jsonify(self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)), 201
+
+    @staticmethod
+    def get_cameras_that_are_not_in_database(network_cameras : list, database_cameras : list):
+        result_camera_list = []
+
+        for network_camera in network_cameras:
+            flag = False
+            for database_camera in database_cameras:
+                if network_camera == database_camera[1]:
+                    flag = True
+                    break
+            if not flag:
+                result_camera_list.append(network_camera)
+    
+    @staticmethod
+    def get_cameras_that_are_not_in_network(network_cameras : list, database_cameras : list):
+        result_camera_list = []
+
+        for database_camera in database_cameras:
+            flag = False
+            for network_camera in network_cameras:
+                if network_camera == database_camera[1]:
+                    flag = True
+                    break
+            if not flag:
+                result_camera_list.append(database_camera)
+    
     
     def intialise_network_with_cameras(self, networkip, subnetMask):
         # Recherche automatique des cameras

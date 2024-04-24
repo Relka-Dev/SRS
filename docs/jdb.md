@@ -2373,3 +2373,288 @@ def getCameraToken(cameraIp):
 #### Conclusion
 
 Aujourd'hui j'ai réussi à terminer la récupération des cameras. Demain, je vais commencer par la modification des données des cameras.
+
+## 24.04.2024
+
+#### Bilan de la veille
+Hier j'ai eu l'occasion de me concentrer sur le système de récupération des cameras. De m'adapter en fonction de la situation du réseau, de la situation des cameras et ainsi de suite. J'ai également effectué une auto-évaluation intermédiaire pour préparer celle d'aujourd'hui.
+
+#### Planification du jour
+Je vais commencer par développer le système de mise à jour de cameras. Aujourd'hui est égalment le jour de l'évaluation intermédiaire, cependant je ne sais pas à quelle heure elle est planifiée.
+
+### Mise à jour des cameras
+
+
+#### Vue
+
+Pour commencer, il faut que j'adapte ma vue en fonction de l'état de séléction du spinner des cameras.
+
+Je crée une fonction - `change_view_input_state()` qui me sert à changer l'état des input de ma vue.
+```py
+def change_view_input_state(self, viewDisabled : bool):
+    self.ids.update_cameras_list_button.disabled = viewDisabled
+    self.ids.position_slider.disabled = viewDisabled
+    self.ids.walls_spinner.disabled = viewDisabled
+    self.ids.update_camera_button.disabled = viewDisabled
+```
+
+
+J'ajoute ensuite une nouvelle fonction - `camera_changed(input_text)` qui est appelé à chaque changement dans le spinner de la camera.
+
+```py
+def camera_changed(self, input_text):
+    self.change_view_input_state(not (input_text != self.TEXT_NO_CAMERA_FOUND and input_text != self.TEXT_CAMERA_FOUND))
+```
+
+```
+Button:
+    id: update_camera_button
+    text: "Mettre à jour la camera"
+    disabled: True
+    on_release: root.update_camera()
+    disabled: True
+    bold: True
+```
+
+##### Résultats
+
+![](./ressources/images/camerainputmanagamentdisabled.png)
+![](./ressources/images/canerainputmanagementactivaded.png)
+
+#### 1 : Mise à jour des cameras
+
+Pour le bouton *Mettre à jour la liste de cameras*, il faut que je crée un nouvel endpoint me permettant de forcer la nouvelle recherche de cameras sur le réseau. L'objectif de cette procesure c'est d'ajouter / supprimer les cameras en fonction de leur présence sur le réseau sans pour autant altérer les données des cameras qui n'ont pas changés.
+
+1. Création du endpoint
+2. Récupération des adresses actuelles des caméras présentes dans le réseau depuis la base.
+3. Récupération des cameras dans le réseau actuel.
+3. Comparaison des données
+4. Adapatation de la base de données
+5. Retour des nouvelles cameras dans la réponse
+6. Faire l'appel vers l'API depuis le client
+7. Désactiver tous les autres input
+8. Interpréter les données
+
+##### 1.1 : Création du endpoint
+
+```py
+self.app.add_url_rule('/update_camera_list', 'update_camera_list', self.update_camera_list, methods=['GET'])
+
+@JwtLibrary.API_token_required
+def update_camera_list(self):
+     pass
+```
+##### 1.2 : Récupération des adresses actuelles des caméras présentes dans le réseau depuis la base
+
+Je fais les mêmes vérification que avec le endpoint des `camera`. Si aucun réseau n'est présent, on le crée dans la fonction `initialise_network_with_cameras()`.
+
+```py
+@JwtLibrary.API_token_required
+def update_camera_list(self):
+    ip = request.args.get('ip')
+    subnetMask = request.args.get('subnetMask')
+    if not ip or not subnetMask:
+        return jsonify({'erreur': 'Mauvais paramètres, utilisez (ip, subnetMask) pour l\ip du réseau et le masque de sous-réseau respectivement.'}), 400
+    if not NetworkScanner.is_network_valid("{n}/{sub}".format(n = ip, sub = subnetMask)):
+        return jsonify({'erreur': 'Le réseau donné est inavalide'}), 400
+    
+    self.cameraServerClient = CameraServerClient(ip, subnetMask)
+    networkId = self.db_client.getNetworkIdByIpAndSubnetMask(ip, subnetMask)
+    # Vérification si le réseau n'existe pas
+    # Recherche automatique de caméras, vérification la présence des caméras et ajout dans la base.
+    if(not self.db_client.checkIfNetworkExists(ip)):
+        return self.intialise_network_with_cameras(ip, subnetMask)
+    
+    # Récupération des adresses actuelles des caméras présentes dans le réseau depuis la base
+    cameras = self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)
+```
+##### 1.3 : Récupération des cameras dans le réseau actuel
+
+```py
+camera_server_client = CameraServerClient(ip, subnetMask)
+cameras_in_network = camera_server_client.lookForCameras()
+```
+
+##### 1.4 : Comparaison des données
+Pour récupérer la liste des caméras à ajouter j'ai crée un algorithme sur un tableau.  
+
+Dans cet exemple, on commence par parcourir les cameras dans le réseau. Si on trouve une correspondance, on n'ajoute pas la camera.
+
+![](./ressources/images/tableau_cameras_to_add1.jpg)  
+
+Cependant, si une correspondance n'est pas trouvée, on ajoute la camera à la liste.
+
+![](./ressources/images/tableau_cameras_to_add2.jpg)  
+
+```py
+def get_cameras_that_are_not_in_database(network_cameras : list, database_cameras : list):
+    result_camera_list = []
+    for network_camera in network_cameras:
+        flag = False
+        for database_camera in database_cameras:
+            if network_camera == database_camera[1]:
+                flag = True
+                break
+        if not flag:
+            result_camera_list.append(network_camera)
+```
+
+Pour la liste des caméras à supprimer je fais l'inverse. Je commence par parcourir la liste des caméras dans la base puis celle du network. Si aucune correspondance n'est trouvée, la camera est ajoutée à la liste des caméras à supprimer.
+
+![](./ressources/images/tableau_cameras_to_remove.jpg)  
+
+```py
+def get_cameras_that_are_not_in_network(network_cameras : list, database_cameras : list):
+    result_camera_list = []
+    for database_camera in database_cameras:
+        flag = False
+        for network_camera in network_cameras:
+            if network_camera == database_camera[1]:
+                flag = True
+                break
+        if not flag:
+            result_camera_list.append(database_camera)
+```
+
+##### 1.5 : Adapatation de la base de données
+
+Dans la classe `DatabaseClient` j'ai ajouté les fonctions `deleteCamerasFromNetwork()` ainsi que `addCamerasToNetwork()`
+
+```py
+def deleteCamerasFromNetwork(self, cameras : list, idNetwork : int):
+    try:
+        for camera in cameras:
+            self.cursor.execute("DELETE FROM Cameras WHERE idCamera = %s AND idNetwork = %s", (camera, idNetwork,))
+            self.dbConnexion.commit()
+        return True, "Caméras supprimées du réseau avec succès."
+    except Exception as e:
+        print(f"Erreur lors de la suppression des caméras du réseau : {e}")
+        return False, f"Erreur lors de la suppression des caméras du réseau : {e}"
+def addCamerasToNetwork(self, cameras : list, idNetwork : int):
+    try:
+        for camera in cameras:
+            self.cursor.execute("INSERT INTO Cameras (ip, idNetwork, JWT) VALUES(%s, %s, %s);", (camera['ip'], idNetwork, camera['token']))
+            self.dbConnexion.commit()
+        return True, "Caméras ajoutées au réseau avec succès."
+    except Exception as e:
+        print(f"Erreur lors de l'ajout des caméras au réseau : {e}")
+        return False, f"Erreur lors de l'ajout des caméras au réseau : {e}"
+```
+
+Ces fonctions sont ensuite appelés par la roule :
+
+```py
+self.db_client.addCamerasToNetwork(cameras_to_add, networkId)
+self.db_client.deleteCamerasFromNetwork(cameras_to_remove, networkId)
+```
+
+##### 1.6 : Retour des nouvelles cameras dans la réponse
+Je retourne simplement la liste des cameras appartenant au network.
+
+```py
+return jsonify(self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)), 201
+```
+
+##### 1.7 : Faire l'appel vers l'API depuis le client
+
+Dans la classe `ServerClient`, je crée la fonction `update_camera_list` qui me permet de faire l'appel vers le endpoint et de créer dynamiquement les objets `Camera`.
+
+```py
+def update_camera_list(self):
+    if not self.server_ip:
+        return False
+    
+    print(ServerClient.get_netowk_from_ip(self.server_ip))
+    
+    params = {
+        "token": self.API_token,
+        "ip": ServerClient.get_netowk_from_ip(self.server_ip),
+        "subnetMask": 24
+    }
+    
+    endpoint_url = f"{self.server_url}/update_camera_list"
+    response = requests.get(endpoint_url, params=params)
+    if response.status_code == 201:
+        response_data = response.content.decode('utf-8')
+        cameras_data = json.loads(response_data)
+        cameras = []
+        for camera in cameras_data:
+            cameras.append(Camera(camera[0],camera[1],camera[2],camera[3],camera[4],camera[5],camera[6]))
+        return True, cameras
+    else:
+        return False, response
+```
+
+Cette fonction est appelée de façon asyncrone depuis la vue quand le bouton `update_camera_list_button` est appuyé.
+
+```py
+def update_cameras_list(self):
+    Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'text', self.TEXT_LOADING_CAMERA))
+    self.ask_camera_update_thread = threading.Thread(target=self.ask_camera_update)
+    self.ask_camera_update_thread.start()
+    
+
+def ask_camera_update(self):
+    result, response = self.server_client.update_camera_list()
+```
+
+```
+Button:
+    id: update_cameras_list_button
+    text: "Mettre à jour la liste des cameras"
+    disabled: True
+    on_release: root.update_cameras_list()
+```
+
+##### 1.8 : Désactiver les autres input
+
+Je crée une fonction `change_all_view_input` qui me permet de définir l'état des input en fonction du booléen passé dans le paramètre.
+
+```py
+def change_all_view_input_state(self, viewDisabled : bool):
+    self.ids.cameras_spinner.disabled = viewDisabled
+    self.ids.update_cameras_list_button.disabled = viewDisabled
+    self.ids.position_slider.disabled = viewDisabled
+    self.ids.walls_spinner.disabled = viewDisabled
+    self.ids.update_camera_button.disabled = viewDisabled
+```
+
+##### 1.9 : Interpréter les données
+
+Dans la fonction `update_camera_list` dans la classe `ServeurClient`. Je fais en sorte que si je reçois une réponse **201** de récupérer les valeurs de la réponse en les stockant dans des objets `Camera` que je retourne.
+
+```py
+if response.status_code == 201
+    response_data = response.content.decode('utf-8')
+    cameras_data = json.loads(response_data
+    cameras = []
+    for camera in cameras_data
+        cameras.append(Camera(camera[0],camera[1],camera[2],camera[3],camera[4],camera[5],camera[6])
+    return True, cameras
+else:
+    return False, response
+```
+
+Du côté de la vue, je récupère unitquement les ip pour les afficher.
+
+```py
+
+def ask_camera_update(self):
+    result, response = self.server_client.update_camera_list()
+    print(response)
+    
+    cameras_ips = []
+    if result:
+        for camera in response:
+            cameras_ips.append(str(camera.ip))
+        if len(cameras_ips) < 1:
+            Clock.schedule_once(lambda dt: setattr(self.idscameras_spinner, 'values', []))
+                Clock.schedule_once(lambda dt: setattr(self.idscameras_spinner, 'text', self.TEXT_NO_CAMERA_FOUND))
+                Clock.schedule_once(lambda dt: setattr(self.idscameras_spinner, 'disabled', True))
+            else:
+            Clock.schedule_once(lambda dt: setattr(self.idscameras_spinner, 'values', cameras_ips))
+                Clock.schedule_once(lambda dt: setattr(self.idscameras_spinner, 'text', self.TEXT_CAMERA_FOUND))
+                Clock.schedule_once(lambda dt: setattr(self.idscameras_spinner, 'disabled', False))
+        
+    self.ids.update_cameras_list_button.disabled = False
+```

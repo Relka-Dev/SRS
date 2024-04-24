@@ -205,6 +205,36 @@ class ServerClient:
             return True, cameras
         else:
             return False, response
+        
+    def update_camera_list(self):
+
+        if not self.server_ip:
+            return False
+        
+        print(ServerClient.get_netowk_from_ip(self.server_ip))
+        
+        params = {
+            "token": self.API_token,
+            "ip": ServerClient.get_netowk_from_ip(self.server_ip),
+            "subnetMask": 24
+        }
+        
+        endpoint_url = f"{self.server_url}/update_camera_list"
+        response = requests.get(endpoint_url, params=params)
+
+        if response.status_code == 201:
+
+            response_data = response.content.decode('utf-8')
+            cameras_data = json.loads(response_data)
+
+            cameras = []
+            for camera in cameras_data:
+
+                cameras.append(Camera(camera[0],camera[1],camera[2],camera[3],camera[4],camera[5],camera[6]))
+
+            return True, cameras
+        else:
+            return False, response
 
         
     @staticmethod

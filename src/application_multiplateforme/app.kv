@@ -308,6 +308,7 @@ WindowManager:
                     disabled: True
                     bold: True
 
+
 <CamerasManagementWindow>:
     name: "camerasManagement"
 
@@ -339,7 +340,7 @@ WindowManager:
                 text: "Recherche des cameras en cours..."
                 disabled: True
                 values: ["Fonction 1", "Fonction 2", "Fonction 3"]
-                on_text: root.camera_changed()
+                on_text: root.camera_changed(self.text)
             
             Button:
                 id: update_cameras_list_button
@@ -366,7 +367,7 @@ WindowManager:
                 text: "Sélectionnez un mur"
                 values: ["Fonction 1", "Fonction 2", "Fonction 3"]
                 disabled: True
-                on_text: root.camera_changed()
+                on_text: root.camera_changed(cameras_spinner.text)
             
             Button:
                 id: update_camera_button
@@ -375,8 +376,3 @@ WindowManager:
                 on_release: root.update_camera()
                 disabled: True
                 bold: True
-
-            
-
-        
-

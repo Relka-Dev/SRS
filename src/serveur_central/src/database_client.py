@@ -277,6 +277,26 @@ class DatabaseClient:
         except Exception as e:
             print(f"Error: {e}")
             return False
+    
+    def deleteCamerasFromNetwork(self, cameras : list, idNetwork : int):
+        try:
+            for camera in cameras:
+                self.cursor.execute("DELETE FROM Cameras WHERE idCamera = %s AND idNetwork = %s", (camera, idNetwork,))
+                self.dbConnexion.commit()
+            return True, "Caméras supprimées du réseau avec succès."
+        except Exception as e:
+            print(f"Erreur lors de la suppression des caméras du réseau : {e}")
+            return False, f"Erreur lors de la suppression des caméras du réseau : {e}"
+
+    def addCamerasToNetwork(self, cameras : list, idNetwork : int):
+        try:
+            for camera in cameras:
+                self.cursor.execute("INSERT INTO Cameras (ip, idNetwork, JWT) VALUES(%s, %s, %s);", (camera['ip'], idNetwork, camera['token']))
+                self.dbConnexion.commit()
+            return True, "Caméras ajoutées au réseau avec succès."
+        except Exception as e:
+            print(f"Erreur lors de l'ajout des caméras au réseau : {e}")
+            return False, f"Erreur lors de l'ajout des caméras au réseau : {e}"
 
     
     

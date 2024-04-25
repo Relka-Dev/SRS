@@ -3030,3 +3030,6 @@ Une fois le bouton **Mettre à jour la camera** appuyé, les données sont envoy
 ![](./ressources/images/updateCamera2_app.png)  
 ![](./ressources/images/updateCamera2_bdd.png)
 
+### Conslusion
+
+J'ai pu terminer mes objectifs fixés pour la journée. Le projet avance bien, il faut juste que je continue à mettre en place mes cameras pour enfin pourvoir effectuer mes tests. Demain, je vais continuer à mettre en place les serveur sur les cameras wifi, pendant l'installation, je vais faire le crud sur les utilisateurs.

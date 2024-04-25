@@ -227,7 +227,7 @@ class ServeurCentral:
         # Vérification si la durée de vie des JWT des cameras est dépassée
         if self.db_client.areTheCamerasInTheNetworkInNeedOfAnUpdate(networkId):
             for camera in cameras:
-                self.db_client.updateCameraToken(self.db_client.getByIdCameras(camera[0]), self.cameraServerClient.getCameraToken(camera[0]))
+                self.db_client.updateCameraToken(self.db_client.getByIdCameras(camera[0]), self.cameraServerClient.getCameraToken(camera[1]))
                 self.db_client.refreshNetworkTimestamp(networkId)
         
         return jsonify(self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)), 201
@@ -277,7 +277,7 @@ class ServeurCentral:
         if not idCamera or not idNetwork or not positionX or not idWall:
             return jsonify({'erreur': 'Paramètres manquants, veuillez fournir idCamera, idNetwork, positionX et idWall'}), 400
     
-        result, message = self.db_client.updateCamera(idCamera, idNetwork, positionX, idWall)
+        result, message = self.db_client.updateCameraByIdCameraAndIdNetwork(idCamera, idNetwork, positionX, idWall)
     
         if result:
             return jsonify({'message': message}), 200

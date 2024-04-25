@@ -4,10 +4,13 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 import threading
 
 from Classes.camera import Camera
+from Classes.wall import Wall
 
 class CamerasManagementWindow(Screen):
     walls = []
     cameras = []
+    selected_camera = None
+    selected_wall = None
 
     TEXT_NO_CAMERA_FOUND = "Aucune camera trouvée sur votre réseau"
     TEXT_CAMERA_FOUND = "Veuillez séléctionner une camera"
@@ -27,31 +30,87 @@ class CamerasManagementWindow(Screen):
         result, response = self.server_client.get_walls()
 
         if result:
-            for data in response:
-                self.walls.append(data[1])
-            Clock.schedule_once(lambda dt: setattr(self.ids.walls_spinner, 'values', self.walls))
+            self.walls = response
+            wall_names = [wall.wallName for wall in self.walls]
+            Clock.schedule_once(lambda dt: setattr(self.ids.walls_spinner, 'values', wall_names))
+        else:
+            Clock.schedule_once(lambda dt: setattr(self.ids.walls_spinner, 'values', []))
+            Clock.schedule_once(lambda dt: setattr(self.ids.walls_spinner, 'text', "Aucun mur trouvé"))
+            Clock.schedule_once(lambda dt: setattr(self.ids.walls_spinner, 'disabled', True))
     
     def get_cameras(self):
         result, response = self.server_client.get_cameras()
-        
-        cameras_ips = []
-        if result:
-            for camera in response:
-                cameras_ips.append(str(camera.ip))
 
-            if len(cameras_ips) < 1:
+        camera_details = []
+        if result:
+            self.cameras = response
+            for camera in response:
+                display_text = f"IP: {camera.ip} - Wall: {camera.idWall}"
+                camera_details.append(display_text)
+
+            if not camera_details:
                 Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'values', []))
                 Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'text', self.TEXT_NO_CAMERA_FOUND))
                 Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'disabled', True))
             else:
-                Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'values', cameras_ips))
+                Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'values', camera_details))
                 Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'text', self.TEXT_CAMERA_FOUND))
                 Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'disabled', False))
+        else:
+            Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'values', []))
+            Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'text', self.TEXT_NO_CAMERA_FOUND))
+            Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'disabled', True))
         
         self.ids.update_cameras_list_button.disabled = False
+
+    def wall_changed(self, wall_name):
+        selected_wall = next((wall for wall in self.walls if wall.wallName == wall_name), None)
+        if selected_wall:
+            self.selected_wall = selected_wall
+            print(f"Selected wall: {self.selected_wall.wallName}")
+        else:
+            self.selected_wall = None
+            print("No wall matched the selection or no wall selected.")
+
+    def get_wall_names(self):
+        return [wall.wallName for wall in self.walls]
+
+
         
     def camera_changed(self, input_text):
-        self.change_all_view_input_state(not (input_text != self.TEXT_NO_CAMERA_FOUND and input_text != self.TEXT_CAMERA_FOUND and input_text != self.TEXT_LOADING_CAMERA))
+        if input_text in [self.TEXT_NO_CAMERA_FOUND, self.TEXT_CAMERA_FOUND, self.TEXT_LOADING_CAMERA]:
+          self.change_all_view_input_state(True)
+        else:
+          self.change_all_view_input_state(False)
+          camera_ip = input_text.split(" - ")[0].replace("IP: ", "").strip()
+
+          for camera in self.cameras:
+              if camera.ip == camera_ip:
+                  self.selected_camera = camera
+                  break
+               
+          if self.selected_camera:
+              print("Position x :" + str(self.selected_camera.positionX))
+              self.ids.position_slider.value = self.selected_camera.positionX
+
+              # Update wall selection based on the selected camera's wall ID
+              matching_wall = next((wall for wall in self.walls if wall.idWall == self.selected_camera.idWall), None)
+              if matching_wall:
+                  self.selected_wall = matching_wall
+                  self.ids.walls_spinner.text = matching_wall.wallName
+              else:
+                  print("No matching wall found for the selected camera.")
+
+
+    def get_selected_camera_positionX(self):
+        if self.selected_camera:
+            return self.selected_camera.positionX
+        return 0
+
+    def update_positionX(self, new_position):
+        if self.selected_camera:
+            self.selected_camera.positionX = new_position
+
 
     def change_all_view_input_state(self, viewDisabled : bool):
         self.ids.cameras_spinner.disabled = viewDisabled
@@ -70,24 +129,40 @@ class CamerasManagementWindow(Screen):
     
     def ask_camera_update(self):
         result, response = self.server_client.update_camera_list()
-
-        print(response)
-        
-        cameras_ips = []
+        camera_details = []
         if result:
+            self.cameras = response
             for camera in response:
-                cameras_ips.append(str(camera.ip))
+                display_text = f"IP: {camera.ip} - Wall: {camera.idWall}"
+                camera_details.append(display_text)
 
-            if len(cameras_ips) < 1:
+            if not camera_details:
                 Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'values', []))
                 Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'text', self.TEXT_NO_CAMERA_FOUND))
                 Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'disabled', True))
             else:
-                Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'values', cameras_ips))
+                Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'values', camera_details))
                 Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'text', self.TEXT_CAMERA_FOUND))
                 Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'disabled', False))
+        else:
+            Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'values', []))
+            Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'text', self.TEXT_NO_CAMERA_FOUND))
+            Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'disabled', True))
         
         self.ids.update_cameras_list_button.disabled = False
 
     def update_camera(self):
-        pass
+        if self.selected_camera and self.selected_wall:
+            idCamera = self.selected_camera.idCamera
+            idNetwork = self.selected_camera.idNetwork
+            positionX = self.ids.position_slider.value
+            idWall = self.selected_wall.idWall
+
+            result, response = self.server_client.update_camera(idCamera, idNetwork, positionX, idWall)
+            if result:
+                print("Camera updated successfully:", response)
+            else:
+                print("Failed to update camera:", response)
+        else:
+            print("No camera or wall selected. Please select both before updating.")
+

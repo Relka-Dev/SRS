@@ -8,18 +8,23 @@ WindowManager:
     AddUserWindow:
     CamerasManagementWindow:
 
+
 <MainWindow>:
     name: "main"
     
-    GridLayout:
-        cols: 1
-
+    FloatLayout:
         GridLayout:
             cols: 3
+            size_hint: 1, 0.1
+            pos_hint: {'top': 1}
 
-            Label:
-                id: ip_server_label
-            
+            Button:
+                text: "Déconnexion"
+                disabled: True
+                on_release:
+                    app.root.current = "previous_page"
+                    root.manager.transition.direction = "right"
+
             Label:
                 text: "SRS : Page Principale"
                 bold: True
@@ -29,9 +34,10 @@ WindowManager:
         
         GridLayout:
             cols: 1
+            size_hint_y: 0.9
 
             Button:
-                id: retry_button
+                id: face_management_button
                 size_hint: 0.5, 0.5
                 font_size: '15sp' 
                 text: "Gestion des données faciales"
@@ -39,17 +45,20 @@ WindowManager:
                     app.root.current = "navigationFaceManagement"
                     root.manager.transition.direction = "left"
         
-        GridLayout:
-            cols: 1
-
             Button:
-                id: retry_button
+                id: wifi_cameras_button
                 size_hint: 0.5, 0.5
-                font_size: '15sp' 
+                font_size: '15sp'
                 text: "Gestion des cameras wifi"
                 on_release:
                     app.root.current = "camerasManagement"
                     root.manager.transition.direction = "left"
+
+            Button:
+                size_hint: 0.5, 0.5
+                font_size: '15sp'
+                text: "Reconnaissance Spaciale"
+                disabled: True
             
             
 
@@ -223,34 +232,45 @@ WindowManager:
                 disabled: True
                 on_release: root.login()
 
-<NavigationFaceManagementWindow>
+<NavigationFaceManagementWindow>:
     name: "navigationFaceManagement"
-    GridLayout:
-        cols: 1
+
+    FloatLayout:
         GridLayout:
-            cols: 2
+            cols: 3
+            size_hint: 1, 0.1
+            pos_hint: {'top': 1}
 
             Button:
-                text: "Ajouter une personnes"
-                bold: True
+                text: "<- Retour"
                 on_release:
-                    app.root.current = "addUser" 
-                    root.manager.transition.direction = "left"
+                    app.root.current = "main"
+                    root.manager.transition.direction = "right"
 
-            Button:
-                text: "Supprimer / Modifier une personne"
+            Label:
+                text: "Gestion des données faciales"
                 bold: True
-                disabled: True
-            
 
+            Image:
+                source: 'Ressources/logo.png'
+        
         GridLayout:
             cols: 1
+            size_hint_y: 0.9
+            GridLayout:
+                cols: 2
 
-            Button:
-                text: "Retourner au menu principal"       
-                on_release:
-                    app.root.current = "main" 
-                    root.manager.transition.direction = "right"
+                Button:
+                    text: "Ajouter une personne"
+                    bold: True
+                    on_release:
+                        app.root.current = "addUser" 
+                        root.manager.transition.direction = "left"
+
+                Button:
+                    text: "Supprimer / Modifier une personne"
+                    bold: True
+                    disabled: True
 
 <AddUserWindow>:
     name: "addUser"
@@ -339,7 +359,6 @@ WindowManager:
                 id: cameras_spinner
                 text: "Recherche des cameras en cours..."
                 disabled: True
-                values: ["Fonction 1", "Fonction 2", "Fonction 3"]
                 on_text: root.camera_changed(self.text)
             
             Button:
@@ -356,18 +375,22 @@ WindowManager:
 
                 Slider:
                     id: position_slider
-                    disabled: True
                     min: 0
                     max: 100
                     step: 1
+                    value: root.get_selected_camera_positionX()
+                    disabled: True
                     orientation: 'horizontal'
+                    on_value: root.update_positionX(self.value)
+
 
             Spinner:
                 id: walls_spinner
-                text: "Sélectionnez un mur"
-                values: ["Fonction 1", "Fonction 2", "Fonction 3"]
+                text: "Select a Wall"
                 disabled: True
-                on_text: root.camera_changed(cameras_spinner.text)
+                values: root.get_wall_names()
+                on_text: root.wall_changed(self.text)
+
             
             Button:
                 id: update_camera_button

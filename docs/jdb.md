@@ -2710,3 +2710,323 @@ Comme vous pouvez le voir, j'entre les données dans Postman et les modification
 
 ### Conclusion
 Lors de l'évaluation intermédiaire j'ai pu discuter sur différents points avec mes suiveurs. Dans l'absolut je suis sur la bonne route cependant, je dois absolument réaliser des tests fonctionnels et les mettre à jour régulièrement. De plus, je dois réaliser plus de commit. Pour conclure sur cette journée, j'ai l'impression d'avoir bien avancé. L'intégration de l'algorithmie a été interessante. Demain je vais continuer la mise à jour des caméras en espérant avoir terminé la matinée pour ensuite me concentrer sur les aspects manquants de ma documentation.
+
+## 25.04.2024
+
+#### Bilan de la veille
+Hier était le jour de l'évalutation intermédiaire, j'ai bien pris note des conseils qui m'ont été apportés. Je dois réaliser un plan de test et être plus à jour sur mon git.
+
+#### Planification du jour
+Aujourd'hui je vais faire en sorte de travailler en parallèle sur le projet et sur mes cameras wifi. Je dois abosulment faire en sorte que les serveurs fonctionnent. Du côté du projet, je vais implémenter la modification des cameras. Si j'ai le temps ou si j'ai besoin de faire autre chose, je vais continuer ma maquette ou mettre à jour ma plannification effective.
+
+### Installation des cameras
+
+Je pensais avoir compris l'installation, cependant, vu l'environnement assez limitié au départ de mes cameras-wifi, il y a tout de même une liste assez importante de commandes à exécuter.
+
+### Installation des dépendances necessaires
+
+On commence par mettre à jour le système
+```sh
+sudo apt update
+sudo apt upgrade
+```
+
+Créer l'environnement virtuel
+```sh
+python3 -m venv venv
+```
+
+Activer l'environnement virtuel
+```sh
+source venv/bin/activate
+```
+
+Ces librairies permettent de faire fonctionner la librairie [face-recognition](https://pypi.org/project/face-recognition/)
+
+```sh
+sudo apt install build-essential cmake
+sudo apt install libopenblas-dev liblapack-dev libjpeg-dev libpng-dev libtiff-dev libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libxine2-dev libtbb-dev libeigen3-dev libtesseract-dev
+sudo apt install python3-dev python3-numpy python3-pip
+```
+
+Installation de la librairie [face-recognition](https://pypi.org/project/face-recognition/)
+
+```sh
+pip install face-recognition
+```
+
+### 1 : Affichage des données des caméras
+
+Quand j'appelle le endpoint `cameras` ou `update_camera_list`, le serveur retourne une liste de camera. Cette liste est ensuite parsée en objets `Cameras`. Pour l'instant je n'affiche que les ip. Il faut que j'interprète le reste des données.
+
+#### 1.1 : Mise à jour de l'objet Camera (application multiplateforme  : camera.py)
+
+Afin de pour accèder aux données, je crée des getter setters sur toutes les varialbles d'instance.
+
+```py
+class Camera:
+    def __init__(self, idCamera, ip, idNetwork, jwt, positionX, idWall, macAddress):
+        self._idCamera = idCamera
+        self._ip = ip
+        self._idNetwork = idNetwork
+        self._jwt = jwt
+        self._positionX = positionX
+        self._idWall = idWall
+        self._macAddress = macAddress
+
+    @property
+    def idCamera(self):
+        """Getter for the camera ID"""
+        return self._idCamera
+
+    @idCamera.setter
+    def idCamera(self, value):
+        """Setter for the camera ID"""
+        self._idCamera = value
+
+    @property
+    def ip(self):
+        """Getter for the IP address"""
+        return self._ip
+
+    @ip.setter
+    def ip(self, new_ip):
+        """Setter for the IP address"""
+        # Add IP validation if necessary
+        self._ip = new_ip
+
+    @property
+    def idNetwork(self):
+        """Getter for the network ID"""
+        return self._idNetwork
+
+    @idNetwork.setter
+    def idNetwork(self, value):
+        """Setter for the network ID"""
+        self._idNetwork = value
+
+    @property
+    def jwt(self):
+        """Getter for the JWT token"""
+        return self._jwt
+
+    @jwt.setter
+    def jwt(self, new_jwt):
+        """Setter for the JWT token"""
+        self._jwt = new_jwt
+
+    @property
+    def positionX(self):
+        """Getter for the X position"""
+        return self._positionX
+
+    @positionX.setter
+    def positionX(self, value):
+        """Setter for the X position"""
+        self._positionX = value
+
+    @property
+    def idWall(self):
+        """Getter for the wall ID"""
+        return self._idWall
+
+    @idWall.setter
+    def idWall(self, value):
+        """Setter for the wall ID"""
+        self._idWall = value
+
+    @property
+    def macAddress(self):
+        """Getter for the MAC address"""
+        return self._macAddress
+
+    @macAddress.setter
+    def macAddress(self, value):
+        """Setter for the MAC address"""
+        self._macAddress = value
+```
+
+#### 1.2 : Création de l'objet wall (application multiplateforme  : wall.py)
+
+Afin de simplifier l'intégration de la table `ẁalls` je crée un objet wall.
+
+```py
+class Wall:
+    def __init__(self, idWall, wallName):
+        self._idWall = idWall
+        self._wallName = wallName
+
+    @property
+    def idWall(self):
+        """Getter for the wall ID"""
+        return self._idWall
+
+    @idWall.setter
+    def idWall(self, value):
+        """Setter for the wall ID"""
+        self._idWall = value
+
+    @property
+    def wallName(self):
+        """Getter for the wall name"""
+        return self._wallName
+
+    @wallName.setter
+    def wallName(self, value):
+        """Setter for the wall name"""
+        self._wallName = value
+
+```
+
+#### 1.3 : Adaptation la récupération des mur (application multiplateforme  : server_client.py)
+
+J'ai fais en sorte que lors de la récupération des murs, on crée dynamiquement l'objet.
+
+```py
+    def get_walls(self):
+        """Récupérer la liste des murs depuis le serveur."""
+        if not self.server_ip:
+            return False, "IP du serveur manquante"
+        
+        params = {"token": self.API_token}
+        endpoint_url = f"{self.server_url}/walls"
+        response = requests.get(endpoint_url, params=params)
+        
+        if response.status_code == 200:
+            walls_data = response.json()
+            walls = [Wall(wall[0], wall[1]) for wall in walls_data]
+            return True, walls
+        else:
+            return False, response.json()
+```
+
+#### 1.4 : Adaptation de la vue pour l'affichage des murs (application multiplateforme  : camera_management_window.py et app.kv)
+
+Pour adapter le code à l'utilisation de l'objet wall, je stocke les noms de chaque mur dans la variable `wall_name` et attribue cette liste au spinner.
+
+```py
+def get_walls(self):
+    result, response = self.server_client.get_walls()
+    if result:
+        self.walls = response
+        wall_names = [wall.wallName for wall in self.walls]
+        Clock.schedule_once(lambda dt: setattr(self.ids.walls_spinner, 'values', wall_names))
+    else:
+        Clock.schedule_once(lambda dt: setattr(self.ids.walls_spinner, 'values', []))
+        Clock.schedule_once(lambda dt: setattr(self.ids.walls_spinner, 'text', "Aucun mur trouvé"))
+        Clock.schedule_once(lambda dt: setattr(self.ids.walls_spinner, 'disabled', True))
+```
+
+```
+Spinner:
+    id: walls_spinner
+    text: "Select a Wall"
+    values: root.get_wall_names()
+    on_text: root.wall_changed(self.text)
+```
+
+Ensuite, je crée une fonction `wall_changed` qui est appelé lors d'un changement dans le spinner. Avec cela je crée une variable d'instance `selected_wall` permettant de savoir quel mur est séléctionnée.
+
+```py
+selected_wall = None
+
+[...]
+
+def wall_changed(self, wall_name):
+    selected_wall = next((wall for wall in self.walls if wall.wallName == wall_name), None)
+    if selected_wall:
+        self.selected_wall = selected_wall
+        print(f"Selected wall: {self.selected_wall.wallName}")
+    else:
+        self.selected_wall = None
+        print("No wall matched the selection or no wall selected.")
+```
+
+#### 1.5 : Affichage de la position X (application multiplateforme : camera_management_window.py et app.kv)
+
+Je crée une fonction qui permet de récupérer la propriété positionX de la camera actuelle séléctionnée.
+
+```py
+def get_selected_camera_positionX(self):
+    if self.selected_camera:
+        return self.selected_camera.positionX
+    return 0
+```
+
+```
+Slider:
+    id: position_slider
+    min: 0
+    max: 100
+    step: 1
+    value: root.get_selected_camera_positionX()
+    disabled: True
+    orientation: 'horizontal'
+```
+
+### 2 : Mise à jour des données
+
+#### 2.1 : Récupération des données (application multiplateforme : camera_management.py)
+
+Je commence par récupérer les données depuis les différents inputs. Une fois cela fait, les données sont envoyé vers la fonction `update_camera` de la classe `server_client`.
+
+```py
+def update_camera(self):
+    if self.selected_camera and self.selected_wall:
+        idCamera = self.selected_camera.idCamera
+        idNetwork = self.selected_camera.idNetwork
+        positionX = self.ids.position_slider.value
+        idWall = self.selected_wall.idWall
+        result, response = self.server_client.update_camera(idCamera, idNetwork, positionX, idWall)
+        if result:
+            print("Camera updated successfully:", response)
+        else:
+            print("Failed to update camera:", response)
+    else:
+        print("No camera or wall selected. Please select both before updating.")
+```
+
+#### 2.2 Appel du endpoint (application multiplateforme : server_client)
+
+Depuis le client du serveur, l'endpoint d'update est appelé. Les différentes données sont passés dans les paramètres puis l'endpoint est appelé.
+```py
+
+def update_camera(self, idCamera, idNetwork, positionX, idWall):
+    if not self.server_ip:
+        return False, "IP du serveur manquante"
+    params = {
+        "token": self.API_token,
+        "idCamera": idCamera,
+        "idNetwork": idNetwork,
+        "positionX": positionX,
+        "idWall": idWall
+    }
+    endpoint_url = f"{self.server_url}/update_camera"
+    response = requests.put(endpoint_url, params=params)
+    if response.status_code == 200:
+        return True, response.json()
+    else:
+        return False, response.json()
+```
+
+#### 2.3 Résultat
+
+##### Séléction d'une camera
+En séléctionnant une des cameras dans le spinner, les données de cette dernière sont ajoutés dans le formulaire. On peut voir que les données correspondent à celles dans la base de données.
+
+- Position relative au mur : 27
+- Mur d'appartenance : West
+
+![](./ressources/images/updateCamera1_app.png)  
+![](./ressources/images/updateCamera1_bdd.png)
+
+##### Pression du bouton de mise à jour
+
+Une fois le bouton **Mettre à jour la camera** appuyé, les données sont envoyées dans la base.
+
+- Position relative au mur : 70
+- Mur d'appartenance : South
+
+![](./ressources/images/updateCamera2_app.png)  
+![](./ressources/images/updateCamera2_bdd.png)
+

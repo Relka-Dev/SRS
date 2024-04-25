@@ -5,6 +5,7 @@ import json
 import socket
 
 from Classes.camera import Camera
+from Classes.wall import Wall
 
 class ServerClient:
     __SERVER_PORT = 4299
@@ -162,26 +163,24 @@ class ServerClient:
             return False, response
         
     def get_walls(self):
+        """Récupérer la liste des murs depuis le serveur."""
         if not self.server_ip:
-            return False
+            return False, "IP du serveur manquante"
         
-        params = {
-            "token": self.API_token
-        }
-        
+        params = {"token": self.API_token}
         endpoint_url = f"{self.server_url}/walls"
         response = requests.get(endpoint_url, params=params)
-
+        
         if response.status_code == 200:
-            return True, response.json()
+            walls_data = response.json()
+            walls = [Wall(wall[0], wall[1]) for wall in walls_data]
+            return True, walls
         else:
-            return False, response
+            return False, response.json()
         
     def get_cameras(self):
         if not self.server_ip:
             return False
-        
-        print(ServerClient.get_netowk_from_ip(self.server_ip))
         
         params = {
             "token": self.API_token,
@@ -205,6 +204,27 @@ class ServerClient:
             return True, cameras
         else:
             return False, response
+    
+    def update_camera(self, idCamera, idNetwork, positionX, idWall):
+        if not self.server_ip:
+            return False, "IP du serveur manquante"
+
+        params = {
+            "token": self.API_token,
+            "idCamera": idCamera,
+            "idNetwork": idNetwork,
+            "positionX": positionX,
+            "idWall": idWall
+        }
+
+        endpoint_url = f"{self.server_url}/update_camera"
+        response = requests.put(endpoint_url, params=params)
+
+        if response.status_code == 200:
+            return True, response.json()
+        else:
+            return False, response.json()
+
         
     def update_camera_list(self):
 

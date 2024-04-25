@@ -1,6 +1,7 @@
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager
 from kivy.lang import Builder
+from kivy.utils import get_color_from_hex
 
 from Pages.main_window import MainWindow
 from Pages.server_research_window import ServerResearchWindow
@@ -18,7 +19,7 @@ class WindowManager(ScreenManager):
     pass
 
 # Chargement du fichier KV
-kv = Builder.load_file("app.kv")
+
 
 # Définition de l'application principale
 class MyMainApp(App):
@@ -26,8 +27,11 @@ class MyMainApp(App):
     server_client = None
 
     def build(self):
+
+        kv = Builder.load_file("app.kv")
+
         self.title = 'Système de Reconnaissance Spaciale'
-        # Retourne l'interface utilisateur chargée à partir du fichier app.kv
+
         return kv
 
     def set_server_ip(self, server_ip : str):

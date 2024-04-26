@@ -56,6 +56,9 @@ class ServeurCentral:
         self.app.add_url_rule('/cameras', 'cameras', self.cameras, methods=['GET'])
         self.app.add_url_rule('/update_camera_list', 'update_camera_list', self.update_camera_list, methods=['GET'])
         self.app.add_url_rule('/update_camera', 'update_camera', self.update_camera, methods=['PUT'])
+        self.app.add_url_rule('/update_user', 'update_user', self.update_user, methods=['PUT'])
+        self.app.add_url_rule('/delete_user', 'delete_user', self.delete_user, methods=['DELETE'])
+        self.app.add_url_rule('/get_users', 'get_users', self.get_users, methods=['GET'])
 
 
 
@@ -310,6 +313,69 @@ class ServeurCentral:
                     break
             if not flag:
                 result_camera_list.append(database_camera)
+
+    @JwtLibrary.API_token_required
+    def update_user(self):
+        data = request.get_json()  # Automatically parses JSON data
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        try:
+            data = request.json
+            user_id = data.get('idUser')
+            new_username = data.get('username')
+            new_idPersonType = data.get('idPersonType')
+            new_encodings = data.get('encodings')
+
+            if not user_id:
+                return jsonify({'error': 'User ID is required'}), 400
+
+            update_data = {}
+            if new_username:
+                update_data['username'] = new_username
+            if new_idPersonType:
+                update_data['idPersonType'] = new_idPersonType
+            if new_encodings:
+                update_data['encodings'] = json.dumps(new_encodings)
+
+            if not update_data:
+                return jsonify({'error': 'No new data provided for update'}), 400
+
+            result, message = self.db_client.updateUser(user_id, update_data)
+            if result:
+                return jsonify({'message': message}), 200
+            else:
+                return jsonify({'error': message}), 400
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+        
+    @JwtLibrary.API_token_required
+    def get_users(self):
+        """
+        Retrieve user data from the database.
+        """
+        try:
+            users = self.db_client.getUsers()
+            return jsonify(users), 200
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+        
+    @JwtLibrary.API_token_required
+    def delete_user(self):
+        try:
+            user_id = request.args.get('idUser')
+            if not user_id:
+                return jsonify({'error': 'User ID is required'}), 400
+    
+            result, message = self.db_client.deleteUser(user_id)
+            if result:
+                return jsonify({'message': message}), 200
+            else:
+                return jsonify({'error': message}), 400
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+
     
     
     def intialise_network_with_cameras(self, networkip, subnetMask):

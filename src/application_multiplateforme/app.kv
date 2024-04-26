@@ -7,6 +7,7 @@ WindowManager:
     LoginWindow:
     AddUserWindow:
     CamerasManagementWindow:
+    UpdateUserWindow:
 
 
 <MainWindow>:
@@ -270,7 +271,9 @@ WindowManager:
                 Button:
                     text: "Supprimer / Modifier une personne"
                     bold: True
-                    disabled: True
+                    on_release:
+                        app.root.current = "updateUser" 
+                        root.manager.transition.direction = "left"
 
 <AddUserWindow>:
     name: "addUser"
@@ -300,6 +303,7 @@ WindowManager:
 
             Camera:
                 id: qrcam
+                play: False
                 resolution: (640, 480)
 
             GridLayout:
@@ -399,3 +403,85 @@ WindowManager:
                 on_release: root.update_camera()
                 disabled: True
                 bold: True
+
+<UpdateUserWindow>:
+    name: "updateUser"
+    
+    FloatLayout:
+        GridLayout:
+            cols: 3
+            size_hint: 1, 0.1
+            pos_hint: {'top': 1}
+
+            Button:
+                text: "<- Retour"
+                on_release:
+                    app.root.current = "navigationFaceManagement"
+                    root.manager.transition.direction = "right"
+
+            Label:
+                text: "SRS : Modification d'utilisateurs"
+                bold: True
+
+            Image:
+                source: 'Ressources/logo.png'
+        
+        GridLayout:
+            cols: 1
+            size_hint_y: 0.9
+
+            GridLayout:
+                cols: 1
+
+                Label:
+                    id: status_label
+                    text: "Veuillez remplir le formulaire"
+                    font_size: '24sp' 
+                    bold: True
+
+                Spinner:
+                    id: user_spinner
+                    text: "Recherche d'utilisateurs en cours..."
+                    disabled: True
+                    on_text: root.user_changed(self.text)
+                
+                TextInput:
+                    id: username_textInput
+                    disabled: True
+                    hint_text: "Nom de la personne"
+
+                Spinner:
+                    id: person_type_spinner
+                    text: ""
+                    disabled: True
+            
+            GridLayout:
+                cols: 1
+
+                Camera:
+                    play: False
+                    id: update_camera
+                    resolution: (640, 480)
+            
+            GridLayout:
+                cols: 1
+
+                Button:
+                    id: take_picture_button
+                    text: "Prendre une photo"
+                    disabled: True
+                    on_release: root.take_picture()
+                
+                Button:
+                    id: update_user_button
+                    text: "Modifier l'utilisateur"
+                    disabled: True
+                    on_release: root.update_user()
+                
+                Button:
+                    id: delete_user_button
+                    text: "Supprimer l'utilisateur"
+                    disabled: True
+                    on_release: root.show_delete_confirmation()
+                    background_color: (1, 0, 0, 1)
+                    background_normal: ''

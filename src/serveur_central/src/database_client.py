@@ -11,6 +11,7 @@ Version     : 0.1
 import mysql.connector
 from datetime import datetime, timedelta
 from network_scanner import NetworkScanner
+from flask import json
 
 class DatabaseClient:
     
@@ -306,6 +307,8 @@ class DatabaseClient:
         except Exception as e:
             print(f"Erreur lors de la mise à jour de la caméra : {e}")
             return False, f"Erreur lors de la mise à jour de la caméra : {e}"
+        
+    
 
     
     
@@ -313,6 +316,48 @@ class DatabaseClient:
         network = self.getNetwork(idNetwork)
 
         return DatabaseClient.isOlderThan24Hours(str(network[3]))
+    
+    def updateUser(self, user_id, update_data):
+        update_parts = ", ".join([f"{key} = %s" for key in update_data.keys()])
+        values = list(update_data.values())
+        values.append(user_id)
+        try:
+            self.cursor.execute(f"UPDATE Users SET {update_parts} WHERE idUser = %s", values)
+            self.dbConnexion.commit()
+            return True, "User updated successfully."
+        except Exception as e:
+            return False, str(e)
+    
+    def getUsers(self):
+        """
+        Retrieve all users from the database.
+        """
+        try:
+            self.cursor.execute("SELECT idUser, username, idPersonType, encodings FROM Users")
+            results = self.cursor.fetchall()
+            users = [
+                {
+                    'idUser': user[0],
+                    'username': user[1],
+                    'idPersonType': user[2],
+                    'encodings': json.loads(user[3]) if user[3] else None  # Load JSON string from database into Python list
+                }
+                for user in results
+            ]
+            return users
+        except Exception as e:
+            print(f"Error retrieving users: {e}")
+            raise
+        
+    def deleteUser(self, user_id):
+        try:
+            self.cursor.execute("DELETE FROM Users WHERE idUser = %s", (user_id,))
+            self.dbConnexion.commit()
+            return True, "User deleted successfully."
+        except Exception as e:
+            return False, str(e)
+
+
     
     @staticmethod
     def isOlderThan24Hours(timestamp_input):

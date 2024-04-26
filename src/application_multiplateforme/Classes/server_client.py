@@ -6,6 +6,7 @@ import socket
 
 from Classes.camera import Camera
 from Classes.wall import Wall
+from Classes.user import User
 
 class ServerClient:
     __SERVER_PORT = 4299
@@ -255,6 +256,41 @@ class ServerClient:
             return True, cameras
         else:
             return False, response
+        
+    
+    def get_users(self):
+        """
+        Fetches a list of all users from the server and creates User instances.
+        """
+        endpoint_url = f"{self.server_url}/get_users"
+        params = {"token": self.API_token}
+        response = requests.get(endpoint_url, params=params)
+
+        if response.status_code == 200:
+            users_data = response.json()
+            users = [User(user['idUser'], user['username'], user['idPersonType'], user['encodings']) for user in users_data]
+            return True, users
+        else:
+            error_message = response.json().get('error', 'Unexpected error occurred during user retrieval.')
+            return False, error_message
+    
+    def delete_user(self, user_id):
+        if not self.server_ip:
+            return False, "IP du serveur manquante"
+
+        endpoint_url = f"{self.server_url}/delete_user"
+        params = {
+            "token": self.API_token,
+            "idUser": user_id
+        }
+
+        response = requests.delete(endpoint_url, params=params)
+        if response.status_code == 200:
+            return True, response.json()
+        else:
+            return False, response.json().get('error', 'Failed to delete user')
+
+
 
         
     @staticmethod

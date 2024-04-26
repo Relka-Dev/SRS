@@ -3033,3 +3033,280 @@ Une fois le bouton **Mettre à jour la camera** appuyé, les données sont envoy
 ### Conslusion
 
 J'ai pu terminer mes objectifs fixés pour la journée. Le projet avance bien, il faut juste que je continue à mettre en place mes cameras pour enfin pourvoir effectuer mes tests. Demain, je vais continuer à mettre en place les serveur sur les cameras wifi, pendant l'installation, je vais faire le crud sur les utilisateurs.
+
+## 26.04.2024
+
+#### Bilan de la veille
+Hier j'ai travaillé sur la mise à jour des camera en parallèle de la mise en place des cameras wifi restantes.
+
+#### Planification du jour
+Pour commencer sur la lancée de hier, je vais continuer à travailler sur la mise en place des serveurs des cameras wifi, cela sera ma priorité aujourd'hui. Pendant les téléchargements assez long je vais me concetrer sur des aspects moins urgents de mon application comme la suite du crud des utilisateurs.
+
+
+### 1 : Installation des cameras
+
+#### 1.1 : Installation par docker (machine puissante)
+
+##### Mise à jour du système
+
+```sh
+sudo apt update
+sudo apt upgrade -y
+```
+
+##### Creation du builder pour l'architecture du Raspberry Zero W 2
+
+```sh
+docker buildx create --name mybuilder --use
+docker buildx inspect --bootstrap
+```
+
+##### Build l'image
+
+```sh
+docker buildx build --platform linux/arm64 -t face-recognition-app . --load
+```
+
+##### Envoi de l'exécutable vers la camera
+
+```sh
+docker save face-recognition-app | bzip2 | ssh pi@raspberrypi.local 'bunzip2 | docker load'
+```
+
+#### 1.2 : Installation sur le Raspberry
+
+##### Installation de docker (Si besoin)
+
+```py
+sudo apt update
+sudo apt install apt-transport-https ca-certificates curl gnupg2 software-properties-common
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+echo "deb [arch=armhf] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
+sudo apt update
+sudo apt install docker-ce
+```
+
+##### Démarrer l'image
+
+```sh
+docker run -p 4298:4298 face-recognition-app
+```
+
+### 2 : Modification / Suppression des données faciales
+
+#### 2.1 : Création de la maquette
+
+1. Un spinner permettant de choisir l'utilisateur à modifier.
+2. Input affichant le nom de l'utilisateur.
+3. Spinner de séléction de type de personnes.
+4. Retour de la camera.
+5. Bouton permettant de mettre en pause la video.
+6. Bouton qui permet de mettre à jour l'utilisateur.
+7. Bouton permettant de supprimer l'utilisateur.
+
+![](./ressources/images/maquette_update_user.jpg)
+
+#### 2.2 Création de la page
+
+En suivant ma maquette j'ai crée une interface. J'ai fais en sorte de séparer la grid en 3 parties : 
+
+1. Spinner utilisateur / text input nom / spinner types de personnes
+2. Camera
+3. Bouton pause / bouton modifier / bouton supprimer
+
+L'objectif de cette approche et de laisser le plus de place à la camera.  Je n'ai pas pu intégrer la camera de suite car j'ai un petit problème lors du démarrage de l'application si je l'utilise deux fois. Je vais résoudre le problème plus tard lors de l'intégration.
+
+##### Résultat
+
+![](./ressources/images/updateUserInterface.png)
+
+##### Code de l'interface (application multiplateforme : app.kv)
+
+```
+<UpdateUserWindow>:
+    name: "updateUser"
+    
+    FloatLayout:
+        GridLayout:
+            cols: 3
+            size_hint: 1, 0.1
+            pos_hint: {'top': 1}
+
+            Button:
+                text: "<- Retour"
+                on_release:
+                    app.root.current = "navigationFaceManagement"
+                    root.manager.transition.direction = "right"
+
+            Label:
+                text: "SRS : Modification d'utilisateurs"
+                bold: True
+
+            Image:
+                source: 'Ressources/logo.png'
+        
+        GridLayout:
+            cols: 1
+            size_hint_y: 0.9
+
+            GridLayout:
+                cols: 1
+
+                Spinner:
+                    id: user_spinner
+                    text: "Recherche d'utilisateurs en cours..."
+                    disabled: True
+                    on_text: root.user_changed(self.text)
+                
+                TextInput:
+                    id: username_textInput
+                    disabled: True
+                    hint_text: "Nom de la personne"
+
+                Spinner:
+                    id: person_type_spinner
+                    text: ""
+                    disabled: True
+            
+            GridLayout:
+                cols: 1
+
+                Camera:
+                    disabled: True
+                    id: qrcam
+                    resolution: (640, 480)
+            
+            GridLayout:
+                cols: 1
+
+                Button:
+                    id: take_picture_button
+                    text: "Prendre une photo"
+                    disabled: True
+                    on_release: root.take_picture()
+                
+                Button:
+                    id: update_user_button
+                    text: "Modifier l'utilisateur"
+                    disabled: True
+                    on_release: root.update_user()
+                
+                Button:
+                    id: delete_user_button
+                    text: "Supprimer l'utilisateur"
+                    disabled: True
+                    on_release: root.delete_user()
+                    background_color: (1, 0, 0, 1)
+                    background_normal: ''
+```
+
+#### 2.3 : Création de des routes (serveur central : app.py)
+
+```py
+self.app.add_url_rule('/update_user', 'update_user', self.update_user, methods=['PUT'])
+self.app.add_url_rule('/delete_user', 'delete_user', self.delete_user, methods=['DELETE'])
+```
+
+Pour les données, elles sont passés dans le body à la place des paramètres pour des question de place.  
+
+Une fois les données récupérée, elles sont passés dans une liste et envoyé vers le client de la base de données.
+
+```py
+@JwtLibrary.API_token_required
+    def update_user(self):
+        data = request.get_json()  # Automatically parses JSON data
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        try:
+            data = request.json
+            user_id = data.get('idUser')
+            new_username = data.get('username')
+            new_idPersonType = data.get('idPersonType')
+            new_encodings = data.get('encodings')
+
+            if not user_id:
+                return jsonify({'error': 'User ID is required'}), 400
+
+            update_data = {}
+            if new_username:
+                update_data['username'] = new_username
+            if new_idPersonType:
+                update_data['idPersonType'] = new_idPersonType
+            if new_encodings:
+                update_data['encodings'] = json.dumps(new_encodings)
+
+            if not update_data:
+                return jsonify({'error': 'No new data provided for update'}), 400
+
+            result, message = self.db_client.updateUser(user_id, update_data)
+            if result:
+                return jsonify({'message': message}), 200
+            else:
+                return jsonify({'error': message}), 400
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+```
+
+```py
+    @JwtLibrary.API_token_required
+    def delete_user(self):
+        try:
+            user_id = request.args.get('idUser')
+            if not user_id:
+                return jsonify({'error': 'User ID is required'}), 400
+    
+            result, message = self.db_client.deleteUser(user_id)
+            if result:
+                return jsonify({'message': message}), 200
+            else:
+                return jsonify({'error': message}), 400
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+```
+
+#### 2.4 : Query vers la bdd (serveur central : database_client.py)
+
+Pour la suppression des données, je supprime l'utilisateur par l'id.
+
+```py
+def deleteUser(self, user_id):
+    try:
+        self.cursor.execute("DELETE FROM Users WHERE idUser = %s", (user_id,))
+        self.dbConnexion.commit()
+        return True, "User deleted successfully."
+    except Exception as e:
+        return False, str(e)
+
+```
+
+Pour la mise à jour, j'utilise les données passés en paramètres et je les attribue aux unitilisateurs par ID.
+
+```py
+def updateUser(self, user_id, update_data):
+    update_parts = ", ".join([f"{key} = %s" for key in update_data.keys()])
+    values = list(update_data.values())
+    values.append(user_id)
+    try:
+        self.cursor.execute(f"UPDATE Users SET {update_parts} WHERE idUser = %s", values)
+        self.dbConnexion.commit()
+        return True, "User updated successfully."
+    except Exception as e:
+        return False, str(e)
+```
+
+#### 2.6 : Résultats (Postman) 
+
+##### Requête de mise à jour
+![](./ressources/images/update_user_postman.png)
+
+##### Requête de suppression
+![](./ressources/images/delete_user_postman.png)
+
+##### Résultat dans la bdd
+Comme on peut voir sur le résulat final, l'utlisateur 4 a changé ses données alors que l'utilisateur 5 n'existe tout simplement plus.  
+![](./ressources/images/delete_upadate_user_bdd.png)
+
+### Conclusion
+
+Je n'ai pas terminé la modification des utilisateurs, cependant j'ai bien avancé en utilisant les test postman. Ma journée a été rythmé par l'apprentissage de docker je n'ai donc pas pu avancé à ma vitesse souhaité. La semaine prochaine je vais essayer d'avoir une image docker prête déployée sur docker hub pour pouvoir mettre en place mes cameras.

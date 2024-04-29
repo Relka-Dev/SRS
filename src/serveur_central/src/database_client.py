@@ -279,25 +279,29 @@ class DatabaseClient:
             print(f"Error: {e}")
             return False
     
-    def deleteCamerasFromNetwork(self, cameras : list, idNetwork : int):
+    def addCamerasToNetwork(self, cameras, idNetwork):
         try:
             for camera in cameras:
-                self.cursor.execute("DELETE FROM Cameras WHERE idCamera = %s AND idNetwork = %s", (camera, idNetwork,))
-                self.dbConnexion.commit()
-            return True, "Caméras supprimées du réseau avec succès."
+                ip = str(camera)
+                token = str(cameras[camera])
+                print(token)
+                self.cursor.execute("INSERT INTO Cameras (ip, idNetwork, JWT) VALUES (%s, %s, %s);", (ip, idNetwork, token))
+            self.dbConnexion.commit()
+            return True, "Cameras added to network successfully."
         except Exception as e:
-            print(f"Erreur lors de la suppression des caméras du réseau : {e}")
-            return False, f"Erreur lors de la suppression des caméras du réseau : {e}"
+            print(f"Error adding cameras to the network: {e}")
+            return False, f"Error adding cameras to the network: {e}"
 
-    def addCamerasToNetwork(self, cameras : list, idNetwork : int):
+    def deleteCamerasFromNetwork(self, cameras, idNetwork):
         try:
-            for camera in cameras:
-                self.cursor.execute("INSERT INTO Cameras (ip, idNetwork, JWT) VALUES(%s, %s, %s);", (camera['ip'], idNetwork, camera['token']))
-                self.dbConnexion.commit()
-            return True, "Caméras ajoutées au réseau avec succès."
+            for camera_id in cameras:
+                self.cursor.execute("DELETE FROM Cameras WHERE idCamera = %s AND idNetwork = %s", (str(camera_id[0]), str(idNetwork),))
+            self.dbConnexion.commit()
+            return True, "Cameras removed from the network successfully."
         except Exception as e:
-            print(f"Erreur lors de l'ajout des caméras au réseau : {e}")
-            return False, f"Erreur lors de l'ajout des caméras au réseau : {e}"
+            print(f"Error removing cameras from the network: {e}")
+            return False, f"Error removing cameras from the network: {e}"
+
 
     def updateCameraByIdCameraAndIdNetwork(self, idCamera, idNetwork, positionX, idWall):
         try:

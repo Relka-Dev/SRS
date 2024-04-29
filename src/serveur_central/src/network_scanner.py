@@ -1,43 +1,33 @@
-import socket
+import asyncio
 import ipaddress
+import socket
 import subprocess
-import re
-    
+
 class NetworkScanner:
     def __init__(self, network):
         self.network = ipaddress.IPv4Network(network)
 
-    def scan_ips(self, port,  timeout=0.35):
-        ip_with_port_open = []
-        
-        for ip in self.network.hosts():
-            print(str(ip) + ":" + str(port))
-            if self.check_port(ip, port, timeout):
-                ip_with_port_open.append(str(ip))
-                break
-
+    async def scan_ips(self, port, timeout=0.35):
+        tasks = [self.check_port(str(ip), port, timeout) for ip in self.network.hosts()]
+        results = await asyncio.gather(*tasks)
+        ip_with_port_open = [ip for ip, is_open in zip(self.network.hosts(), results) if is_open]
         return ip_with_port_open
 
-    def check_port(self, ip, port, timeout):
+    async def check_port(self, ip, port, timeout):
         """
-        Vérifie si un port spécifié sur une adresse IP donnée est ouvert.
-
-        Args:
-            ip (str): L'adresse IP à tester.
-            port (int): Le numéro de port à vérifier.
-            timeout (float): Le temps maximum en secondes à attendre pour une réponse.
-
-        Returns:
-            bool: Renvoie True si le port est ouvert, sinon False.
+        Asynchronously checks if a specified port on a given IP address is open.
         """
+        conn = asyncio.open_connection(ip, port)
         try:
-            # Vérification de l'ouverture du port
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.settimeout(timeout)
-                s.connect((str(ip), port))
-                return True
-        except (socket.timeout, socket.error):
+            reader, writer = await asyncio.wait_for(conn, timeout=timeout)
+            writer.close()
+            await writer.wait_closed()
+            return True
+        except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
             return False
+
+    async def lookForCameras(self, port):
+        return await self.scan_ips(port)
         
     @staticmethod
     def is_network_valid(network : str):

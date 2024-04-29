@@ -3310,3 +3310,92 @@ Comme on peut voir sur le résulat final, l'utlisateur 4 a changé ses données 
 ### Conclusion
 
 Je n'ai pas terminé la modification des utilisateurs, cependant j'ai bien avancé en utilisant les test postman. Ma journée a été rythmé par l'apprentissage de docker je n'ai donc pas pu avancé à ma vitesse souhaité. La semaine prochaine je vais essayer d'avoir une image docker prête déployée sur docker hub pour pouvoir mettre en place mes cameras.
+
+## 29.04.2024
+
+#### Bilan de la semaine dernière
+La semaine dernière j'ai implémenté des concepts comme la recherche automatique de camera et leur mise à jour dans la base, le crud sur les camera ainsi que sur les utilisateurs. J'ai également appris comment utiliser docker mais j'ai pas réussi à build des images pour ARM depuis l'architecture de mon serveur.
+
+#### Objectif de la journée
+Aujourd'hui je vais commencer par développer un nouveau script pour les cameras wifi. Ensuite, je vais créer la page permettant d'afficher en temps réel la vue des cameras.
+
+### 1.0 : Restructuration des cameras
+Après longues réfléxion et tentatives, je n'ai pas réussi à faire fonctionner la librairie face-recognition sur mes raspberry une seconde fois, je n'arrive pas à trouver la sources des différentes erreur. Par conséquent j'ai décidé de passer la logique de la détéction faciale sur le serveur. Voici une liste des avantages et désavantages de cette méthode.
+
+#### 1.1 : Avantages
+1. Alègement de la logique sur les cameras.
+2. Alègement des dépendances sur les cameras.
+2. Possiblilité d'effectuer des algorithmes plus complexes
+3. Tout cela sans compromettre la sécurité grâce à l'utilisation des JWT.
+
+#### 1.2 : Désavantages
+1. Logique et architecture plus complexe.
+2. Suppression d'un partie du travail interessante incluant le multiprocessing.
+
+#### 1.3 : Implémentation
+
+Je débute par créer une route sur les cameras. Cette dernière envère une photo prise par la camera.
+
+#### 1.4 : Problème lors de la récupération du flux
+
+Après avoir fait un appel vers le endpoint `/video`, aucune image ne s'affiche et je me retrouve avec cette erreur.
+
+```
+[ WARN:1@17.308] global cap_v4l.cpp:997 open VIDEOIO(V4L2:/dev/video0): can't open camera by index
+[ERROR:1@17.316] global obsensor_uvc_stream_channel.cpp:159 getStreamChannelGroup Camera index out of range
+```
+
+Cela veut simplement dire que la camera n'est pas indexée et donc pas accessible. Je commence à me dire que ça doit venir de la version de debian que j'utilise, peut-ête pas adapté. Les images que j'utilisait précédament et fonctionnaient était créés depuis le pi image version windows permettant de choisir le système où elles était déployés, assurant donc une compatibilité. Ce n'est pas le cas de la version Ubuntu. Je compare donc les version de debian en utilisant la commande `lsb_release -a`.
+
+Version fonctionnelle :
+
+```
+Distributor ID:	Raspbian
+Description:	Raspbian GNU/Linux 11 (bullseye)
+Release:	11
+Codename:	bullseye
+```
+
+Version (non) fonctionnelle :
+
+```
+Distributor ID:	Debian
+Description:	Debian GNU/Linux 12 (bookworm)
+Release:	12
+Codename:	bookworm
+```
+
+#### 1.5 : Création du endpoint
+
+L'endpoint `video` sert à récupérer le flux video en temps réel.
+
+```py
+@app.route('/video')
+@token_required
+def video_feed():
+    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+```
+
+La fonction `gen_frame()` prend une photo en utilisant la camera du serveur.
+```py
+def gen_frames():
+    camera = cv2.VideoCapture(0)
+    while True:
+        success, frame = camera.read() 
+        if not success:
+            break
+        else:
+            ret, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+```
+
+##### Résultat
+
+Pour ce test, j'ai appelé l'endpoint depuis un navigateur. J'ai enlevé le décorateur au préalable. Le flux de la camera s'affiche en temps réel.
+
+![](./ressources/images/endpointcamera.png)  
+
+
+

@@ -3397,5 +3397,43 @@ Pour ce test, j'ai appelé l'endpoint depuis un navigateur. J'ai enlevé le déc
 
 ![](./ressources/images/endpointcamera.png)  
 
+#### 1.6 : Problèmes lors de la récupération des flux
+Pendant le poc j'ai eu l'occasion de récupérer le flux de mes camera depuis un client opencv. Le problème c'est que je n'ai pas réussi pour l'instant depuis mon application Kivy.  
 
+```py
+import cv2
+import requests
+import numpy as np
+
+def main():
+    # URL du serveur Flask
+    server_url = 'http://192.168.1.131:4298/video?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiU1JTLVNlcnZlciIsImV4cCI6MTcxNDQ3NjIyMH0.63zb0fjHPFmUtKttnOE3m2uqmQoQVDPm-2YFhZ7BFDY'
+
+    # Réception du flux vidéo en continu
+    response = requests.get(server_url, stream=True)
+
+    if response.status_code == 200:
+        bytes_stream = bytes()
+        for chunk in response.iter_content(chunk_size=1024):
+            bytes_stream += chunk
+            a = bytes_stream.find(b'\xff\xd8')
+            b = bytes_stream.find(b'\xff\xd9')
+            if a != -1 and b != -1:
+                jpg = bytes_stream[a:b+2]
+                bytes_stream = bytes_stream[b+2:]
+                frame = cv2.imdecode(np.frombuffer(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
+                cv2.imshow('Video Stream', frame)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+    else:
+        print("Erreur lors de la récupération du flux vidéo")
+
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()
+```
+
+### Conclusion
+Pour être honnête, aujourd'hui je ne suis pas réelement satisfait de mon travail. J'ai l'impression de bloquer sur un problème normalement simple. Demain je vais essayer d'autres façon de récupérer le flux. Peut-être modifier le serveur des camera me permettra de trouver une solution.
 

@@ -12,6 +12,7 @@ from Pages.navigation_face_management import NavigationFaceManagementWindow
 from Pages.add_user_window import AddUserWindow
 from Pages.cameras_management_window import CamerasManagementWindow
 from Pages.update_user_window import UpdateUserWindow
+from Pages.camera_streamer_window import CameraStreamerWindow
 
 from Classes.server_client import ServerClient
 

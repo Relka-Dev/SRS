@@ -15,6 +15,7 @@ from Pages.update_user_window import UpdateUserWindow
 from Pages.camera_streamer_window import CameraStreamerWindow
 
 from Classes.server_client import ServerClient
+from Classes.camera import Camera
 
 # Définition du gestionnaire d'écrans
 class WindowManager(ScreenManager):
@@ -27,6 +28,7 @@ class WindowManager(ScreenManager):
 class MyMainApp(App):
     server_ip = None
     server_client = None
+    camera_list = []
 
     def build(self):
 
@@ -47,6 +49,13 @@ class MyMainApp(App):
 
     def get_server_client(self):
         return self.server_client
+    
+    def set_camera_list(self, camera_list : list):
+        self.camera_list = camera_list
+
+    def get_camera_list(self):
+        return self.camera_list
+
 
 # Point d'entrée de l'application
 if __name__ == "__main__":

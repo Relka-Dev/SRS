@@ -3437,3 +3437,211 @@ if __name__ == "__main__":
 ### Conclusion
 Pour être honnête, aujourd'hui je ne suis pas réelement satisfait de mon travail. J'ai l'impression de bloquer sur un problème normalement simple. Demain je vais essayer d'autres façon de récupérer le flux. Peut-être modifier le serveur des camera me permettra de trouver une solution.
 
+## 30.04.2024
+
+#### Bilan de la veille
+Hier, j'ai commencé à développer la page d'affichage des streams. J'ai renctré un problème lors de l'affichage avec Kivy. Cependant, j'ai tout de même réussi à faire fonctionner de façon fiable la récupération des caméras sur le réseau.
+
+#### Objectifs de la jour
+Aujourd'hui, j'ai décidé de créer un nouvel endpoint pour les camera appellé `/image` afin de récupérer une photo prise à l'instant, j'abandonne pas l'idée d'afficher le stream car c'est pratique pour la configuration etc.
+
+### 1.0 : Récupération des images
+
+Afin de récupérer les images, je vais en premier lieu, créer un endpoint adéquat, une fois cela fait, je vais effectuer un test avec postman et ensuite, je vais la récupérer dynamiquement dans la page que j'ai créé hier. 
+
+#### 1.1 : Camera (app.py) : Endpoint de récupération d'image
+L'endpoint `/image` prend une photo avec la camera, puis la retourne en réponse. J'ai pour l'instant enlevé le JWT pour le développement.
+
+```py
+@app.route('/image')
+def image():
+    """
+    Route qui retourne une image capturée de la caméra.
+    """
+    camera = cv2.VideoCapture(0)
+    success, frame = camera.read()
+    camera.release()
+    if success:
+        ret, buffer = cv2.imencode('.jpg', frame)
+        return Response(buffer.tobytes(), mimetype='image/jpeg')
+    else:
+        return jsonify({'message': 'Failed to capture image'}), 500
+```
+
+#### 1.2 : Test avec postman
+
+Comme on peut le voir, l'image prise est envoyé dans le body.
+
+![](./ressources/images/test_postman_image.png)
+
+#### 1.3 : Récupération de l'image depuis le serveur central
+
+Pour la récupération d'image j'ai décidé de procéder de la façon suivante :
+
+1. Serveur central : Appel de l'endpoint `/image` grâce à l'id (transmit par l'application) de la camera et son JWT (récupéré dans la bdd).
+2. Serveur central : Création de l'endpoint `/camera_picture`.
+3. Application : Récupération des id des cameras grâce à l'objet camera.
+4. Application : Appel de l'endpoint du serveur central.
+5. Application : Affiche de l'image dans un élément `Image` en Kivy.
+
+##### 1.3.1 : Serveur central (camera_server_client.py) : Appel de l'endpoint image des camera.
+
+Avec la fonction `getCameraImage`, l'endpoint `image` des cameras est appelé avec le JWT ainsi que l'ip de la camera en paramètre. Si la réponse à la requête est 200, l'image est retournée. 
+
+```py
+@staticmethod
+def getCameraImage(ip_camera, JWT):
+    camera_url = f"http://{ip_camera}:{CameraServerClient.__CAMERAS_SERVER_PORT}/image?token={JWT}"
+    try:
+        response = requests.get(camera_url)
+        if response.status_code == 200:
+            return True, response.content
+        else:
+            return False, f"Échec de la récupération de l'image pour l'ip : {ip_camera}. Statut : {response.status_code}"
+    except RequestException as e:
+        return False, f"Erreur de connexion avec la caméra à l'ip : {ip_camera}. Détail de l'erreur : {str(e)}"
+```
+
+##### 1.3.2 : Serveur central (app.py) : Création du endpoint
+
+Pour l'endpoint, je commence par la véfication du paramètre `idCamera`. Si ce dernier est présent, on recherche son JWT dans la base puis on appèle l'endpoint de la camera. Si une image est passé avec succès, l'image est encodée puis passé dans le body de la résponse.
+
+```py
+@JwtLibrary.API_token_required
+def camera_picture(self):
+    idCamera = request.args.get('idCamera')
+    
+    if not idCamera:
+        return jsonify({'error': 'Camera ID is required'}), 400
+    result, camera = self.db_client.getByIdCameras(idCamera)
+    if camera:
+        camera_ip = camera[1]
+        camera_JWT = camera[3]
+        result, response = CameraServerClient.getCameraImage(camera_ip, camera_JWT)
+        if result:
+            import base64
+            image_base64 = base64.b64encode(response).decode('utf-8')
+            return jsonify({'image': image_base64}), 200
+        else:
+            return jsonify({'error': response}), 401
+    else:
+        return jsonify({'error': 'Camera not found'}), 404
+```
+
+##### 1.3.3 : Postman : Test du endpoint
+
+Si l'id de la camera est correcte, l'image est retournée, encodée en base64.
+
+Par la suite, je vais effectuer les tests afin de vérifier les erreurs potentiels des utilisateurs, problèmes de serveur etc.
+![](./ressources/images/test_postman_recupimage_srv.png)  
+
+#### 1.4 : Récupération de l'image dans l'application
+
+##### 1.4.1 : Application (server_client.py) : Appel de l'endpoint
+
+```py
+def get_image_by_camera(self, camera: Camera):
+    endpoint_url = f"{self.server_url}/camera_picture?idCamera={camera.idCamera}"
+    params = {
+        'token': self.API_token
+    }
+    response = requests.get(endpoint_url, params=params)
+    if response.status_code == 200:
+        return True, response.json()['image']
+    else:
+        return False, response.json().get('error', 'Failed to retrieve the camera image')
+```
+
+##### 1.4.2 : Application (app.py) : Affichage de l'image
+
+Pour l'instant je crée un objet en dur avec un id d'une camera qui est activée.
+
+```py
+def update_image(self, dt):
+    camera = Camera(50, None, None, None, None, None, None)
+    result, image_or_error = self.server_client.get_image_by_camera(camera)
+    if result:
+        self.display_image(image_or_error)
+    else:
+        print(f"Failed to retrieve image: {image_or_error}")
+```
+
+Dans la fonction `on_enter()`, cette fonction est appellée chaque 5 secondes.
+
+```py
+Clock.schedule_interval(self.update_image, 5)
+```
+
+##### 1.4.3 : Application (app.py) : Conversion de l'image
+
+Afin d'afficher l'image dans un élément Image, il faut en premier lieu décoder l'image, puis la transformer en image pour ensuite en créer une texture qui elle est affichable.
+
+```py
+def display_image(self, image_base64):
+    image_data = base64.b64decode(image_base64)
+    image_stream = io.BytesIO(image_data)
+    pil_image = Image.open(image_stream)
+    pil_image = pil_image.convert('RGB')
+    buf = pil_image.tobytes()
+    img_texture = Texture.create(size=(pil_image.width, pil_image.height), colorfmt='rgb')
+    img_texture.blit_buffer(buf, colorfmt='rgb', bufferfmt='ubyte')
+    self.image_one.texture = img_texture
+```
+
+##### 1.4.4 : Application (vue) : Résultat
+
+![](./ressources/images/affichage_image.png)
+
+##### 1.4.5 : Application (camera_streamer_window.py) : Gestion de l'affichage dynamique
+
+J'ai voulu faire en sorte qu'on affiche les cameras en fonction de leur disponibilité.
+
+je crée une fonction update_images qui aura comme rôle de mettre à jour les images des cameras. 
+On commence par récupérer les caméras puis par vérifier le nombre de caméras présentes dans le réseau et adapter l'appel des methodes en fonction de cette donnée.
+
+```py
+def update_images(self, dt):
+    result, cameras = self.server_client.get_cameras()
+    if result:
+        num_cameras = len(cameras)
+        if num_cameras > 0:
+            self.update_camera_image(cameras[0], self.ids.image_one)
+        if num_cameras > 1:
+            self.update_camera_image(cameras[1], self.ids.image_two)
+        if num_cameras > 2:
+            self.update_camera_image(cameras[2], self.ids.image_three)
+        if num_cameras > 3:
+            self.update_camera_image(cameras[3], self.ids.image_four)
+```
+
+Une fois cela fait, on crée je crée une seconde fonction `update_camera_image` qui met à jour l'élément de l'affichage en fonction de la camera qu'on lui attribue.
+
+```py
+def update_camera_image(self, camera, element):
+    result, image_or_error = self.server_client.get_image_by_camera(camera)
+    
+    if result:
+        element.texture = self.generate_texture(image_or_error)
+    else:
+        print("error retrieving image")
+```
+
+Et pour terminer, je crée j'adapte la fonction `display_image` à `generate_texture` qui génère la texture depuis une image en base 64.
+
+```py
+def generate_texture(self, image_base64):
+    image_data = base64.b64decode(image_base64)
+    image_stream = io.BytesIO(image_data)
+    pil_image = Image.open(image_stream)
+    pil_image = pil_image.convert('RGB')
+    buf = pil_image.tobytes()
+    img_texture = Texture.create(size=(pil_image.width, pil_image.height), colorfmt='rgb')
+    img_texture.blit_buffer(buf, colorfmt='rgb', bufferfmt='ubyte')
+    return img_texture
+```
+
+##### 1.4.6 : Application (vue) : Résultat
+
+Dans cet exemple, le serveur trouve deux cameras sur le réseau. Leurs endpoint sont appelés et les photos sont affichées dans l'application.
+
+![](./ressources/images/resultat_double_camera.png)

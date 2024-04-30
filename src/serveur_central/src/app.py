@@ -60,6 +60,9 @@ class ServeurCentral:
         self.app.add_url_rule('/update_user', 'update_user', self.update_user, methods=['PUT'])
         self.app.add_url_rule('/delete_user', 'delete_user', self.delete_user, methods=['DELETE'])
         self.app.add_url_rule('/get_users', 'get_users', self.get_users, methods=['GET'])
+        self.app.add_url_rule('/get_users', 'get_users', self.get_users, methods=['GET'])
+
+        self.app.add_url_rule('/camera_picture', 'camera_picture', self.camera_picture, methods=['GET'])
 
 
 
@@ -200,6 +203,30 @@ class ServeurCentral:
             return jsonify({'message' : response}), 200
         else:
             return jsonify({'erreur' : response}), 400
+        
+    
+
+    @JwtLibrary.API_token_required
+    def camera_picture(self):
+        idCamera = request.args.get('idCamera')
+        
+        if not idCamera:
+            return jsonify({'error': 'Camera ID is required'}), 400
+
+        result, camera = self.db_client.getByIdCameras(idCamera)
+        if camera:
+            camera_ip = camera[1]
+            camera_JWT = camera[3]
+            result, response = CameraServerClient.getCameraImage(camera_ip, camera_JWT)
+
+            if result:
+                import base64
+                image_base64 = base64.b64encode(response).decode('utf-8')
+                return jsonify({'image': image_base64}), 200
+            else:
+                return jsonify({'error': response}), 401
+        else:
+            return jsonify({'error': 'Camera not found'}), 404
         
     
     @JwtLibrary.API_token_required

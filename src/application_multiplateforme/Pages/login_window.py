@@ -26,8 +26,8 @@ class LoginWindow(Screen):
     
         result, response = self.server_client.admin_login(username, password)
     
-        print(result)
         if result:
+
             self.manager.current = "main"
         else:
             self.ids.status_label.text = response

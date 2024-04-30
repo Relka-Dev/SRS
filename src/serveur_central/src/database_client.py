@@ -278,6 +278,20 @@ class DatabaseClient:
         except Exception as e:
             print(f"Error: {e}")
             return False
+        
+    def getCamerasByIdNetwork(self, id_network):
+        try:
+            self.cursor.execute("SELECT * FROM Cameras WHERE idNetwork = %s", (id_network,))
+            results = self.cursor.fetchall()
+
+            if results:
+                return True, results
+            else:
+                return False, None
+        except Exception as e:
+            print(f"Error: {e}")
+            return False
+
     
     def addCamerasToNetwork(self, cameras, idNetwork):
         try:

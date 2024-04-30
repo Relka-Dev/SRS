@@ -3645,3 +3645,7 @@ def generate_texture(self, image_base64):
 Dans cet exemple, le serveur trouve deux cameras sur le réseau. Leurs endpoint sont appelés et les photos sont affichées dans l'application.
 
 ![](./ressources/images/resultat_double_camera.png)
+
+
+### Conclusion
+J'ai l'impression d'avoir repris un bon rythme de travail. Après avoir effectué l'affciahge dynamique de la vue des cameras, j'ai commencé à développer la reconnaissance de silhouettes. Cependant, mon travail n'était pas suffisament avancé pour en faire mention dans le jdb. La prochaine fois, je vais développer une application de bureau me permettant de récupérer la position de personnes en temps réel. Une fois cela fait, j'implémenterai le code dans mon serveur.

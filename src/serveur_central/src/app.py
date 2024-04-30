@@ -15,8 +15,11 @@ from jwt_library import JwtLibrary
 from camera_server_client import CameraServerClient
 from network_scanner import NetworkScanner
 import asyncio
+import cv2
+import numpy as np
 
 from Classes.network import Network
+from Classes.camera import Camera
 
 class ServeurCentral:
     # Constantes de l'application
@@ -63,6 +66,7 @@ class ServeurCentral:
         self.app.add_url_rule('/get_users', 'get_users', self.get_users, methods=['GET'])
 
         self.app.add_url_rule('/camera_picture', 'camera_picture', self.camera_picture, methods=['GET'])
+        self.app.add_url_rule('/space_recognition', 'space_recognition', self.space_recognition, methods=['GET'])
 
 
 
@@ -158,6 +162,7 @@ class ServeurCentral:
         self.db_client.addCameras(tokens_for_ip, ip, subnetMask)
 
         return jsonify({'tokens' : tokens_for_ip})
+
     
     @JwtLibrary.API_token_required
     def person_types(self):
@@ -209,7 +214,7 @@ class ServeurCentral:
     @JwtLibrary.API_token_required
     def camera_picture(self):
         idCamera = request.args.get('idCamera')
-        
+
         if not idCamera:
             return jsonify({'error': 'Camera ID is required'}), 400
 
@@ -228,6 +233,58 @@ class ServeurCentral:
         else:
             return jsonify({'error': 'Camera not found'}), 404
         
+    
+    @JwtLibrary.API_token_required
+    def space_recognition(self):
+        idNetwork = request.args.get('idNetwork')
+        if not idNetwork:
+            return jsonify({'error': 'Network ID is required'}), 400
+
+        response = []
+        result, response = self.db_client.getCamerasByIdNetwork(idNetwork)
+        if not result:
+            return jsonify({'error': 'Camera not found'}), 404
+
+        cameras = []
+        for data in response:
+            camera = Camera(data[0], data[1], data[2], data[3], data[4], data[5], data[6], None, None)
+            resultImg, responseImg = CameraServerClient.getCameraImage(camera.ip, camera.jwt)
+
+            if resultImg:
+                positions_x = self.find_silhouettes(responseImg)
+                camera.persons_position = positions_x
+                cameras.append(camera)
+            else:
+                return jsonify({'error': responseImg}), 401
+
+        cameras_info = [{'id': cam.idCamera, 'persons_position': cam.persons_position} for cam in cameras]
+        return jsonify(cameras_info), 200
+
+
+
+    def find_silhouettes(self, image_bytes):
+        """Detect human silhouettes in an image and return their normalized x coordinates as percentages."""
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+        _, threshold = cv2.threshold(blurred, 30, 255, cv2.THRESH_BINARY)
+
+        contours, _ = cv2.findContours(threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        positions_x = []
+        img_width = img.shape[1] 
+
+        for cnt in contours:
+            x, y, w, h = cv2.boundingRect(cnt)
+            area = cv2.contourArea(cnt)
+
+            if h > w and 100 < area < 10000:
+                center_x = x + w // 2
+                normalized_x = (center_x / img_width) * 100 
+                positions_x.append(normalized_x)
+
+        return positions_x
     
     @JwtLibrary.API_token_required
     def cameras(self):

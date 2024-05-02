@@ -304,6 +304,20 @@ class ServerClient:
         else:
             return False, response.json().get('error', 'Failed to retrieve the camera image')
         
+    def get_video_by_camera(self, camera: Camera):
+        endpoint_url = f"{self.server_url}/camera_video?idCamera={camera.idCamera}"
+
+        params = {
+            'token': self.API_token
+        }
+
+        response = requests.get(endpoint_url, params=params)
+
+        if response.status_code == 200:
+            return True, response.json()['image']
+        else:
+            return False, response.json().get('error', 'Failed to retrieve the camera image')
+        
     @staticmethod
     def hash_password(password : str):
         password_bytes = password.encode('utf-8')

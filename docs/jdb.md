@@ -3667,9 +3667,7 @@ Après avoir testé le code, je suis assez scpetique. Logiquement le script fonc
 
 Afin que mon programme soit plus fiable, je recherche des façon pour pouvoir détecter le haut d'un corps.
 
-#### 1.1 : Algorithmes de Haar
-
-#### 1.2 : MediaPipe Pose
+#### 1.1 : MediaPipe Pose
 Après avoir travaill sur `VisionPiano`, le projet en atelier décloisonné cet année. Je me suis dis que MediaPipe pouvait être une bonne solution. Et en effet, la personne présente sur l'image est traquée avec précision.  
 Cependant, je me suis rendu compte un peu tard qu'il est impossible d'utiliser mediapipe pour détecter plusieurs personnes.
 
@@ -3712,11 +3710,155 @@ cv2.destroyAllWindows()
 
 ```
 
-#### 1.3 : Pytorch - YOLOv5
+#### 1.2 : Pytorch - YOLOv5
 
-```
-pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu
-pip install opencv-python-headless
-pip install ultralytics
+La librairie YOLOv5 est utilisé pour la détéction d'objets. Le code ci-dessous permet de rechercher les personnes dans l'image puis de les afficher dans un cadre vert.
+
+##### 1.2.1 : Code
+
+```py
+import cv2
+import torch
+
+# Charger le modèle pré-entraîné
+model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
+
+# Fonction pour la détection dans un flux vidéo
+def detect_people(frame):
+    # Convertir l'image BGR de cv2 en RGB
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    # Appliquer la détection
+    results = model(frame_rgb)
+    # Filtrer pour obtenir uniquement les détections de personnes
+    results = results.pandas().xyxy[0]  # Résultats au format DataFrame
+    people = results[results['name'] == 'person']
+    return people
+
+# Initialiser la capture vidéo
+cap = cv2.VideoCapture(0)  # '0' est généralement l'indice de la première caméra
+
+try:
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        # Détecter les personnes dans le cadre actuel
+        detections = detect_people(frame)
+
+        # Dessiner les boîtes englobantes sur l'image
+        for index, row in detections.iterrows():
+            cv2.rectangle(frame, (int(row['xmin']), int(row['ymin'])), (int(row['xmax']), int(row['ymax'])), (0, 255, 0), 2)
+
+        # Afficher l'image
+        cv2.imshow('Detected People', frame)
+
+        # Arrêter le flux en appuyant sur 'q'
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+finally:
+    cap.release()
+    cv2.destroyAllWindows()
 ```
 
+##### 1.2.1 : Exemple
+
+Comme vous pouvez le voir le système est très efficace, il affiche même mon collègue alors que ce dernier est assis sur une chaise et n'est presque pas visible.
+
+![](./ressources/images/yolo5_test.png)
+
+#### 1.3 : Implémentation dans l'API
+
+##### 1.3.1 : Création de la classe SpaceRecognition (Serveur : space_recognition.py)
+
+En premier lieu, je dois faire en sorte que ce soit l'image récupérée par les cameras soit passé dans l'algorithme. Pour cela je crée une nouvelle classe `SpaceRecognition`.
+
+```py
+import cv2
+import torch
+import numpy as np
+
+class SpaceRecognition:
+
+    def __init__(self):
+        self.model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
+
+    
+    def _detect_people(self, image):
+        frame_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        results = self.model(frame_rgb)
+        results = results.pandas().xyxy[0]
+        people = results[results['name'] == 'person']
+        return people
+
+
+    def get_people_positions_x(self, imageBase64):
+        nparr = np.frombuffer(imageBase64, np.uint8)
+        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        detections = self._detect_people(image)
+```
+
+Une fois cette partie fonctionnelle, il faut que je récupère la position x des personnes dans l'image. Je complète la fonction `get_people_positions_x` en conséquence.
+
+1. Récupération des détections 
+2. Pour chaque personne trouvée
+    - Récupération du milieu de la personne.
+    - Récupération de la largeur de l'image
+    - Normalisation de la position pour correspondre au reste du projet (0 à 100)
+    - Ajout de la personne dans la liste
+
+
+```py
+def get_people_positions_x(self, imageBase64):
+    nparr = np.frombuffer(imageBase64, np.uint8)
+    image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    
+    detections = self._detect_people(image)
+    people_positions = []
+    for index, row in detections.iterrows():
+        x_center = (row['xmin'] + row['xmax']) / 2
+        width = image.shape[1]
+        normalized_x_position = (x_center / width) * 100
+        people_positions.append(normalized_x_position)
+    return people_positions
+```
+
+##### 1.3.2 : Adaptation de la route (Serveur : app.py)
+
+Et pour terminer, j'adapte ma route afin de pouvoir retourner les données dans le endpoint.
+
+```py
+@JwtLibrary.API_token_required
+def space_recognition(self):
+    idNetwork = request.args.get('idNetwork')
+    if not idNetwork:
+        return jsonify({'error': 'Network ID is required'}), 400
+    response = []
+    result, response = self.db_client.getCamerasByIdNetwork(idNetwork)
+    if not result:
+        return jsonify({'error': 'Camera not found'}), 404
+    cameras = []
+    for data in response:
+        camera = Camera(data[0], data[1], data[2], data[3], data[4], data[5], data[6], None, None)
+        resultImg, responseImg = CameraServerClient.getCameraImage(camera.ip, camera.jwt)
+        if resultImg:
+            space_recongition = SpaceRecognition()
+            positions_x = space_recongition.get_people_positions_x(responseImg) # Ajouté
+            camera.persons_position = positions_x # Ajouté
+            cameras.append(camera)
+        else:
+            return jsonify({'error': responseImg}), 401
+    cameras_info = [{'id': cam.idCamera, 'persons_position': cam.persons_position} for cam in cameras]
+    return jsonify(cameras_info), 200
+```
+
+##### 1.3.2 : Test (Postman)
+
+Quand je fais l'appel vers le endpoint je reçois les position des personnes captés par les camera. Pour l'instant, j'ai que 2 caméras, j'attends la commande que j'ai passé avec mr Garcia pour la suite.
+
+![](./ressources/images/postman_yolo.png)
+
+### Conclusion
+
+Je suis en capacité de commencer le développment de la reconnaissance spaciale. Cependant, je dois impérativement avoir mes caméras disponibles. La prochaine fois je vais mettre en place les autres caméras.

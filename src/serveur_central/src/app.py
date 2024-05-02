@@ -1,12 +1,12 @@
 """
 Auteur      : Karel Vilém Svoboda
 Affiliation : CFPTi - SRS
-Date        : 28.03.2024
+Date        : 02.05.2024
 
 Script      : app.py
 Description : Serveur central du projet SRS
             : Routes pour l'API
-Version     : 0.1
+Version     : 0.2
 """
 
 from flask import Flask, jsonify, request, json
@@ -67,9 +67,8 @@ class ServeurCentral:
         self.app.add_url_rule('/get_users', 'get_users', self.get_users, methods=['GET'])
 
         self.app.add_url_rule('/camera_picture', 'camera_picture', self.camera_picture, methods=['GET'])
+        self.app.add_url_rule('/camera_video', 'camera_video', self.camera_picture, methods=['GET'])
         self.app.add_url_rule('/space_recognition', 'space_recognition', self.space_recognition, methods=['GET'])
-
-
 
     
     def ping(self):
@@ -234,6 +233,29 @@ class ServeurCentral:
         else:
             return jsonify({'error': 'Camera not found'}), 404
         
+    @JwtLibrary.API_token_required
+    def camera_video(self):
+        idCamera = request.args.get('idCamera')
+
+        if not idCamera:
+            return jsonify({'error': 'Camera ID is required'}), 400
+
+        result, camera = self.db_client.getByIdCameras(idCamera)
+        if camera:
+            camera_ip = camera[1]
+            camera_JWT = camera[3]
+            result, response = CameraServerClient.getCameraVideo(camera_ip, camera_JWT)
+
+            if result:
+                import base64
+                
+                image_base64 = base64.b64encode(response).decode('utf-8')
+                return jsonify({'image': image_base64}), 200
+            else:
+                return jsonify({'error': response}), 401
+        else:
+            return jsonify({'error': 'Camera not found'}), 404
+        
     
     @JwtLibrary.API_token_required
     def space_recognition(self):
@@ -254,7 +276,6 @@ class ServeurCentral:
             if resultImg:
                 space_recongition = SpaceRecognition()
                 positions_x = space_recongition.get_people_positions_x(responseImg) 
-                #positions_x = self.find_silhouettes(responseImg)
                 camera.persons_position = positions_x
                 cameras.append(camera)
             else:
@@ -262,32 +283,6 @@ class ServeurCentral:
 
         cameras_info = [{'id': cam.idCamera, 'persons_position': cam.persons_position} for cam in cameras]
         return jsonify(cameras_info), 200
-
-
-
-    def find_silhouettes(self, image_bytes):
-        """Detect human silhouettes in an image and return their normalized x coordinates as percentages."""
-        nparr = np.frombuffer(image_bytes, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-        _, threshold = cv2.threshold(blurred, 30, 255, cv2.THRESH_BINARY)
-
-        contours, _ = cv2.findContours(threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        positions_x = []
-        img_width = img.shape[1] 
-
-        for cnt in contours:
-            x, y, w, h = cv2.boundingRect(cnt)
-            area = cv2.contourArea(cnt)
-
-            if h > w and 100 < area < 10000:
-                center_x = x + w // 2
-                normalized_x = (center_x / img_width) * 100 
-                positions_x.append(normalized_x)
-
-        return positions_x
     
     @JwtLibrary.API_token_required
     def cameras(self):

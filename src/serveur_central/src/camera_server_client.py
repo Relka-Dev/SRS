@@ -44,6 +44,18 @@ class CameraServerClient:
                 return False, f"Échec de la récupération de l'image pour l'ip : {ip_camera}. Statut : {response.status_code}"
         except RequestException as e:
             return False, f"Erreur de connexion avec la caméra à l'ip : {ip_camera}. Détail de l'erreur : {str(e)}"
+    
+    @staticmethod
+    def getCameraVideo(ip_camera, JWT):
+        camera_url = f"http://{ip_camera}:{CameraServerClient.__CAMERAS_SERVER_PORT}/video_base64?token={JWT}"
+        try:
+            response = requests.get(camera_url)
+            if response.status_code == 200:
+                return True, response.content
+            else:
+                return False, f"Échec de la récupération de la video pour l'ip : {ip_camera}. Statut : {response.status_code}"
+        except RequestException as e:
+            return False, f"Erreur de connexion avec la caméra à l'ip : {ip_camera}. Détail de l'erreur : {str(e)}"
 
     @staticmethod
     def getCameraToken(cameraIp):

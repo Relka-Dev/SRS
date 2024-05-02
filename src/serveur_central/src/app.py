@@ -20,6 +20,7 @@ import numpy as np
 
 from Classes.network import Network
 from Classes.camera import Camera
+from space_recognition import SpaceRecognition
 
 class ServeurCentral:
     # Constantes de l'application
@@ -251,7 +252,9 @@ class ServeurCentral:
             resultImg, responseImg = CameraServerClient.getCameraImage(camera.ip, camera.jwt)
 
             if resultImg:
-                positions_x = self.find_silhouettes(responseImg)
+                space_recongition = SpaceRecognition()
+                positions_x = space_recongition.get_people_positions_x(responseImg) 
+                #positions_x = self.find_silhouettes(responseImg)
                 camera.persons_position = positions_x
                 cameras.append(camera)
             else:

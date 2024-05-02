@@ -3649,3 +3649,74 @@ Dans cet exemple, le serveur trouve deux cameras sur le réseau. Leurs endpoint 
 
 ### Conclusion
 J'ai l'impression d'avoir repris un bon rythme de travail. Après avoir effectué l'affciahge dynamique de la vue des cameras, j'ai commencé à développer la reconnaissance de silhouettes. Cependant, mon travail n'était pas suffisament avancé pour en faire mention dans le jdb. La prochaine fois, je vais développer une application de bureau me permettant de récupérer la position de personnes en temps réel. Une fois cela fait, j'implémenterai le code dans mon serveur.
+
+## 02.05.2024
+
+#### Bilan de la dernière fois
+Mardi, j'ai terminé la récupération dynamique de la vue des cameras. J'ai également eu un problème avec un de [mes composants](https://www.pi-shop.ch/raspberry-pi-zero-kamera-kabel) qui a arrêté de fonctionné. J'ai demandé à Mr Garcia de passer une nouvelle commande.
+
+#### Objectifs de la journée
+Je vais commencer par la détection de personnes. Une fois cela fait, je vais l'intégrer au serveur. S'il me reste du temps ensuite, je vais commencer à développer la reconnaissance spaciale.
+
+### 1.0 : Détection de personnes
+Après avoir effectué quelques recherche je suis tombé sur [cet article](https://thedatafrog.com/en/articles/human-detection-video/) qui explique clairement comment fonctionne la détéction de personne et fournit également un code.
+
+Après avoir testé le code, je suis assez scpetique. Logiquement le script fonctionne mieux quand la personne est loin vu que la camera peut prendre l'entièreté de la personne. 
+
+![](./ressources/images/detection_de_personnes.png)
+
+Afin que mon programme soit plus fiable, je recherche des façon pour pouvoir détecter le haut d'un corps.
+
+#### 1.1 : Algorithmes de Haar
+
+#### 1.2 : MediaPipe Pose
+Après avoir travaill sur `VisionPiano`, le projet en atelier décloisonné cet année. Je me suis dis que MediaPipe pouvait être une bonne solution. Et en effet, la personne présente sur l'image est traquée avec précision.  
+Cependant, je me suis rendu compte un peu tard qu'il est impossible d'utiliser mediapipe pour détecter plusieurs personnes.
+
+```py
+import cv2
+import mediapipe as mp
+
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose(static_image_mode=False, model_complexity=2, enable_segmentation=True, min_detection_confidence=0.5)
+
+mp_drawing = mp.solutions.drawing_utils
+
+cap = cv2.VideoCapture(0)
+
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        continue
+
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = pose.process(frame_rgb)
+
+    if results.pose_landmarks:
+        mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+        
+        positions = [landmark.x for landmark in results.pose_landmarks.landmark]
+        avg_position = sum(positions) / len(positions)
+        position_scale = int(avg_position * 100)
+        
+        cv2.putText(frame, f'Position: {position_scale}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+
+    cv2.imshow('MediaPipe Pose', frame)
+
+    if cv2.waitKey(5) & 0xFF == 27:
+        break
+
+pose.close()
+cap.release()
+cv2.destroyAllWindows()
+
+```
+
+#### 1.3 : Pytorch - YOLOv5
+
+```
+pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu
+pip install opencv-python-headless
+pip install ultralytics
+```
+

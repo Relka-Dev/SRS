@@ -3862,3 +3862,11 @@ Quand je fais l'appel vers le endpoint je reçois les position des personnes cap
 ### Conclusion
 
 Je suis en capacité de commencer le développment de la reconnaissance spaciale. Cependant, je dois impérativement avoir mes caméras disponibles. La prochaine fois je vais mettre en place les autres caméras.
+
+## 03.05.2024
+
+#### Bilan de la veille
+Hier j'ai terminé la détection de personnes. J'ai effectué des recherches afin de trouver la meilleure technologie possible dans mon cas de figure.
+
+#### Objectifs de la journée
+Je pense avoir bien avancé dans mon travail technique, à présent, je dois me concentrer sur le rendu de la semaine prochaine. Pour ce faire, je dois avancer la documentation, faire des diagrammes, l'analyse organique, les tests etc.

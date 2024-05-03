@@ -269,142 +269,65 @@ def login():
     return make_response('could not verify', 401, {'WWW-Authenticate' : 'Basic realm="Login required"'})
 ```
 
-## Détection de visages
+## Récupération d'images
 
-### Détecter
+### Connexion
 
-Endpoint: `/detect`
+Endpoint: `http://localhost:4298/image`
 
 #### Description
 
-Détecte les visages dans le champ de vision de la caméra.
+Retourne l'image prise par la camera du serveur au moment de l'appel de la requête. L'image est au format `.jpg`
 
 #### Requête
 
-- Méthode: `POST`
+- Méthode: `GET`
 
 #### Paramètres
 
-- Image: Données de l'image du cadre capturé
+- token: `Token JWT`
 
 #### Réponse
 
 - Statut: 200 OK
-- Corps: JSON contenant les données faciales détectées
+- Corps: Image prise de la camera du serveur.
 
 #### Tests
 
-##### Statut 200 OK : Assure que le statut de la réponse est 200.
 ```js
-pm.test("Statut de réponse 200 OK", function () {
+// Vérification du code de résponse
+pm.test("Status code is 200", function () {
     pm.response.to.have.status(200);
 });
-```
-##### Contient les données attendues : Vérifie que le corps de la réponse contient les données faciales attendues.
 
-```js
-pm.test("La réponse contient les données attendues", function () {
-    var jsonData = pm.response.json();
+// Vérificaiton de l'image
+pm.test("Response is a JPEG image", function() {
+    pm.response.to.have.header("Content-Type", "image/jpeg");
+});
 
-    pm.expect(jsonData.nb_faces).to.be.above(-1);
-    pm.expect(jsonData.nb_profiles).to.be.above(-1);
-    pm.expect(jsonData.faces_data).to.be.an("array");
-    pm.expect(jsonData.profiles_data).to.be.an("array");
+pm.test("Response body is not empty", function() {
+    pm.expect(pm.response.stream).to.not.be.empty;
+});
+
+// Savoir si le temps de la requête n'est pas trop long
+pm.test("Response time is acceptable", function () {
+    pm.expect(pm.response.responseTime).to.be.below(2000);
 });
 ```
 
-##### Statut 403 KO : Token manquant
-```js
-pm.test("Erreur de Params - Token manquant", function () {
-    pm.sendRequest({
-        url: 'http://192.168.1.26:4298/detect',
-        method: 'GET',
-    }, function (err, res) {
-        pm.expect(res).to.have.status(403);
-    });
-});
-```
+#### Résultat Postman
 
-##### Statut 403 KO : Faux token
-```js
-pm.test("Erreur de Params - Faux token", function () {
-    pm.sendRequest({
-        url: 'http://192.168.1.26:4298/detect?token=ceciestuntokenincorrect',
-        method: 'GET',
-    }, function (err, res) {
-        pm.expect(res).to.have.status(403);
-    });
-});
-```
+![](../ressources/images/test_postman_image.png)
 
-### Implémentation
 
-#### Class Detection
-Cette classe sert de librairie à la logique du traitement facial.
+## Sécurité des routes
 
-##### Detection des faces et des profils
+La sécurité des routes se fait via la fonction décoratrice `token_required(f)`. 
 
-Grâce à l'utilisation des algorithmes de **Haar**, cette fonction permet de détecter les **visages** et les **profils** dans une image.
-
-1. Récupération des cascades (faces et profile)
-2. Conversion des images en gris pour simplifier le traitement.
-3. Récupération des faces et des profils dans l'image en niveau de gris.
-4. Retourne la taille et la position des visage.
-
+### Fonction token_required
 ```py
-@staticmethod
-    def detect_faces_and_profiles(image):
-        """
-        Permet de détecter les faces et profiles
+from functools import wraps
 
-        Args:
-            image: L'image à analyser pour détecter les profils et faces
-
-        Returns:
-            faces: Tableau contenant les coordonées et tailles des faces
-            profiles: Tableau contenant les coordonées et tailles des profiles
-        """
-        face_cascade = cv2.CascadeClassifier('cascades/haarcascade_frontalface_default.xml')
-        profile_cascade = cv2.CascadeClassifier('cascades/haarcascade_profileface.xml')
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, 1.1, 4)
-        profiles = profile_cascade.detectMultiScale(gray, 1.1, 4)
-        return faces, profiles
-```
-
-##### Récupération des encodages des visages
-Grâce à la librairie **face_recognition**, on récupères les données faciales dans l'image.
-
-1. Récupération de la position des visages.
-2. Récupération des encodage dans l'image en fonction de l'emplacement des visages.
-3. Retour des encodages.
-
-```py
-@staticmethod
-    def get_face_encodings(image):
-        """
-        Récupère les données faciales de la personne dans l'image
-
-        Args:
-            image: L'image à analyser avec les faces
-
-        Returns:
-            face_encodings : Données des visages
-        """
-        face_locations = face_recognition.face_locations(image)
-        face_encodings = face_recognition.face_encodings(image, face_locations)
-        return face_encodings
-```
-
-#### Décorateur (Sécurité JWT)
-Cette fonction permet d'en décorer une autre afin de la rendre accessible uniquement si un token JWT est présent dans la request.
-
-1. Récupération du **token** dans les paramètres.
-2. Vérification du JWT par l'utilisation de la clé secrète.
-
-*Note: Quand la fonction jwt.decode() ne trouve pas de correspondance, elle crée une erreur*
-
-```py
 def token_required(f):
     """
     Fonction décoratrice permettant de forcer une autre fonction d'être identifié par JWT
@@ -428,101 +351,32 @@ def token_required(f):
         except jwt.InvalidTokenError:
             return jsonify({'message': 'Token is invalid'}), 403
         return f(*args, **kwargs)
+
+    return decorated
 ```
 
-
-#### Route 
-
-La route `/detect` permet d'accèder aux fonctions de détection.
-
-1. Prise d'une photo en utilisant la camera du server présente à l'index **0**.
-2. Libération de la mémoire.
-3. Création de la queue asyncrone.
-4. Création du process pour la création d'encodage asyncrone.
-    - Target : La fonction de récupération des encodage asyncrone.
-    - Args : Queue pour le stockage des encodage à la fin des traitements.
-5. Démarrage de la procédure. 
-6. Attente de la fin de la procédure.
-7. Passage des données dans un tableau pour tous les visages et pour les profils.
-8. Création du tableau final puis passage en JSON pour la réponse.
+### Exemple d'utilisation
 
 ```py
-@app.route('/detect', methods=['GET'])
+@app.route('/route_sécurisée', methods=['GET'])
 @token_required
-def detect():
-    """
-    Route permettant d'avoir les information sur les personnes présentes dans la vue de la camera
-
-    Returns:
-        Json: Résultat de l'interprétation de l'image
-    """
-    # CAP_V4L2 permet d'éviter une erreur
-    camera = cv2.VideoCapture(0, cv2.CAP_V4L2)
-    ret, frame = camera.read()
-    camera.release()
-
-    if ret:
-        result_queue = Queue()
-        process = Process(target=detect_worker, args=(frame, result_queue))
-        process.start()
-        process.join()
-
-        faces, profiles, faces_encodings = result_queue.get()
-
-    faces_data = []
-    for ((x, y, w, h), encoding) in zip(faces, faces_encodings):
-        face_data = {
-            'x': int(x),
-            'y': int(y),
-            'width': int(w),
-            'height': int(h),
-            'encoding': encoding.tolist()
-        }
-        faces_data.append(face_data)
-    
-    profiles_data = []
-    for (x, y, w, h) in profiles:
-        profile_info = {
-            'x': int(x),
-            'y': int(y),
-            'width': int(w),
-            'height': int(h)
-        }
-        profiles_data.append(profile_info)
-
-    return jsonify({
-        'nb_faces': len(faces),
-        'faces_data': faces_data,
-        'nb_profiles': len(profiles),
-        'profiles_data': profiles_data
-    })
+def route_sécurisée():
+    pass
 ```
 
-#### Création des encogages (Fonctionnement asyncrone)
-Cette fonction permet d'appeler les fonctions de la librairie détection de façon asyncrone.
-1. Récupération des données des faces et visages grâce aux Algorithmes de Haar.
-2. Récupération des encodages des visages.
-3. Ajout des résultats dans la variable result_data.
-4. Ajout des résultats dans la queue asyncrone.
+## Séquences
 
-```py
-def detect_worker(image, result_queue):
-    """
-    Fonction asychrone
-    Récupères les données dans l'image (Faces et profiles)
+### Authentification et sécurité
 
-    Args:
-        image: image à analyser
-        result_queue (Queue): Queue des contenant les résultats des autres instances de la fonction
-    """
-    faces, profiles = Detection.detect_faces_and_profiles(image)
-    faces_encodings = Detection.get_face_encodings(image)
-    result_data = (faces, profiles, faces_encodings)
-    result_queue.put(result_data)
-```
+L'utilisation des [JWT](https://jwt.io/) permet de s'identifier après une connexion. L'expiration de ce dernier est de **24 heures**.  
+
+1. Authentification avec les identifiants par défault.
+2. Récupération du token JWT
+3. Appel du endpoint `/image` pour demander une photo du serveur.
+4. Récupération de l'image.
+
+### Diagramme de séquence
+![](../ressources/images/gestion_JWT_cw.svg)
 
 ## Collection (Postman)
 Afin d'accèder à la collection ainsi qu'à plus de détails postman veuillez cliquer [ici](../../src/cameras_wifi/tests/SRS-cameras.postman_collection.json).
-
-
-

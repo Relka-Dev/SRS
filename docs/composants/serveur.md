@@ -318,7 +318,5 @@ def API_token_required(f):
         return decorated
 ```
 
-
-
 ## Collection (Postman)
 Afin d'accèder à la collection ainsi qu'à plus de détails postman veuillez cliquer [ici](../../src/serveur_central/tests/SRS-serveur.postman_collection.json).

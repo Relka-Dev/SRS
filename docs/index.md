@@ -1,4 +1,4 @@
-# Système de reconnaissance Spaciale
+# Documentation : Système de reconnaissance Spaciale
 Le SRS (Système de Reconnaissance Spatiale) est un projet destiné à localiser les individus dans un environnement 3D et à présenter visuellement leur position en 2D en utilisant des caméras et des technologies de reconnaissance faciale.
 
 ![](./ressources/images/logo.png)  
@@ -9,8 +9,8 @@ Le SRS (Système de Reconnaissance Spatiale) est un projet destiné à localiser
 - **Affiliation** : CFPT Informatique - Projet de diplôme
 - **Classe** : T.IS-E2A
 - **Suiveurs** : 
-    - [Christian Zanardi](Christian.Zanardi@edu.ge.ch)
-    - [Laurent Jayr](edu-jayrl@eduge.ch)
+    - [Christian Zanardi](mailto:Christian.Zanardi@edu.ge.ch)
+    - [Laurent Jayr](mailto:edu-jayrl@eduge.ch)
 
 ## Architecture
 

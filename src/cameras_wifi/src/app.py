@@ -73,6 +73,39 @@ def gen_frames():
 def video_feed():
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
+@app.route('/image')
+@token_required
+def image():
+    """
+    Route qui retourne une image capturée de la caméra.
+    """
+    camera = cv2.VideoCapture(0)
+    success, frame = camera.read()
+    camera.release()
+    if success:
+        ret, buffer = cv2.imencode('.jpg', frame)
+        return Response(buffer.tobytes(), mimetype='image/jpeg')
+    else:
+        return jsonify({'message': 'Failed to capture image'}), 500
+
+def gen_frames_base64():
+    camera = cv2.VideoCapture(0)
+    while True:
+        success, frame = camera.read()
+        if not success:
+            break
+        else:
+            ret, buffer = cv2.imencode('.jpg', frame)
+            if ret:
+                frame_base64 = base64.b64encode(buffer).decode('utf-8')
+                yield (b'--frame\r\n'
+                       b'Content-Type: text/plain\r\n\r\n' + frame_base64.encode() + b'\r\n')
+
+@app.route('/video_base64')
+@token_required
+def video_feed_base64():
+    return Response(gen_frames_base64(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
 
 @app.route('/login')
 def login():

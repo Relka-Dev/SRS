@@ -20,7 +20,7 @@ Le SRS (Système de Reconnaissance Spatiale) est un projet destiné à localiser
 | [**Serveur Central**](./composants/serveur.md)  | Python              | Traite les images (gris, traitement de frames), détecte les positions des corps et les visages, gère les données utilisateurs. |
 | [**Application**](./composants/application.md)    | Python              | Interface utilisateur pour gérer les utilisateurs, afficher les positions, et se connecter au serveur via les ports réseau.    |
 
-### Détails Techniques par Composant
+### Détails techniques par composant
 
 Pour accèder à la documentation de chaque composant, cliquez sur leurs titres.
 
@@ -54,3 +54,14 @@ Pour accèder à la documentation de chaque composant, cliquez sur leurs titres.
 
 ### Diagramme du projet
 ![](./ressources/images/srs_diagramme_complet.jpg)
+
+## Analyse fonctionnelle
+
+L'analyse fonctionnelle dans un projet informatique consiste à décomposer les besoins et les fonctionnalités du système en éléments plus petits et compréhensibles.
+
+#### Recherche dynamique des cameras
+#### Initialisation
+#### Connexion
+
+## Analyse organique
+L'analyse organique dans un projet informatique se concentre sur la manière dont les différents composants du système interagissent et coopèrent pour répondre aux besoins fonctionnels identifiés lors de l'analyse fonctionnelle.

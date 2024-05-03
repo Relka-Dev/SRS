@@ -11,6 +11,7 @@ Utilisez ces liens pour naviguer entre les répertoires du projet.
 
 ### Documentation
 - [**Accueil documentation**](./docs/index.md)  
+- [Tests fonctionnels](./docs/tests-fonctionnels.md)  
 - [Journal de bord](./docs/jdb.md)  
 
 ### Sources

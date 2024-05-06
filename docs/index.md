@@ -59,6 +59,48 @@ Pour accèder à la documentation de chaque composant, cliquez sur leurs titres.
 
 ## Analyse fonctionnelle
 
+### Fonctionnalité 1 : Recherche automatique de serveurs
+
+**Composantes impliquées :** Serveur Central, Application
+
+**Description :** Cette fonctionnalité permet de rechercher automatiquement un serveur SRS actif dans un réseau.
+
+#### Implémentation
+
+##### Application : Recherche de serveur
+
+### Fonctionnalité 2 : Initialisation / Connexion au système
+
+**Composantes impliquées :** Serveur Central, Application
+
+**Description :** Cette fonctionnalité permet d'initialiser le serveur.
+
+#### User Story
+
+Ce diagramme représente un administrateur qui se connecte ou qui met en place le premier administrateur.
+
+1. La page de recherche détermine si le serveur est initialisé.
+
+##### Route Verte - Le serveur est initialisé : Connexion
+2. L'utilisateur est renvoyé vers la page de connexion.
+3. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
+
+##### Route Bleue - Le serveur est initialisé : Intialisation
+2. L'utilisateur est renvoyé vers la page de connexion avec les identifiants par défault (présents dans le manuel ou dans la documentation).
+3. Si les identifiants sont corrects, il est redirigié vers la page lui permettant d'ajouter les premier identifiants d'administrateurs.
+4. Si les identifiants du premier administrateurs sont acceptés, il est redirigé vers la page de connexion d'administrateur.
+5. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
+
+![](./ressources/diagrams/us1-initialisation-connexion.jpg)
+
+#### Implémentation
+
+Si aucun administrateur est présent dans le système, l'utilisateur est 
+
+##### Application : Initialisation
+
+
+
 ### Fonctionnalité 2 : Capture et traitement d'images
 
 **Composantes impliquées :** Caméras Wifi, Serveur Central

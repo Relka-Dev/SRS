@@ -1,0 +1,65 @@
+<mxfile host="Electron" modified="2024-05-06T08:48:59.822Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.2.5 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="E8rxz6hF_-6WH55nM4JP" version="24.2.5" type="device">
+  <diagram name="Page-1" id="ZDlejCnu5OrMv0ja_oQA">
+    <mxGraphModel dx="2391" dy="1194" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Qta03OC2HTsTZXklNkqp-1" value="Recherche de serveur" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="319" y="300" width="110" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="Qta03OC2HTsTZXklNkqp-2" value="Page de connexion d&#39;aministrateur" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="520" width="110" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="Qta03OC2HTsTZXklNkqp-3" value="Si &lt;b&gt;un admin est présent&lt;/b&gt; dans le système" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#00FF00;" edge="1" parent="1" source="Qta03OC2HTsTZXklNkqp-1" target="Qta03OC2HTsTZXklNkqp-2">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="570" y="710" as="sourcePoint" />
+            <mxPoint x="620" y="660" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Qta03OC2HTsTZXklNkqp-4" value="Page de connexion avec les identifiants par défault" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="140" y="520" width="110" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="Qta03OC2HTsTZXklNkqp-5" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Qta03OC2HTsTZXklNkqp-2" target="Qta03OC2HTsTZXklNkqp-6">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="570" y="710" as="sourcePoint" />
+            <mxPoint x="670" y="570" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Qta03OC2HTsTZXklNkqp-6" value="Suite de l&#39;application" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="670" y="520" width="110" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="Qta03OC2HTsTZXklNkqp-7" value="Si &lt;b&gt;aucun admin&lt;/b&gt; est présent dans le système" style="endArrow=classic;html=1;rounded=0;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#0000FF;" edge="1" parent="1" source="Qta03OC2HTsTZXklNkqp-1" target="Qta03OC2HTsTZXklNkqp-4">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="439" y="410" as="sourcePoint" />
+            <mxPoint x="545" y="530" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Qta03OC2HTsTZXklNkqp-8" value="Page d&#39;ajout du premier admin" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="140" y="720" width="110" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="Qta03OC2HTsTZXklNkqp-9" value="Si les &lt;b&gt;identifiants &lt;/b&gt;sont &lt;b&gt;corrects&lt;/b&gt;" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#0000FF;" edge="1" parent="1" source="Qta03OC2HTsTZXklNkqp-4" target="Qta03OC2HTsTZXklNkqp-8">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="40" y="780" as="sourcePoint" />
+            <mxPoint x="90" y="730" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Qta03OC2HTsTZXklNkqp-10" value="&lt;b&gt;Si admin ajouté&lt;/b&gt;" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;strokeColor=#0000FF;" edge="1" parent="1" source="Qta03OC2HTsTZXklNkqp-8" target="Qta03OC2HTsTZXklNkqp-2">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="300" y="780" as="sourcePoint" />
+            <mxPoint x="350" y="730" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="370" y="770" />
+              <mxPoint x="370" y="570" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Qta03OC2HTsTZXklNkqp-13" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;User story : connexion administrateur / intitalisation&lt;/h1&gt;&lt;div&gt;&lt;font style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 16px;&quot;&gt;Qui &lt;/font&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;: &lt;/font&gt;&lt;font style=&quot;font-size: 16px;&quot;&gt;Administrateur&lt;/font&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font size=&quot;3&quot;&gt;Quoi : Se connecter / initialiser le serveur&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font size=&quot;3&quot;&gt;Pourquoi : Mise en reoute / utilisation&lt;/font&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="61.5" y="130" width="625" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="Qta03OC2HTsTZXklNkqp-17" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;Route Bleue : Initialisation&lt;/font&gt;&lt;div&gt;&lt;font size=&quot;3&quot;&gt;Route Verte : Connexion&lt;/font&gt;&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="159" y="870" width="510" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -69,18 +69,16 @@ Pour accèder à la documentation de chaque composant, cliquez sur leurs titres.
 
 Ce diagramme représente la recherche automatique de serveurs sur un réseau.
 
-1. Cette page démarre automatiquement lorseque l'application est lancée.
-2. L'application appelle chaque adresse sur le réseau et essaye de communiquer avec le port prévu pour les serveurs SRS.
-3. 
-  - Si aucun serveur n'est trouvé, un message d'erreur est affiché et un bouton permet à l'utilisateur d'effectuer une nouvelle recherche.  
-  - Si un serveur est trouvé, l'utilisateur est redirigé vers la page de connexion.
-
 ![us2](./ressources/diagrams/us2-recherche-serveurs.jpg)
 
-
-#### Implémentation
-
-##### Application : Recherche de serveur
+1. Cette page démarre automatiquement lorseque l'application est lancée.
+  - ⚠️ Ajouter image ⚠️
+2. L'application appelle chaque adresse sur le réseau et essaye de communiquer avec le port prévu pour les serveurs SRS.
+3. Interprétation du résultat.
+  - Si aucun serveur n'est trouvé, un message d'erreur est affiché et un bouton permet à l'utilisateur d'effectuer une nouvelle recherche.  
+    - ⚠️ Ajouter image ⚠️
+  - Si un serveur est trouvé, l'utilisateur est redirigé vers la page de connexion.
+    - ⚠️ Ajouter image ⚠️
 
 ### Fonctionnalité 2 : Initialisation / Connexion au système
 
@@ -92,26 +90,27 @@ Ce diagramme représente la recherche automatique de serveurs sur un réseau.
 
 Ce diagramme représente un administrateur qui se connecte ou qui met en place le premier administrateur.
 
-1. La page de recherche détermine si le serveur est initialisé.
-
-##### Route Verte - Le serveur est initialisé : Connexion
-2. L'utilisateur est renvoyé vers la page de connexion.
-3. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
-
-##### Route Bleue - Le serveur est initialisé : Intialisation
-2. L'utilisateur est renvoyé vers la page de connexion avec les identifiants par défault (présents dans le manuel ou dans la documentation).
-3. Si les identifiants sont corrects, il est redirigié vers la page lui permettant d'ajouter les premier identifiants d'administrateurs.
-4. Si les identifiants du premier administrateurs sont acceptés, il est redirigé vers la page de connexion d'administrateur.
-5. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
 
 ![](./ressources/diagrams/us1-initialisation-connexion.jpg)
 
-#### Implémentation
+1. La page de recherche détermine si le serveur est initialisé.
+  - ⚠️ Ajouter image ⚠️
 
-Si aucun administrateur est présent dans le système, l'utilisateur est 
+##### Route Verte - Le serveur est initialisé : Connexion
+2. L'utilisateur est renvoyé vers la page de connexion.
+  - ⚠️ Ajouter image ⚠️
+3. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
+  - ![seconde connexion](./ressources/images/secondeconnexion.png)
 
-##### Application : Initialisation
-
+##### Route Bleue - Le serveur est initialisé : Intialisation
+2. L'utilisateur est renvoyé vers la page de connexion avec les identifiants par défault (présents dans le manuel ou dans la documentation).
+  - ![première connexion](./ressources/images/premiereconnexion.png)
+3. Si les identifiants sont corrects, il est redirigié vers la page lui permettant d'ajouter les premier identifiants d'administrateurs.
+  - ![ajout admin](./ressources/images/pageajoutpremieradmin.png)
+4. Si les identifiants du premier administrateurs sont acceptés, il est redirigé vers la page de connexion d'administrateur.
+  - ![seconde connexion](./ressources/images/secondeconnexion.png)
+5. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
+  - ⚠️ Ajouter image ⚠️
 
 
 ### Fonctionnalité 2 : Capture et traitement d'images

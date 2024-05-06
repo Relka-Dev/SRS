@@ -3870,3 +3870,23 @@ Hier j'ai terminé la détection de personnes. J'ai effectué des recherches afi
 
 #### Objectifs de la journée
 Je pense avoir bien avancé dans mon travail technique, à présent, je dois me concentrer sur le rendu de la semaine prochaine. Pour ce faire, je dois avancer la documentation, faire des diagrammes, l'analyse organique, les tests etc.
+
+### Diagramme
+
+En utilisant Draw.io, j'ai crée le diagramme complet du projet.
+
+![](./ressources/images/srs_diagramme_complet.jpg)
+
+### Poster
+
+J'ai voulu créer quelque chose dans la charte graphique sérieuse de mon travail, quelque chose qui écoque la sécurité. J'ai envoyé cette première version à mes suiveurs.
+
+![](./ressources/poster/poster_srs_v1.1.png)
+
+### Conclusion
+
+J'ai pu avancer sur la documentation. J'ai rédigé les tests fonctionnels en adéquation avec les avancées que j'ai fais fais chaque semaine. J'ai égalment fait le diagramme général du projet et la première verion du poster.
+
+## 06.05.2024
+
+Absent

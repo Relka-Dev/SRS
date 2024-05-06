@@ -100,15 +100,15 @@ Ce diagramme représente un administrateur qui se connecte ou qui met en place l
 2. L'utilisateur est renvoyé vers la page de connexion.
   - ⚠️ Ajouter image ⚠️
 3. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
-  - ![seconde connexion](./ressources/images/secondeconnexion.png)
+  - ⚠️ Ajouter image ⚠️
 
 ##### Route Bleue - Le serveur est initialisé : Intialisation
 2. L'utilisateur est renvoyé vers la page de connexion avec les identifiants par défault (présents dans le manuel ou dans la documentation).
-  - ![première connexion](./ressources/images/premiereconnexion.png)
+  - ⚠️ Ajouter image ⚠️
 3. Si les identifiants sont corrects, il est redirigié vers la page lui permettant d'ajouter les premier identifiants d'administrateurs.
   - ![ajout admin](./ressources/images/pageajoutpremieradmin.png)
 4. Si les identifiants du premier administrateurs sont acceptés, il est redirigé vers la page de connexion d'administrateur.
-  - ![seconde connexion](./ressources/images/secondeconnexion.png)
+  - ⚠️ Ajouter image ⚠️
 5. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
   - ⚠️ Ajouter image ⚠️
 

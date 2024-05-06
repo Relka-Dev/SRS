@@ -65,6 +65,19 @@ Pour accèder à la documentation de chaque composant, cliquez sur leurs titres.
 
 **Description :** Cette fonctionnalité permet de rechercher automatiquement un serveur SRS actif dans un réseau.
 
+#### User Story
+
+Ce diagramme représente la recherche automatique de serveurs sur un réseau.
+
+1. Cette page démarre automatiquement lorseque l'application est lancée.
+2. L'application appelle chaque adresse sur le réseau et essaye de communiquer avec le port prévu pour les serveurs SRS.
+3. 
+  - Si aucun serveur n'est trouvé, un message d'erreur est affiché et un bouton permet à l'utilisateur d'effectuer une nouvelle recherche.  
+  - Si un serveur est trouvé, l'utilisateur est redirigé vers la page de connexion.
+
+![us2](./ressources/diagrams/us2-recherche-serveurs.jpg)
+
+
 #### Implémentation
 
 ##### Application : Recherche de serveur

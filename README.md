@@ -17,13 +17,20 @@ Utilisez ces liens pour naviguer entre les répertoires du projet.
 ### Sources
 Lien vers les sources des différents composants ainsi que leurs tests.
 
-#### Cameras Wifi
-- [Sources Cameras Wifi](./src/cameras_wifi/src/)
-- [Tests](./src/cameras_wifi/tests/)
+| Composant        | Sources                                    | Tests                                |
+|------------------|--------------------------------------------|--------------------------------------|
+| Cameras Wifi     | [Sources](./src/cameras_wifi/src/)        | [Tests](./src/cameras_wifi/tests/)  |
+| Serveur Central | [Sources](./src/serveur_central/src/)     | [Tests](./src/serveur_central/tests/) |
+| Application      | [Sources](./src/application_multiplateforme/) | N/A                                  |
+
+### Poster
+
+- [Poster](./docs/ressources/poster/)
 
 ## Normalisation des push
 
 La normalisation des push permet d'augementer la lisibilité dans l'historique des intéractions avec le repertoire du projet.  
+
 | **Syntaxe** | **Domaine de modification**                                    |
 |-------------|----------------------------------------------------------------|
 | Code        | Code / Fonctionnalités                                         |

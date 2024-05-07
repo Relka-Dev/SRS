@@ -33,42 +33,6 @@ Codename:       mantic
 
 ![Architercture de l'application](../ressources/diagrams/application.jpg)
 
-## Analyse organique
-
-### Initialisation
-
-Cette séquence permet d'initialiser le serveur si aucun administrateur n'est présent dans le système. S'il l'est, la page de connexion s'affiche, sinon, les autres étapes de l'initialisation s'activent.
-
-![](../ressources/diagrams/us1-initialisation-connexion.jpg)
-
-<p align="center">
-  <img src="../ressources/videos/initialize.gif">
-</p>
-
-#### Séquences
-
-##### Vérification si le serveur est initialisé
-
-Le serveur vérifie dans sa base de données si la table Admins est vide ou pas. Si c'est le cas, cela veut dire que le serveur n'est pas initialisé.
-
-![](../ressources/diagrams/sequences/test_server_intialized.png)
-
-##### Première connexion
-Cette connexion se fait avec des identifiants génériques (admin, super). Une fois les identifiants vérifiés par le serveur, un JWT est retourné servant uniquement pour les routes d'initialisation.
-
-![](../ressources/diagrams/sequences/first_connexion.png)
-
-##### Ajout d'administrateur
-
-En utilisant le JWT généré lors de l'étape précedente, on ajoute le premier administrateur à la base.
-
-![](../ressources/diagrams//sequences/add_admin.png)
-
-##### Connexion d'aministrateur
-
-L'utilisateur entre les identifiants, si ces derniers correspondent à ceux présentes dans la base, un JWT est retourner lui permettant d'accèder aux autres fonctionnalités.
-
-![](../ressources/diagrams//sequences/add_admin.png)
 
 
 

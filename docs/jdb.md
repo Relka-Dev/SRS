@@ -3917,3 +3917,9 @@ En vue de l'évaluation intermédiaire, je dois continuer mon travail sur la doc
 Afin d'aider à la compréhension de l'architecture de l'application. J'ai crée un diagramme.
 
 ![](./ressources/diagrams/application.jpg)
+
+#### 2.2 : Diagrammes de séquences
+Pour faire les diagrammes de séquence j'utilise [PlantUML](https://plantuml.com/fr/). La plus value par rapport à draw.io c'est la vitesse et vu le nombre de diagrammes que je vais devoir effectué c'est bienvenu.
+
+### Conclusion
+Aujourd'hui j'ai bien avancé la documentaiton, j'ai appris une nouvelle technologie avec PlanUML et j'ai pu discuter avec Monsieur Zanardi par rapport à la structure. Maintenant que j'ai toutes les clés en main je dois donner mon maximum demain pour essayer de terminer.

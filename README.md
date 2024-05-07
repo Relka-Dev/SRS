@@ -1,4 +1,4 @@
-# Système de reconnaissance spaciale (SRS)
+# Système de reconnaissance spatiale (SRS)
 
 ![Logo](./docs/ressources/images/logo.png)
 

@@ -1,0 +1,35 @@
+@startuml
+participant "Démarrage de l'application" as AppStart
+participant "ServerResearchWindow" as SRW
+participant "ServerClient" as SC
+participant "App"
+participant "DataBaseClient" as DBC
+participant "Database" as DB
+
+AppStart -> SRW : is_server_set_up()
+activate SRW
+
+SRW -> SC : is_server_set_up()
+activate SC
+
+SC -> App : Http request: /is_set_up
+activate App
+
+App -> DBC : is_set_up
+activate DBC
+
+DBC -> DB : SQL Query\nAdmin Table Empty?
+activate DB
+
+DB -> DBC : SQL Response\nTrue or False
+deactivate DB
+
+DBC -> App : Returns: True or False
+deactivate DBC
+
+App -> SC : Http Response\nCode: 200 or 400 
+deactivate App
+
+SC -> SRW : Returns: True or False
+deactivate SC
+@enduml

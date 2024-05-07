@@ -1,0 +1,33 @@
+@startuml
+participant "LoginWindow(Screen)" as LW
+participant "ServerClient" as SC
+participant "App"
+participant "DataBaseClient" as DBC
+participant "Database" as DB
+
+activate LW
+
+LW -> SC : admin_login(username, password)
+activate SC
+
+SC -> App : Http request: /admin_login
+activate App
+
+App -> DBC : adminLogin(username, password)
+activate DBC
+
+DBC -> DB : SQL Query\nIs an admin with the same credentials in the db ?
+activate DB
+
+DB -> DBC : SQL Response\nTrue or False
+deactivate DB
+
+DBC -> App : Returns: True + app JWT or False
+deactivate DBC
+
+App -> SC : Http Response\nCode: 200 + app JWT or 400 
+deactivate App
+
+SC -> LW : Returns: True or False
+deactivate LW
+@enduml

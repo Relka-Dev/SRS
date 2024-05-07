@@ -1,0 +1,33 @@
+@startuml
+participant "AddFirstAdminWindow(Screen)" as AFAW
+participant "ServerClient" as SC
+participant "App"
+participant "DataBaseClient" as DBC
+participant "Database" as DB
+
+activate AFAW
+
+AFAW -> SC : add_first_admin((sha256 encrypted)username, password)
+activate SC
+
+SC -> App : Http request: /first_admin\nParms: username, passoword, initialize JWT
+activate App
+
+App -> DBC : addAdmin(username, password, Initialise JWT)
+activate DBC
+
+DBC -> DB : SQL Query\nAdd Admin
+activate DB
+
+DB -> DBC : SQL Response\nTrue or False
+deactivate DB
+
+DBC -> App : Returns: True or False
+deactivate DBC
+
+App -> SC : Http Response\nCode: 201 or 400 
+deactivate App
+
+SC -> AFAW : Returns: True or False
+deactivate AFAW
+@enduml

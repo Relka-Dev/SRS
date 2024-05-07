@@ -1,0 +1,19 @@
+@startuml
+participant "InitializeLoginWindow" as ILW
+participant "ServerClient" as SC
+participant "App"
+
+activate ILW
+
+ILW -> SC : initialize_login(username, password)
+activate SC
+
+SC -> App : Http request\n/initialize
+activate App
+
+App -> SC : Http response\n 200 + initialize JWT or 400
+deactivate App
+
+SC -> ILW : Returns True + initialize JWT or False
+
+@enduml

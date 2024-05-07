@@ -3890,3 +3890,30 @@ J'ai pu avancer sur la documentation. J'ai rédigé les tests fonctionnels en ad
 ## 06.05.2024
 
 Absent
+
+## 07.05.2024
+
+#### Bilan de la dernière fois
+J'ai terminé la semaine dernière par la documentation, j'ai fais le poster et j'ai commencé l'analyse fonctionelle.
+
+#### Objectif de la journée
+Aujourd'hui je vais commencer par modifier le poster afin de suivre les conseils de Monsieur Zanardi et Monsieur Jayr.
+
+### 1.0 : Modification du poster
+Pour résumer, je dois mettre en application les conseils suivants :
+- Utiliser des mots clés
+- Remplacer la description par une séquence qui décrit mon application.
+- Bouger le texte "Travail de diplôme" en bas de la page.
+- Mettre la phrase d'accroche en dessous du titre.
+
+#### 1.1 : Version 1.3 du poster
+![](./ressources/poster/poster_srs_1.3.png
+)
+
+### 2.0 : Suite du travail sur la doc
+En vue de l'évaluation intermédiaire, je dois continuer mon travail sur la documentation de mon projet.
+
+#### 2.1 : Diagramme de l'application
+Afin d'aider à la compréhension de l'architecture de l'application. J'ai crée un diagramme.
+
+![](./ressources/diagrams/application.jpg)

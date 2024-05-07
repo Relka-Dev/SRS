@@ -3,7 +3,7 @@ Le SRS (Système de Reconnaissance Spatiale) est un projet destiné à localiser
 
 ## Poster
 
-![](./ressources/poster/poster_srs_v1.1.png)  
+![](./ressources/poster/poster_srs_1.3.png)  
 
 ## Informations
 
@@ -58,6 +58,9 @@ Pour accèder à la documentation de chaque composant, cliquez sur leurs titres.
 ![](./ressources/images/srs_diagramme_complet.jpg)
 
 ## Analyse fonctionnelle
+
+### Architecture de l'application
+![](./ressources/diagrams/application.jpg)
 
 ### Fonctionnalité 1 : Recherche automatique de serveurs
 
@@ -154,6 +157,3 @@ En naviguant sur la page de stream, on peut appercevoir la vue en temps réel de
 **Composantes impliquées :** Application
 
 **Description :** Cette fonctionnalité concerne l'affichage correct des données, notamment les positions détectées, sur l'interface utilisateur de l'application.
-
-## Analyse organique
-L'analyse organique dans un projet informatique se concentre sur la manière dont les différents composants du système interagissent et coopèrent pour répondre aux besoins fonctionnels identifiés lors de l'analyse fonctionnelle.

@@ -72,13 +72,13 @@ Ce diagramme représente la recherche automatique de serveurs sur un réseau.
 ![us2](./ressources/diagrams/us2-recherche-serveurs.jpg)
 
 1. Cette page démarre automatiquement lorseque l'application est lancée.
-  - ⚠️ Ajouter image ⚠️
+  - ![](./ressources/images/look-for-server.png)
 2. L'application appelle chaque adresse sur le réseau et essaye de communiquer avec le port prévu pour les serveurs SRS.
 3. Interprétation du résultat.
   - Si aucun serveur n'est trouvé, un message d'erreur est affiché et un bouton permet à l'utilisateur d'effectuer une nouvelle recherche.  
-    - ⚠️ Ajouter image ⚠️
+  - ![](./ressources/images/server-not-found.png)
   - Si un serveur est trouvé, l'utilisateur est redirigé vers la page de connexion.
-    - ⚠️ Ajouter image ⚠️
+    - ![](./ressources/images/login.png)
 
 ### Fonctionnalité 2 : Initialisation / Connexion au système
 
@@ -94,23 +94,21 @@ Ce diagramme représente un administrateur qui se connecte ou qui met en place l
 ![](./ressources/diagrams/us1-initialisation-connexion.jpg)
 
 1. La page de recherche détermine si le serveur est initialisé.
-  - ⚠️ Ajouter image ⚠️
+  - ![](./ressources/images/look-for-server.png)
 
 ##### Route Verte - Le serveur est initialisé : Connexion
 2. L'utilisateur est renvoyé vers la page de connexion.
-  - ⚠️ Ajouter image ⚠️
+  - ![](./ressources/images/login.png)
 3. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
-  - ⚠️ Ajouter image ⚠️
 
 ##### Route Bleue - Le serveur est initialisé : Intialisation
 2. L'utilisateur est renvoyé vers la page de connexion avec les identifiants par défault (présents dans le manuel ou dans la documentation).
-  - ⚠️ Ajouter image ⚠️
+  - [](./ressources/images/intialize.png)
 3. Si les identifiants sont corrects, il est redirigié vers la page lui permettant d'ajouter les premier identifiants d'administrateurs.
   - ![ajout admin](./ressources/images/pageajoutpremieradmin.png)
 4. Si les identifiants du premier administrateurs sont acceptés, il est redirigé vers la page de connexion d'administrateur.
-  - ⚠️ Ajouter image ⚠️
+  - ![](./ressources/images/login.png)
 5. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
-  - ⚠️ Ajouter image ⚠️
 
 
 ### Fonctionnalité 2 : Capture et traitement d'images

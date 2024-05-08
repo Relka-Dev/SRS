@@ -333,6 +333,7 @@ class ServeurCentral:
         networkId = self.db_client.getNetworkIdByIpAndSubnetMask(ip, subnetMask)
 
         if not self.db_client.checkIfNetworkExists(ip):
+            
             return self.intialise_network_with_cameras(ip, subnetMask)
 
         # Utilisation d'un event loop pour exécuter la recherche des caméras de manière asynchrone
@@ -400,6 +401,8 @@ class ServeurCentral:
         
         result_camera_list = []
         for database_camera in database_cameras:
+            print(database_camera[1])
+            print(network_cameras)
             if database_camera[1] not in network_cameras:
                 result_camera_list.append(database_camera)
         return result_camera_list

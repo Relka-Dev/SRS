@@ -96,21 +96,21 @@ Ce diagramme représente un administrateur qui se connecte ou qui met en place l
 
 ![](./ressources/diagrams/us1-initialisation-connexion.jpg)
 
-1. La page de recherche détermine si le serveur est initialisé.
-  - ![](./ressources/images/look-for-server.png)
+1. La page de recherche détermine si le serveur est initialisé.  
+![](./ressources/images/look-for-server.png)
 
 ##### Route Verte - Le serveur est initialisé : Connexion
-2. L'utilisateur est renvoyé vers la page de connexion.
-  - ![](./ressources/images/login.png)
+2. L'utilisateur est renvoyé vers la page de connexion.  
+![](./ressources/images/login.png)
 3. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
 
 ##### Route Bleue - Le serveur est initialisé : Intialisation
-2. L'utilisateur est renvoyé vers la page de connexion avec les identifiants par défault (présents dans le manuel ou dans la documentation).
-  - [](./ressources/images/intialize.png)
-3. Si les identifiants sont corrects, il est redirigié vers la page lui permettant d'ajouter les premier identifiants d'administrateurs.
-  - ![ajout admin](./ressources/images/pageajoutpremieradmin.png)
-4. Si les identifiants du premier administrateurs sont acceptés, il est redirigé vers la page de connexion d'administrateur.
-  - ![](./ressources/images/login.png)
+2. L'utilisateur est renvoyé vers la page de connexion avec les identifiants par défault (présents dans le manuel ou dans la documentation).  
+[](./ressources/images/intialize.png)
+3. Si les identifiants sont corrects, il est redirigié vers la page lui permettant d'ajouter les premier identifiants d'administrateurs.  
+![ajout admin](./ressources/images/pageajoutpremieradmin.png)
+4. Si les identifiants du premier administrateurs sont acceptés, il est redirigé vers la page de connexion d'administrateur.  
+![](./ressources/images/login.png)
 5. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
 
 

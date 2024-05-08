@@ -91,7 +91,9 @@ class CamerasManagementWindow(Screen):
                
           if self.selected_camera:
               print("Position x :" + str(self.selected_camera.positionX))
-              self.ids.position_slider.value = self.selected_camera.positionX
+              
+              if self.selected_camera.positionX:
+                self.ids.position_slider.value = self.selected_camera.positionX
 
               # Update wall selection based on the selected camera's wall ID
               matching_wall = next((wall for wall in self.walls if wall.idWall == self.selected_camera.idWall), None)

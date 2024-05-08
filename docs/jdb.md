@@ -3922,4 +3922,20 @@ Afin d'aider à la compréhension de l'architecture de l'application. J'ai crée
 Pour faire les diagrammes de séquence j'utilise [PlantUML](https://plantuml.com/fr/). La plus value par rapport à draw.io c'est la vitesse et vu le nombre de diagrammes que je vais devoir effectué c'est bienvenu.
 
 ### Conclusion
-Aujourd'hui j'ai bien avancé la documentaiton, j'ai appris une nouvelle technologie avec PlanUML et j'ai pu discuter avec Monsieur Zanardi par rapport à la structure. Maintenant que j'ai toutes les clés en main je dois donner mon maximum demain pour essayer de terminer.
+Aujourd'hui j'ai bien avancé la documentaiton, j'ai appris une nouvelle technologie avec PlantUML et j'ai pu discuter avec Monsieur Zanardi par rapport à la structure. Maintenant que j'ai toutes les clés en main je dois donner mon maximum demain pour essayer de terminer.
+
+## 08.05.2024
+
+#### Résumé de la veille
+Hier j'ai travaillé sur les diagrammes de séquences et terminé le poster. Grâce à l'utilisation de plantUML j'ai réussi à être plus efficace.
+
+#### Objectif de la journée
+Je vais commencer par créer mon abstract, en effet, il faut que je le rende ce soir à 17h. Ensuite, je vais continuer la documentation. Avec les conseils apportés hier par monsieur Zanardi, je connais la structure que je dois faire.
+
+## 1.0 : Abstract
+Je dois commencer par me renseigner qu'est-ce qu'un abstract en informatique.
+Je n'ai pas trouvé d'informations sur internet alors en recherchant dans les rapports des années précédentes, l'abstract s'avère être une sorte de résumé du projet.
+
+- [Abstract](./abstract.md)
+
+J'ai pu demander à monsieur Jayr des détails supplémentaires, pour m'aider, il va nous envoyer des exemples.

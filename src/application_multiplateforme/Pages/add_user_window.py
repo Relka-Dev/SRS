@@ -64,19 +64,14 @@ class AddUserWindow(Screen):
             self.ids.add_user_button.disabled = True
     
     def add_user_button_pressed(self):
-        result, face_encodings = LibFaceRecognition.get_face_encodings(self.get_picture())
-        
-        if not result:
-            # Ajouter l'affichage de l'erreur
-            pass
 
-        # Récupération des inputs
-            
-        #
-        #face_encodings
-        result, id_function = self.server_client.get_person_types_by_name(self.ids.function_spinner.text)
+        result_function, id_function = self.server_client.get_person_types_by_name(self.ids.function_spinner.text)
+
+        result_encodings, face_encodings = LibFaceRecognition.get_face_encodings(self.get_picture())
+
         username = self.ids.username_textInput.text
-        print(face_encodings)
-        self.server_client.add_user(username, id_function, face_encodings)
+        
+        if result_function and result_encodings:
+            self.server_client.add_user(username, id_function, face_encodings)
 
 

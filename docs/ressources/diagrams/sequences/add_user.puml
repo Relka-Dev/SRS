@@ -1,0 +1,61 @@
+@startuml
+
+participant "LibFaceRecognition" as LFR
+participant "AddUserWindow(Screen)" as AUW
+participant "ServerClient" as SC
+participant "App"
+participant "DataBaseClient" as DBC
+participant "Database" as DB
+
+activate AUW
+
+AUW -> SC : get_person_type_by_name(self.ids.function_spinner.text)
+activate SC
+
+SC -> App : Http request: /person_types\nParams: App JWT
+activate App
+
+App -> DBC : getPersonTypes()
+activate DBC
+
+DBC -> DB : SQL Query\nSELECT * FROM Person_Types
+activate DB
+
+DB -> DBC : SQL Response\nPerson Type by id
+deactivate DB
+
+DBC -> App : Returns: Person Type
+
+App -> SC : Http Response\nCode: 200
+
+SC -> AUW : Returns: Person Type
+
+AUW -> LFR : get_face_encodings(picture from kivy)
+activate LFR
+
+LFR -> AUW : Result (True or False), face encodings 
+deactivate LFR
+
+AUW -> SC : add_user(username, id function, face_encodings)
+
+SC -> App : Http request\ndata: username, idPersonType, encodings
+
+App -> DBC : add_user()
+
+DBC -> DB : SQL Query\nINSERT INTO srs.Users (idPersonType, encodings, username) VALUES(idPersonType, encodings, username)
+activate DB
+
+DB -> DBC : SQL Response
+deactivate DB
+
+DBC -> App : True or False
+deactivate DBC
+
+App -> SC : 200 or 400
+deactivate App
+
+SC -> AUW : True or False
+
+
+
+@enduml

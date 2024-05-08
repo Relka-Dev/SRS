@@ -488,8 +488,241 @@ La page d'ajout d'utilisateur permet d'ajouter les données d'un individus dans 
 2. Type de personne (Employé, dangereux, etc.)
 3. Données faciales
 
-#### Récupération du type de personnes
-
 <p align="center">
   <img src="./ressources/videos/addUser.gif">
 </p>
+
+#### Récupération du type de personnes
+
+Cette séquence permet de récupérer les types de personnes présentes dans la base de données afin de l'affiche dans le spinner du formulaire d'ajout de personnes.
+
+![](./ressources/diagrams/sequences/get_person_types.png)
+
+##### Application : AddUserWindow
+
+Récupération des types de personne, passage de la liste dans le spinner.
+
+```py
+def get_person_types(self):
+    result, response = self.server_client.get_person_types()
+    if result:
+        for data in response:
+            self.personTypes.append(data[1])
+            self.ids.function_spinner.values = self.personTypes
+        return True, response
+    else:
+        return False, response
+```
+
+##### Application : ServerClient
+
+Appelle le endpoint puis passe les données en liste si trouvés, sinon, renvoi d'un message d'erreur.
+
+```py
+def get_person_types(self):
+    if not self.server_ip:
+        return False
+    
+    params = {
+        "token": self.API_token
+    }
+    
+    endpoint_url = f"{self.server_url}/person_types"
+    response = requests.get(endpoint_url, params=params)
+    if response.status_code == 200:
+        return True, response.json()
+    else:
+        return False, response
+```
+
+##### Serveur : App
+
+Route sécurisée renvoyant la liste des type de personnes en json.
+
+```py
+@JwtLibrary.API_token_required
+def person_types(self):
+    return jsonify(self.db_client.getPersonTypes()), 200
+```
+
+##### Serveur : DatabaseClient
+
+Récupération de la liste complète des type de personnes dans la base.
+
+
+```py
+def getPersonTypes(self):
+    try:
+        self.cursor.execute("SELECT * FROM PersonTypes")
+        return self.cursor.fetchall()
+    except Exception as e:
+        print(f"Error: {e}")
+```
+
+#### Ajout des données de l'utilisateur
+1. Récupération des type de personne par id
+2. Encodage des données faciale de l'utilisateur.
+3. Envoi des données de l'utilisateur
+
+![](./ressources/diagrams/sequences/add_user.png)
+
+##### Application : AddUserWindow
+
+Cette fonction est appellée après la pression du bouton d'ajout d'utilisateur.
+
+```py
+def add_user_button_pressed(self):
+    result_function, id_function = self.server_client.get_person_types_by_name(self.ids.function_spinner.text)
+    result_encodings, face_encodings = LibFaceRecognition.get_face_encodings(self.get_picture())
+    username = self.ids.username_textInput.text
+    
+    if result_function and result_encodings:
+        self.server_client.add_user(username, id_function, face_encodings)
+```
+
+##### Application : LibFaceRecognition
+
+Cette fonction permet de récupérer les données faciale dans une iamge, s'il y a plus de un visage présent, alors elle retourne faux car elle ne peut pas déterminer lequel choisir. Si aucun visage n'est détecté, retourne faux également.
+
+```py
+@staticmethod
+def get_face_encodings(image):
+    """
+    Récupère les données faciales de la personne dans l'image
+    """
+    face_locations = face_recognition.face_locations(image)
+    face_encodings = face_recognition.face_encodings(image, face_locations)
+    if len(face_encodings) < 1:
+        return False, "Aucun visage détecté."
+    elif len(face_encodings) > 1:
+        return False, "Trop de visages détectés, veuillez vous isoler."
+
+    return True, face_encodings
+```
+
+##### Application : ServerClient
+
+Cette fonction est utilisée pour récupérer le type de personne par nom.
+
+```py
+def get_person_types_by_name(self, typeName : str):
+    if not self.server_ip:
+        return False
+    
+    params = {
+        "token": self.API_token,
+        "typeName": typeName
+    }
+    
+    endpoint_url = f"{self.server_url}/person_type_by_name"
+    response = requests.get(endpoint_url, params=params)
+    if response.status_code == 200:
+        return True, response.json()['message']['idPersonType']
+    else:
+        return False, response
+```
+
+Cette fonction ajoute une personne dans le système, les données sont passé dans le body afin de pouvoir transporter plus de contenu. Le token lui reste en paramêtre.
+
+```py
+def add_user(self, username, idPersonType, encodings):
+    if not self.server_ip:
+        return False, "ip du serveur manquante"
+    endpoint_url = f"{self.server_url}/add_user"
+    encodings_list = [encoding.tolist() for encoding in encodings]
+    data = {
+        "username": username,
+        "idPersonType": idPersonType,
+        "encodings": encodings_list,
+    }
+    # Encoder les données en JSON
+    data_json = json.dumps(data)
+    url_with_token = f"{endpoint_url}?token={self.API_token}"
+    response = requests.post(url_with_token, data=data_json)
+    if response.status_code == 200:
+        return True, response.json()
+    else:
+        return False, response.json()
+```
+
+##### Serveur : App
+
+Récupération du type de personne par nom.
+
+```py
+@JwtLibrary.API_token_required
+def person_type_by_name(self):
+    typeName = request.args.get('typeName')
+    result, response = self.db_client.getPersonTypeByName(typeName)
+    if result:
+        return jsonify({'message' : response}), 200
+    else:
+        return jsonify({'erreur' : response}), 400
+```
+
+Récupération des données pour l'ajout de l'utilisateurs.
+
+```py
+@JwtLibrary.API_token_required
+def add_user(self):
+    try:
+        data_json = request.data.decode('utf-8')
+        data = json.loads(data_json)
+        idPersonType = data.get('idPersonType')
+        encodings = data.get('encodings')
+        username = data.get('username')
+        result, response = self.db_client.addUser(idPersonType, json.dumps(encodings), username)
+        if result:
+            return jsonify({'message' : response}), 200
+        else:
+            return jsonify({'erreur' : response}), 400
+    except Exception as e:
+        # Afficher l'erreur précise
+        print(f"Erreur lors de l'ajout de l'utilisateur : {e}")
+        # Retourner une réponse avec un code de statut 500 (Erreur interne du serveur)
+        return jsonify({'erreur' : str(e)}), 500
+```
+
+##### Serveur : DatabaseClient
+
+Récupère le type de personne par le nom, retourne faux si aucune corresponce n'est trouvée.
+
+```py
+def getPersonTypeByName(self, typeName: str):
+    try:
+        self.cursor.execute("SELECT idPersonType FROM PersonTypes WHERE typeName = %s", (typeName,))
+        result = self.cursor.fetchone()
+        if result is None:
+            return False, "Aucune correspondance trouvée"
+        else:
+            # Extracting the relevant data from the result
+            idPersonType = result[0]
+            # Returning a JSON serializable object
+            return True, {'idPersonType': idPersonType}
+    except Exception as e:
+        print(f"Error: {e}")
+        return False, str(e)
+```
+
+
+Ajoute la personne dans la base, vérifie également si la personne n'existe pas déjà et vérifie si le type de personne existe.
+
+```py
+def addUser(self, idPersonType, encodings, username):
+    
+    try:
+        
+        if not self.checkIfIdPersonTypeExist(idPersonType):
+            return False, f"Impossible d'ajouter l'utilisateur : Le type de personne n'existe pas."
+        
+        if self.checkIfUsername(username):
+            return False, f"Impossible d'ajouter l'utilisateur : Un utilisateur avec le même nom existe déjà dans la base"
+        
+        self.cursor.execute("INSERT INTO srs.Users (idPersonType, encodings, username) VALUES(%s, %s, %s);", (int(idPersonType), encodings, username))
+        
+        self.dbConnexion.commit()
+        return True, "L'utilisateur a été ajouté avec succès."
+    except Exception as e:
+        print(f"Error: {e}")
+        return False, f"Impossible d'ajouter l'utilisateur : {e}"
+```

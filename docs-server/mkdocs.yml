@@ -13,6 +13,9 @@ nav:
     - Caméras Wifi: 'composants/camera-wifi.md'
     - Serveur: 'composants/serveur.md'
     - Application: 'composants/application.md'
+  - Supports (.stl) : 
+    - 0.2 : 'supports/srs-support-0.2.stl'
+    - 0.1 : 'supports/srs-support-0.1.stl'   
   - Tests Fonctionnels : 'tests-fonctionnels.md'
   - Abstracts:
     - Français / Anglais: 'abstracts/abstract.md'

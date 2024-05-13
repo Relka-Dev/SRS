@@ -240,7 +240,7 @@ Le problème vennait de la libraire JWT qui était en confit avec PyJWT.
 
 Grace à cette question sur [Stack Overflow](https://stackoverflow.com/questions/33198428/jwt-module-object-has-no-attribute-encode). J'ai pu résoudre le problème.
 
-## Conclusion
+### Conclusion
 Aujourd'hui je pense avoir bien avancé, pour un jour prévu initialement à la planification j'ai quand même bien pu travailler avec mes cameras. Demain, je compte continuer sur cette lancée en implémentant mon système de sécurité puis les tests postman.
 
 ## 28.03.2024
@@ -3932,7 +3932,7 @@ Hier j'ai travaillé sur les diagrammes de séquences et terminé le poster. Gr�
 #### Objectif de la journée
 Je vais commencer par créer mon abstract, en effet, il faut que je le rende ce soir à 17h. Ensuite, je vais continuer la documentation. Avec les conseils apportés hier par monsieur Zanardi, je connais la structure que je dois faire.
 
-## 1.0 : Abstract
+### 1.0 : Abstract
 Je dois commencer par me renseigner qu'est-ce qu'un abstract en informatique.
 Je n'ai pas trouvé d'informations sur internet alors en recherchant dans les rapports des années précédentes, l'abstract s'avère être une sorte de résumé du projet.
 
@@ -3946,3 +3946,50 @@ En faisant la rédaction de l'abstract, je me suis rendu compte qu'il serait mei
 Pas grand chose à dire pour cette conclusion, j'ai terminé l'abstract et j'ai bien avancé les diagrammes de séquence. Je pense être dans les temps pour rendre la documentation lundi.
 
 ## 13.05.2024
+
+#### Bilan de la semaine dernière
+La semaine dernière je me suis exclusivement conscentré sur la documentation en vue du rendu qui est plannifié aujourd'hui.
+
+#### Objectif de la journée
+Aujourd'hui, je vais commencer par trouver une façon de générer un pdf à partir de ma documentaiton. Une fois cela terminé, je vais commencer à développer le support en 3D pour mes caméras.
+
+### 1.0 : Documentation en PDF
+
+Je recherche la meilleure façon de générer automatiquement ma documentation pour le rendu.
+
+#### 1.1 : Pandoc et Xelatex
+
+Pour commencer j'ai recherche les solutions en ligne et je suis tombé sur Pandoc. Après avoir généré un fichier je peux affirmer que ça focntionne bien cependant, ça ne correspond pas à ce que je recherche. En effet j'ai pas trouvé de façon pour que ça fonctionne avec tous les fichier dans un dossier pour avoir des liens relatifs avec une eventuelle table des matières etc.
+
+#### 1.2 : MkDocs material
+
+J'ai décidé de passer ma documentation dans un serveur [mkdocs](https://pypi.org/project/mkdocs/) avec le thème [material](https://squidfunk.github.io/mkdocs-material/). J'ai ensuite ajouté le plugin [mkdocs-with-pdf](https://pypi.org/project/mkdocs-with-pdf/). Avec cette configuration, j'ai réussi à avoir un résultat satisfaisant.
+
+### 2.0 : Impression 3D des supports pour les caméras
+
+Mon objectif est d'avoir au moins un support pour la soirée poster de demain. Pour ce faire je vais demander à un camarade, ayant de l'expériance en 3D pour m'aider à modélier mon support. Pour les mesures des différents composants, je me suis renseigné sur les sites suivants :
+
+1. [Raspberry Zero 2 W (65mm x 30mm)](https://core-electronics.com.au/raspberry-pi-zero-2-w-wireless.html)
+2. [Raspberry Pi Camera 2.1 (25mm x 23mm x 9mm)](https://uk.pi-supply.com/products/raspberry-pi-camera-board-v2-1-8mp-1080p)
+3. [MediaRange MR745 (21mm x 21mm x 90mm)](https://www.digitec.ch/en/s1/product/mediarange-mr745-2600-mah-962-wh-powerbanks-15660520)
+
+Pour l'impression en elle même, j'utilise le logiciel [Ultimaker Cura](https://ultimaker.com/fr/software/ultimaker-cura/) qui me permet de générer un fichier au format [G-code](https://fr.wikipedia.org/wiki/Programmation_de_commande_num%C3%A9rique) que je passe à l'imprimante 3D via une carte microSD.
+
+- Modèle de l'imprimante 3D : [Creality CR 20 Pro](https://www.digitec.ch/en/s1/product/creality-cr-20-pro-3d-printers-11547283)
+
+
+#### 2.1 : Version 0.1
+
+Avec les données que j'ai récolté, j'ai été en mesure d'imprimer une première version.
+
+Pour la taille des composants, j'ai décidé de viser un peu large volontairement. L'impression s'est bien passée cependant il y a plusieurs axes d'amélioration.
+
+1. La camera ne rentre pas dans son réceptacle, il faut reculer le support.
+2. L'avant de la batterie est exposé, il serait meilleur fermé.
+3. Ajouter les lettres **SRS** sur le côté.
+
+![](./ressources/images/support-v0.1a.jpg)
+
+![](./ressources/images/support-v0.1b.jpg)
+
+

@@ -1,0 +1,31 @@
+site_name: Système de Reconnaissance Spatiale
+site_author: Karel Vilém Svoboda
+site_description: Documentation technique du Système de Reconnaissance Spatiale
+copyright: Copyright &copy; 2023 - 2024 Karel Vilém Svoboda / CFPT Informatique
+
+
+theme:
+  name: 'material'
+
+nav:
+  - Accueil: 'index.md'
+  - Composants:
+    - Caméras Wifi: 'composants/camera-wifi.md'
+    - Serveur: 'composants/serveur.md'
+    - Application: 'composants/application.md'
+  - Tests Fonctionnels : 'tests-fonctionnels.md'
+  - Abstracts:
+    - Français / Anglais: 'abstracts/abstract.md'
+    - Anglais: 'abstracts/abstract-english.md'
+    - Version PDF (anglais): 'abstracts/abstract.pdf'
+  - Journal de bord : 'jdb.md'
+
+plugins:
+  - search
+  - with-pdf:
+      enabled_if_env: 'ENABLE_PDF_EXPORT'
+      cover_title: 'Système de Reconnaissance Spatiale'
+      cover_subtitle: 'Projet de diplôme Technicien ES 2024'
+      cover_author: 'Karel Vilém Svoboda'
+      cover_date: 'Mai 2024'
+      version: '1.0'  

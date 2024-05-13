@@ -1,6 +1,6 @@
 # Système de reconnaissance spatiale (SRS)
 
-![Logo](./docs/ressources/images/logo.png)
+![Logo](./docs-server/docs/ressources/images/logo.png)
 
 ## Introduction
 Le SRS (Système de Reconnaissance Spatiale) est un projet destiné à localiser précisément les individus dans un environnement 3D et à présenter visuellement leur position en 2D en utilisant des caméras WiFi et des technologies de reconnaissance faciale.
@@ -10,9 +10,9 @@ Le SRS (Système de Reconnaissance Spatiale) est un projet destiné à localiser
 Utilisez ces liens pour naviguer entre les répertoires du projet.
 
 ### Documentation
-- [**Accueil documentation**](./docs/index.md)  
-- [Tests fonctionnels](./docs/tests-fonctionnels.md)  
-- [Journal de bord](./docs/jdb.md)  
+- [**Accueil documentation**](./docs-server/docs/index.md)  
+- [Tests fonctionnels](./docs-server/docs/tests-fonctionnels.md)  
+- [Journal de bord](./docs-server/docs/jdb.md)  
 
 ### Sources
 Lien vers les sources des différents composants ainsi que leurs tests.
@@ -25,7 +25,7 @@ Lien vers les sources des différents composants ainsi que leurs tests.
 
 ### Poster
 
-- [Poster](./docs/ressources/poster/)
+- [Poster](./docs-server/docs/ressources/poster/)
 
 ## Normalisation des push
 

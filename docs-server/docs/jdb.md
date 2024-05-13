@@ -3941,3 +3941,8 @@ Je n'ai pas trouvé d'informations sur internet alors en recherchant dans les ra
 J'ai pu demander à monsieur Jayr des détails supplémentaires, pour m'aider, il va nous envoyer des exemples.
 
 En faisant la rédaction de l'abstract, je me suis rendu compte qu'il serait meilleur de placer les caméras dans les coins des pièces. Je garde cette information pour le développement la semaine prochaine.
+
+### Conclusion
+Pas grand chose à dire pour cette conclusion, j'ai terminé l'abstract et j'ai bien avancé les diagrammes de séquence. Je pense être dans les temps pour rendre la documentation lundi.
+
+## 13.05.2024

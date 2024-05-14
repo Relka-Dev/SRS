@@ -3992,4 +3992,175 @@ Pour la taille des composants, j'ai décidé de viser un peu large volontairemen
 
 ![](./ressources/images/support-v0.1b.jpg)
 
+#### 2.2 : Version 0.2
 
+On a effectué les ajustements et avec les modifications nous avons effectué une seconde version.
+
+Les améliorations sont visible et le support fonctionne bien pour une version en développement. Cependant, certaines améliorations sont toujours possibles.
+
+1. Viser la camera ainsi que le Raspberry sur le support directement.
+2. Trouver une façon de fixer la batterie de façon plus professionnelle.
+3. Fermer le support sur le haut pour protéger le Raspberry.
+
+![](./ressources/images/support-v0.2a.jpg)
+![](./ressources/images/support-v0.2b.jpg)
+![](./ressources/images/support-v0.2c.jpg)
+![](./ressources/images/support-v0.1d.jpg)
+
+### Conslusion
+Aujourd'hui j'ai réussi à avoir un support assez satisfaisant pour la suite de mon développement. J'ai effectué également mon rendu intermédiaire, demain je vais effectuer mon auto-évaluation.
+
+## 14.05.2024
+
+#### Bilan de la veille
+Hier je me suis conctré sur l'achèvement de mon rendu intermédiaire, une fois cela terminé, j'ai développé deux version de mon support pour les caméras.
+
+#### Objectifs de la journée
+Aujourd'hui, je vais commencer par effectuer mon auto-évaluation. Ensuite je vais me concentrer sur la préparation de la soirée poster en effectuant un prototype de mon projet.
+
+
+### 1.0 : Auto-évaluation
+
+#### Prestation professionnelle
+**Qualité du travail : travail très soigné** Selon moi, mon travail est suffisament clair grâce aux diagrammes de séquences et aux user story que je mets en place avant le développement.  
+
+**Organisation du travail : normale et sensée** La documentation est pour l'instant mon point faible, j'ai appris comment rédiger des diagrammes de séquence de façon plus efficace mais il fallait que j'y sois contraint. Je pense que si je redouble d'ôrganisation que ferais du meilleur travail à ce niveau là.
+
+**Rythme de travail : rapide** Je pense toujours que j'avance à une bonne cadence malgrès quelques difficultés lié à Kivy et OpenCV.
+
+**Squelette documentation : bien avancé** Je pense avoir enfin trouvé une structure qui fonctionne bien. Avec les séquences dans l'analyse organique qui expliquent de façon efficace le fonctionnement des différentes technologies. Cependant, il faut que je trouve une façon efficace de faire des diagramme en python.
+
+**Ordre des dossiers fichiers: examplaire** Pas grand chose à dire, je pense que mon projet est clair.
+
+#### Comportement au travail
+**Engagement et persévérence : appliqué, persévérant** Je pense avoir prouvé à plusieurs reprise que les problème de compatibilité pouvait être contournés avec suffisament de motivation, par exemple, la compatibilité de openCV en Kivy.
+
+**Intérêt : très interessé** Toujours le même niveau de motivation depuis la dernière fois.
+
+**Autonomie : totalement indépendant** Je suis toujours d'avis que je n'ai pas spécialement besoin d'aide à l'organisation de mon projet. Quand j'ai un problème je le signale etc.
+
+**Capacité à comprendre : comprend vite et bien** Selon moi, je pense assimilier assez vite les principe fondamontaux de mon projet, je comprends de mieux en mieux les différentes technologies de mon projet.
+
+**Mise à jour des outils de partage : très régulier** J'ai fais un effort à ce niveau là depuis la dernière fois, j'essaye de push à chaque fonctionnalité que j'implémente.
+
+#### Attitude personnelle
+
+**Collaboration : Très bonne, caractère sociable** Pas de changement à ce niveau là.
+
+**Façon d'être : préveant et serviable** Je pense avoir toujours la même attitude.
+
+**Conscience professionnelle : respecte les consignes** Quand on me demande quelque chose je pense toujours répondre de façon professionnelle.
+
+**Réponse aux communications : rapide** Quand un mail est envoyé, je vais mon possible pour répondre dans mes meilleurs délais
+
+#### Conclusion
+Je pense m'être amélioré sur plusieurs points qui me faisait défault lors de la première évaluation, je dois cependant toujours fais un effort pour mon organisation de travail.
+
+### 2.0 : Création du prototype
+Pour avoir un prototype fonctionnel à montrer aux différents invités, je intéger les éléments suivants :
+
+1. Récupération du flux de la camera.
+2. Affichage des carrés autour des personnes.
+3. Affichage de la position des personnes sur l'axe x.
+
+Pour rendre cela plus compréhensible, je vais faire un graphique que je vais imprimer pour m'aider lors de mes explications.
+
+#### 2.1 : Graphique
+
+Dans ce graphique, on voir la position de l'utilisateur sur la vue des différentes caméras.
+
+![](./ressources/images/demo.jpg)
+
+#### 2.2 : Implémentation
+
+Pour des question de simplicité, j'ai décidé de mettre le token et l'ip de la caméra en dûr.
+
+```py
+# URL du serveur Flask
+server_url = 'http://192.168.1.131:4298'
+video_url = f'{server_url}/video'
+
+# Token JWT
+token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiU1JTLVNlcnZlciIsImV4cCI6MTcxNTc1NTQ0Mn0.W-WjTXrWXsigBKmPhrsXx7GV2JIgUmW1At1chwbyIyk'
+
+# Headers pour l'authentification
+params = {'token': token}
+```
+
+
+En utilisant la librairie YoloV5, je récupère la position des personnes dans la frame.
+
+```py
+# Chargement du modèle pré entrainé
+model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
+
+def detect_people(frame):
+    '''
+    Détecte les personnes dans une image
+
+    Params:
+        frame : Image où les personnes sont recherchées
+    '''
+    # Convertir l'image BGR de cv2 en RGB
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    # Appliquer la détection
+    results = model(frame_rgb)
+    # Filtrer pour obtenir uniquement les détections de personnes
+    results = results.pandas().xyxy[0]  # Résultats au format DataFrame
+    people = results[results['name'] == 'person']
+    return people
+```
+
+Pour la récupération des données des caméras, j'utilise la fonciton que j'ai crée lors du POC. J'inversé égalment l'image pour correspondre au support.
+
+```py
+# Fonction pour récupérer le flux vidéo du serveur Flask
+def get_video_stream(url, params):
+    video_response = requests.get(url, params=params, stream=True)
+    if video_response.status_code == 200:
+        bytes_data = b''
+        for chunk in video_response.iter_content(chunk_size=1024):
+            bytes_data += chunk
+            a = bytes_data.find(b'\xff\xd8')
+            b = bytes_data.find(b'\xff\xd9')
+            if a != -1 and b != -1:
+                jpg = bytes_data[a:b+2]
+                bytes_data = bytes_data[b+2:]
+                img = cv2.imdecode(np.frombuffer(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
+                if img is not None:
+                    img = cv2.flip(img, 0)
+                    yield img
+    else:
+        raise Exception(f"Failed to get video feed. Status code: {video_response.status_code}")
+```
+
+Affichage des résultats et détermination de position x.
+
+```py
+for frame in get_video_stream(video_url, params):
+# Détecter les personnes dans le cadre actuel
+detections = detect_people(frame)
+# Créer une nouvelle image pour afficher les positions x
+position_map = np.zeros((100, 500, 3), dtype=np.uint8)
+
+for index, row in detections.iterrows():
+    cv2.rectangle(frame, (int(row['xmin']), int(row['ymin'])), (int(row['xmax']), int(row['ymax'])), (0, 255, 0), 2)
+    # Calculer la position x approximative de la personne
+    center_x = int((row['xmin'] + row['xmax']) / 2)
+    # Convertir les coordonnées de l'image en coordonnées de la carte
+    map_x = int(center_x / frame.shape[1] * position_map.shape[1])
+    # Dessine la position sur la carte
+    cv2.circle(position_map, (map_x, position_map.shape[0] // 2), 5, (0, 255, 0), -1)
+# Afficher l'image avec les détections
+cv2.imshow('Detected People', frame)
+# Afficher la carte des positions x
+cv2.imshow('People Position Map', position_map)
+if cv2.waitKey(1) & 0xFF == ord('q'):
+    break
+```
+
+#### 2.3 : Résultat
+
+On peut voir que les personnes dans l'image sont détectés et des rectangles verts les englobent. Sur l'application de droite on voit leurs position x.
+
+![](./ressources/images/demo-application.png)

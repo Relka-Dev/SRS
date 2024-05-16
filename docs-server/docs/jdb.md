@@ -4164,3 +4164,424 @@ if cv2.waitKey(1) & 0xFF == ord('q'):
 On peut voir que les personnes dans l'image sont détectés et des rectangles verts les englobent. Sur l'application de droite on voit leurs position x.
 
 ![](./ressources/images/demo-application.png)
+
+### Conclusion
+Bien que aujourd'hui j'ai pas avancé mon projet en lui même, la démo que j'ai conçu m'a permis de me questionner sur l'implémentation de la reconnaissance spatiale. Je me demande si mon modèle sera suffisament précis.
+
+## 15.05.2024
+
+#### Bilan de la veille
+Hier a eu lieu la soirée poster, expliquer à des personnes le principe de mon projet a été une tâche interessante. Cela m'a fait réfléchir sur l'architecture de ma reconnaissance spaciale.
+
+#### Objectif de la journée 
+Je vais explorer une autre façon d'aborder le projet. Je vais essayer de faire de la détection de profondeur.
+
+### 1.0 : Détection de profondeur
+
+Pour comprendre comment implémenter la détection de profondeur en Python, j'ai suivi un tutoriel sur Youtube.
+
+- [**Depth Estimation with OpenCV Python for 3D Object Detection - Nicolai Nielsen**](https://www.youtube.com/watch?v=uKDAVcSaNZA&list=PLCpB2LmtGbuel31gdKHSV_HBaZa2guc6Y&index=4)
+
+#### 1.1 : Calibration
+
+La calibration me sert à elever la distortion dans l'image.
+
+##### 1.1.1 : Prise de photo (get_images.py)
+
+Je commence par prendre une dizaine de photo par camera afin d'avoir des échantillons pour la calibration. J'ai du adapter le code du script du cours afin d'appeler mes caméras.
+
+1. Pause de 3 seconde afin de pouvoir se mettre en place avec l'échiquier.
+2. Récupération des images, appel des deux caméras en simultanné.
+3. Attente de une seconde entre chaque prise.
+4. Stockage des résultat dans leur dossier correspondant.
+
+```py
+import cv2
+import requests
+import numpy as np
+import time
+import os
+
+time.sleep(3)
+# Créer des répertoires pour sauvegarder les images récupérées
+os.makedirs('./stereoLeft', exist_ok=True)
+os.makedirs('./stereoRight', exist_ok=True)
+
+# URLs des serveurs Flask pour récupérer les images de calibration
+image_urls = ['http://192.168.1.131:4298/image', 'http://192.168.1.26:4298/image']
+
+# Token JWT
+token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiU1JTLVNlcnZlciIsImV4cCI6MTcxNTg1MDEwMn0.pJPpg97CWWcaY0HKNb6jgv7lGuZIwbmn6__yBQOLf84'
+
+
+# Headers pour l'authentification
+params = {'token': token}
+
+def get_calibration_images(urls, params, num_images=10):
+    for j in range(num_images):
+        images = []
+        for i, url in enumerate(urls):
+            response = requests.get(url, params=params)
+            if response.status_code == 200:
+                img_array = np.frombuffer(response.content, np.uint8)
+                img = cv2.flip(cv2.imdecode(img_array, cv2.IMREAD_COLOR), 0)
+                if img is not None:
+                    images.append((i, img))
+            else:
+                print(f"Failed to get image from {url}. Status code: {response.status_code}")
+                continue
+
+        if len(images) == len(urls):
+            for i, img in images:
+                # Sauvegarder l'image dans le dossier correspondant
+                if i == 0:
+                    image_path = f'./stereoLeft/imageL{j+1}.jpg'
+                else:
+                    image_path = f'./stereoRight/imageR{j+1}.jpg'
+                cv2.imwrite(image_path, img)
+                print(f"Saved image to {image_path}")
+
+        # Attendre une seconde avant la prochaine capture
+        time.sleep(1)
+
+# Appel de la fonction pour récupérer et enregistrer les images
+get_calibration_images(image_urls, params)
+```
+
+##### 1.1.2 : Calibration des caméras (calibration_images.py)
+
+Ce script permet de détecter les coins de l'échiquier, calibrer les cameras afin d'effectuer une calibration stereo pour corriger les distorsions et aligner les images pour la vision stereo.
+
+1. **Importations nécessaires** :
+    ```python
+    import numpy as np
+    import cv2 as cv
+    import glob
+    ```
+
+2. **Définition de la taille du damier et de la taille du cadre de l'image** :
+    ```python
+    chessboardSize = (10, 6)
+    frameSize = (640, 480)
+    ```
+
+3. **Critères de terminaison pour l'algorithme de `cornerSubPix`** :
+    ```python
+    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+    ```
+
+4. **Préparation des points d'objets dans le monde réel pour le damier (3D)** :
+    ```python
+    objp = np.zeros((chessboardSize[0] * chessboardSize[1], 3), np.float32)
+    objp[:, :2] = np.mgrid[0:chessboardSize[0], 0:chessboardSize[1]].T.reshape(-1, 2)
+    size_of_chessboard_squares_mm = 20
+    objp = objp * size_of_chessboard_squares_mm
+    ```
+
+5. **Initialisations des listes pour stocker les points d'objets et les points d'images** :
+    ```python
+    objpoints = []  # Points 3D dans l'espace réel
+    imgpointsL = []  # Points 2D dans le plan de l'image de la caméra gauche
+    imgpointsR = []  # Points 2D dans le plan de l'image de la caméra droite
+    ```
+
+6. **Chargement des images de répertoires** :
+    ```python
+    imagesLeft = glob.glob('stereoLeft/*.jpg')
+    imagesRight = glob.glob('stereoRight/*.jpg')
+    print(f"Found {len(imagesLeft)} images on the left and {len(imagesRight)} images on the right.")
+    ```
+
+7. **Boucle sur chaque paire d'images** :
+    ```python
+    for imgLeft, imgRight in zip(imagesLeft, imagesRight):
+        imgL = cv.imread(imgLeft)
+        imgR = cv.imread(imgRight)
+        if imgL is None or imgR is None:
+            print(f"Failed to load images {imgLeft} or {imgRight}")
+            continue
+    ```
+
+8. **Convertion des images en niveaux de gris et égaliser l'histogramme pour améliorer le contraste** :
+    ```python
+    grayL = cv.cvtColor(imgL, cv.COLOR_BGR2GRAY)
+    grayL = cv.equalizeHist(grayL)
+    grayR = cv.cvtColor(imgR, cv.COLOR_BGR2GRAY)
+    grayR = cv.equalizeHist(grayR)
+    ```
+
+9. **Détection des coins de l'echiquier** :
+    ```python
+    retL, cornersL = cv.findChessboardCorners(grayL, chessboardSize, cv.CALIB_CB_ADAPTIVE_THRESH + cv.CALIB_CB_NORMALIZE_IMAGE + cv.CALIB_CB_FAST_CHECK)
+    retR, cornersR = cv.findChessboardCorners(grayR, chessboardSize, cv.CALIB_CB_ADAPTIVE_THRESH + cv.CALIB_CB_NORMALIZE_IMAGE + cv.CALIB_CB_FAST_CHECK)
+    ```
+
+10. **Affichage des résultats de la détection des coins** :
+    ```python
+    print(f"Chessboard detected in image {imgLeft}: {retL}")
+    print(f"Chessboard detected in image {imgRight}: {retR}")
+    ```
+
+11. **Affinage les coins et les dessiner sur les images** :
+    ```python
+    if retL:
+        cornersL = cv.cornerSubPix(grayL, cornersL, (11, 11), (-1, -1), criteria)
+        cv.drawChessboardCorners(imgL, chessboardSize, cornersL, retL)
+    else:
+        print(f"Chessboard corners not found in {imgLeft}")
+
+    if retR:
+        cornersR = cv.cornerSubPix(grayR, cornersR, (11, 11), (-1, -1), criteria)
+        cv.drawChessboardCorners(imgR, chessboardSize, cornersR, retR)
+    else:
+        print(f"Chessboard corners not found in {imgRight}")
+    ```
+
+12. **Affichage des images avec les coins détectés** :
+    ```python
+    cv.imshow('img left', imgL)
+    cv.imshow('img right', imgR)
+    cv.waitKey(1000)
+    ```
+
+13. **Ajout des points d'objet et des points d'image aux listes si les coins sont trouvés** :
+    ```python
+    if retL and retR:
+        print(f"Adding object points and image points for {imgLeft} and {imgRight}")
+        objpoints.append(objp)
+        imgpointsL.append(cornersL)
+        imgpointsR.append(cornersR)
+    ```
+
+14. **Fermer les fenêtres d'affichage** :
+    ```python
+    cv.destroyAllWindows()
+    ```
+
+15. **Calibration des caméras gauche et droite si des points d'objet et d'image sont trouvés** :
+    ```python
+    if objpoints and imgpointsL:
+        retL, cameraMatrixL, distL, rvecsL, tvecsL = cv.calibrateCamera(objpoints, imgpointsL, frameSize, None, None)
+        heightL, widthL, channelsL = imgL.shape
+        newCameraMatrixL, roi_L = cv.getOptimalNewCameraMatrix(cameraMatrixL, distL, (widthL, heightL), 1, (widthL, heightL))
+
+        retR, cameraMatrixR, distR, rvecsR, tvecsR = cv.calibrateCamera(objpoints, imgpointsR, frameSize, None, None)
+        heightR, widthR, channelsR = imgR.shape
+        newCameraMatrixR, roi_R = cv.getOptimalNewCameraMatrix(cameraMatrixR, distR, (widthR, heightR), 1, (widthR, heightR))
+    ```
+
+16. **Calibration stéréo en fixant les paramètres intrinsèques des caméras** :
+    ```python
+    flags = 0
+    flags |= cv.CALIB_FIX_INTRINSIC
+    criteria_stereo = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+    retStereo, newCameraMatrixL, distL, newCameraMatrixR, distR, rot, trans, essentialMatrix, fundamentalMatrix = cv.stereoCalibrate(objpoints, imgpointsL, imgpointsR, newCameraMatrixL, distL, newCameraMatrixR, distR, grayL.shape[::-1], criteria_stereo, flags)
+    ```
+
+17. **Rectification stéréo pour obtenir les matrices de projection et les cartes de rectification** :
+    ```python
+    rectifyScale = 1
+    rectL, rectR, projMatrixL, projMatrixR, Q, roi_L, roi_R = cv.stereoRectify(newCameraMatrixL, distL, newCameraMatrixR, distR, grayL.shape[::-1], rot, trans, rectifyScale, (0, 0))
+    stereoMapL_x, stereoMapL_y = cv.initUndistortRectifyMap(newCameraMatrixL, distL, rectL, projMatrixL, grayL.shape[::-1], cv.CV_32FC1)
+    stereoMapR_x, stereoMapR_y = cv.initUndistortRectifyMap(newCameraMatrixR, distR, rectR, projMatrixR, grayR.shape[::-1], cv.CV_32FC1)
+    ```
+
+18. **Sauvegarde des paramètres de rectification stéréo** :
+    ```python
+    print("Saving parameters!")
+    cv_file = cv.FileStorage('stereoMap.xml', cv.FILE_STORAGE_WRITE)
+    cv_file.write('stereoMapL_x', stereoMapL_x)
+    cv_file.write('stereoMapL_y', stereoMapL_y)
+    cv_file.write('stereoMapR_x', stereoMapR_x)
+    cv_file.write('stereoMapR_y', stereoMapR_y)
+    cv_file.release()
+    ```
+
+19. **Message d'erreur si aucun point n'est trouvé** :
+    ```python
+    else:
+        print("No object points or image points found. Calibration not performed.")
+    ```
+
+###### Résultat :
+
+Sur la video ci-dessous, on peut voir la vue de la camera de droite, quand l'echiquier est détecter, on voir les différentes lignes pour la calibration apparaître.
+
+![camera calibration gif](./ressources/videos/camera_calibration.gif)
+
+### 2.0 : Evaluation intermédaire
+
+Mes suiveurs on pu faire leurs retours sur le travail que j'ai effectué jusqu'à présent. J'ai relevé des points positifs et des points à améliorer
+
+#### Positif
+
+1. User stories.
+2. Diagrammes de séquence.
+3. Quantité de travail.
+4. Documentaiton en séquences.
+5. Tests unitaires avec Postman.
+
+#### À amélorer
+
+1. Abstract trop technique.
+2. Meilleur résumé du projet.
+3. Analyse de l'existant à ajouter.
+4. Diagrammes de classe.
+    - Utiliser [PlantUML](https://plantuml.com/fr/) sur les fichier individuellement pour éviter les problèmes de compatibilité avec Kivy.
+5. Tests unitaires en Python.
+    - Monsieur Zanardi a insisté sur le fait qu'il n'était pas obligatoire d'en avoir une grande quantité, mais montrer qu'on sait le faire constiturait une plus-value au-près des experts.
+    - Librairie conseillée : [PyTest](https://docs.pytest.org/en/8.2.x/)
+    - Je pense m'en servir pour le serveur central. Selon moi c'est l'endroit le plus interessant au niveau des tests.
+
+### Conslusion
+
+Selon mes suiveurs, mon travail se déroule bien et je dois continuer sur cette voie. Personnellement, je sens qu'il faut que j'accelère mon rythme, il faut absolument avoir un livrable interessant pour les experts.
+
+## 16.05.2024
+
+#### Bilan de la veille
+Hier j'ai commencé la vision stereo avec mes deux caméras, j'ai également fait l'évaluation intermédiaire avec mes suiveurs qui s'est bien passé dans l'ensemble.
+
+#### Objectif de la journée
+Pour commencer, je vais déterminer la meilleure façon d'effectuer la reconnaissance spatiale. Ensuite, je vais explorer la piste et effectuer un prototype.
+
+### 1.0 : Recherche de la meilleure façon de faire la reconnaissance spatiale
+
+Après la discussion de hier avec Monsieur Zanardi, on en a conclut que la meilleure serait de mettre les caméras le coins des murs.
+
+### 2.0 : Calcul de la position
+
+J'ai décidé d'effectuer la triangulation *from scratch*. Pour commencer, j'ai crée une permettant de récupérer l'angle des utilisateurs.
+
+```py
+def draw_angles(frame, positions, fov):
+    height, width, _ = frame.shape
+    for (cx, cy) in positions:
+        # Calculer l'angle par rapport au centre de la caméra
+        angle = ((cx - width / 2) / (width / 2)) * (fov / 2)
+        cv2.putText(frame, f"Angle: {angle:.2f}", (int(cx), int(cy)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+    return frame
+```
+
+#### 2.1 : Trigonometrie
+
+Afin de connaîte la position de la personne dans l'espace, j'utilise plusieurs principes trigonométriques.
+
+Voici les calculs dans leurs totalité, veuillez continuer pour voir les détails des étapes.
+
+![](./ressources/images/calcul_position.jpg.jpg)
+
+##### Variables
+
+- C (distance entre les deux caméras) : 3m
+- ɑ (angle de la camera de droite vers l'objet) : 10°
+- β (angle de la camera de gauche vers l'objet) : -12°
+
+##### Recherche des données du triangle (Camera - Personne - Camera)
+
+Je commence par trouver les angles en appliquant le principe suivant :
+
+l'angle ɑ représente l'angle de la personne par rapport au milieur de l'angle de vue de la camera qui est pointé vers le milieu de la pièce. 
+
+L'angle ɑ₁ représente l'angle entre le mur et la personne.
+
+$ɑ₁ = \frac{90}{2} + \alpha$
+
+![angle de camera](./ressources/images/angle_camera.jpg)
+
+Pour trouver le dernier angle de la personne vis à vis des caméras, il suffit de complèter les angles du triangle.
+
+$ϑ₁ = 180 - $ɑ₁ - β₁
+
+![](./ressources/images/triangle_camera_personne.jpg)
+
+
+##### Recherche de la distance camera - personne
+
+En utilisant le théorème du sinus, on recherche la distance camera -> personne.
+
+$ \frac{a}{\sin(\alpha)} = \frac{b}{\sin(\beta)} = \frac{c}{\sin(\gamma)} $
+
+$a = \frac{c}{\sin(\gamma)} * \sin(\alpha)$
+
+![](./ressources/images/distance_camera_personne.jpg)
+
+##### Recherche de la position Y
+
+À présent, nous avons un triangle rectangle, par conséquent on peut utiliser la trigonométrie.
+
+$\sin(\alpha) = \frac{opp}{hyp}$  
+
+$\sin(\alpha ₁) = \frac{y}{a₁}$  
+
+$\sin(\alpha ₁) *  a₁ = y$  
+
+![](./ressources/images/recherche_position_y.jpg)
+
+##### Recherche de la position X
+
+Avec les données que nous avons récoltés, il suffit à présent d'effectuer un théorème de pythagore pour trouver la position x.
+
+$ c^2 = a^2 + b^2 $
+
+$ a^2 = c^2 - b^2 $
+
+$ a = \sqrt{c^2 - b^2} $
+
+![](./ressources/images/calcul_position_x.jpg)
+
+##### 2.2 Implémentation
+
+Après le modèle effectué, j'ai implémenté dans la classe `Triangulation` mes calculs
+
+```py
+import math
+
+class Triangulation:
+
+    @staticmethod
+    def get_object_position(wall_length, object_angle_from_left, object_angle_from_right):
+        # Conversion des angles en radians
+        alpha = math.radians(90 / 2 + object_angle_from_left)
+        beta = math.radians(90 / 2 + object_angle_from_right)
+        
+        # Calcul de gamma
+        gamma = math.pi - alpha - beta  # 180 degrés en radians
+        
+        # Calcul de la distance entre la caméra et l'objet
+        distance_camera_object = wall_length * math.sin(alpha) / math.sin(gamma)
+        
+        # Calcul de la position Y
+        position_y = distance_camera_object * math.sin(alpha)
+        
+        # Calcul de la position X
+        position_x = math.sqrt(distance_camera_object**2 - position_y**2)
+        
+        return [position_x, position_y]
+```
+
+**Test :**  
+Sur papier, le résultat pour les variables suivantes :
+- Taille du mur : 3m
+- Angle camera gauche : 10
+- Angle camera droite : -12
+
+Devrait être (environ) :
+- y : 1.34 m
+- x : 2.06 m
+
+Dans le code :
+```py
+print(Triangulation.get_object_position(3, 10, -12))
+```
+
+Nous donne :
+
+```py
+[1.41039810759833, 2.014257246079405]
+```
+
+Les valeurs sont proches, selon moi, c'est satisfaisant.
+
+### Conclusion
+J'ai réussi à implémenter la détection de la distance en python en effectuant les calculs au tableau au préalable. Demain, je vais essayer de trouver une façon de détecter plusieurs personnes en même temps.

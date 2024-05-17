@@ -4585,3 +4585,148 @@ Les valeurs sont proches, selon moi, c'est satisfaisant.
 
 ### Conclusion
 J'ai réussi à implémenter la détection de la distance en python en effectuant les calculs au tableau au préalable. Demain, je vais essayer de trouver une façon de détecter plusieurs personnes en même temps.
+
+## 17.05.2024
+
+#### Bilan de la veille
+Hier je me suis concentré sur le développement de la triangulation, j'ai fais des calculs au tableau que j'ai intégré dans mon journal de bord.
+
+#### Objectif de la journée
+Aujourd'hui je vais essayer de développer la gestion d'objets multiples dans l'espace, mais avant cela, je vais vérifier si ma triangulation fonctionne correctement.
+
+### 1.0 : Vérification de la triangulation
+
+Pour prouver que ma triangulation fonctionne, j'utilise le site [Math Warefhouse](https://www.mathwarehouse.com/triangle-calculator/online.php) qui me permet d'effectuer des triangle en ligne, je compare ensuite les résultats à ceux de mon application.
+
+#### 1.1 : Ajout des prints pour le débug
+
+```py
+@staticmethod
+def get_object_position(wall_length, object_angle_from_left, object_angle_from_right):
+    # Conversion des angles en radians
+    alpha = 90 / 2 + object_angle_from_left
+    beta = 90 / 2 + object_angle_from_right
+    print(object_angle_from_left)
+    print("alpha : " + str(90 / 2 + object_angle_from_left))
+    print("beta : " + str(90 / 2 + object_angle_from_right))
+    print("gamma : " + str(180 - (90 / 2 + object_angle_from_right) - (90 / 2 + object_angle_from_left)))
+    # Calcul de gamma
+    gamma = 180 - alpha - beta
+    # Calcul de la distance entre la caméra et l'objet
+    distance_camera_object = wall_length * math.sin(math.radians(alpha)) / math.sin(math.radians(gamma))
+    print("cam -> object : " + str(distance_camera_object))
+    
+    # Calcul de la position X
+    position_y = distance_camera_object * math.sin(math.radians(alpha))
+    print("position y : " + str(position_y))
+    # Calcul de la position Y
+    position_x = math.sqrt(distance_camera_object**2 - position_y**2)
+    print("position x : " + str(position_x))
+    
+    return [position_x, position_y]
+```
+
+#### 1.2 : Correction du calcul de la distance
+
+J'ai constaté une erreur lors de mes tests, le calcul distance camera objet pointe la mauvaise camera, cela est du au fait que j'utilise $\alpha$ à la place de $\beta$.
+
+```py
+distance_camera_object = wall_length * math.sin(math.radians(alpha)) / math.sin(math.radians(gamma))
+
+# Est adapté pour :
+distance_camera_object = wall_length * math.sin(math.radians(beta)) / math.sin(math.radians(gamma))
+```
+
+#### 1.3 : Comparaison avec [Math Warefhouse](https://www.mathwarehouse.com/triangle-calculator/online.php)
+
+Avec ce code, modifié, on peut voir avec la comparaison que les données correspondent.
+
+##### Résultat dans le debug
+![](./ressources/images/test_triangle_code.png)
+
+#### Insertion des données dans le générateur de triangle
+![](./ressources/images/test_triangle_web.png)
+
+#### 1.4 : Test avec PyTest
+
+Afin de tester ma fonction j'utilise PyTests et j'effectue les vérifications suivantes :
+
+1. Valeurs classiques
+2. Triangle rectangle
+3. Triangle equilatéral
+4. Angle suppérieur à 90°
+5. Angle inférieur à 0° 
+
+Dans le cadre de mon projet je n'ai pas besoin que ces deux derniers tests réusissent car la FOV de mes caméras est uniquement de 62.2°. Donc je retourne simplement False.
+
+##### PyTest
+
+```py
+import pytest
+from math import isclose
+from triangulation import Triangulation
+
+def test_get_object_position_valid_angles():
+    result, position = Triangulation.get_object_position(3, 30, -20)
+    assert result == True
+    assert isclose(position[0], 0.333, abs_tol=0.001)
+    assert isclose(position[1], 1.243, abs_tol=0.001)
+
+def test_get_object_position_equilateral_rectangle():
+    result, position = Triangulation.get_object_position(3, 15, 15)
+    assert result == True
+    assert isclose(position[0], 1.5, abs_tol=0.001)
+    assert isclose(position[1], 2.598, abs_tol=0.001)
+
+def test_get_object_position_isosceles_rectangle():
+    result, position = Triangulation.get_object_position(3, 30, 30, True)
+    assert result == True
+    assert isclose(position[0], 1.5, abs_tol=0.001)
+    assert isclose(position[1], 5.598, abs_tol=0.001)
+
+def test_get_object_position_angle_greater_than_90():
+    result, message = Triangulation.get_object_position(3, 45, 50)
+    assert result == False
+    assert message == "Impossible de calculer la triangulation pour un angle supérieur à 90°"
+
+def test_get_object_position_angle_less_than_0():
+    result, message = Triangulation.get_object_position(3, -50, -50)
+    assert result == False
+    assert message == "Impossible de calculer la triangulation pour un angle inférieur à 90°"
+
+def test_get_object_position_boundary_angles():
+    result, position = Triangulation.get_object_position(3, 0, 0)
+    assert result == True
+    assert isclose(position[0], 1.5, abs_tol=0.001)
+    assert isclose(position[1], 1.5, abs_tol=0.001)
+
+if __name__ == "__main__":
+    pytest.main()
+```
+
+##### Résultat
+
+```sh
+(venv) svoboda@ubuntu-karelsvbd:~/srs-proto$ python3 test_triangulation.py 
+position y : 1.2435459380619063
+alpha : 75.0
+beta : 25.0
+gamma : 80.0
+cam_left -> object : 1.287413488921204
+position x : 0.33320712985469103
+position y : 1.2435459380619063
+(True, [0.33320712985469103, 1.2435459380619063])
+====================================================================== test session starts =======================================================================
+platform linux -- Python 3.11.6, pytest-8.2.0, pluggy-1.5.0
+rootdir: /home/svoboda/srs-proto
+collected 6 items                                                                                                                                                
+
+test_triangulation.py ......                                                                                                                               [100%]
+
+======================================================================= 6 passed in 0.04s ========================================================================
+(venv) svoboda@ubuntu-karelsvbd:~/srs-proto$ 
+```
+
+### 2.0 : Gestion de plusieurs objets
+
+Il faut que je trouve une façon de faire correspondre deux objets dans deux point de vue différents.

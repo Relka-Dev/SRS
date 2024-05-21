@@ -4729,4 +4729,29 @@ test_triangulation.py ......                                                    
 
 ### 2.0 : Gestion de plusieurs objets
 
-Il faut que je trouve une façon de faire correspondre deux objets dans deux point de vue différents.
+Il faut que je trouve une façon de faire correspondre plusieurs objets depuis  deux point de vue différents.
+
+#### 2.1 : Calculs au tableau
+
+Je commence par exploxer la piste avec uniquement deux caméras. En parcourant la liste deux fois, il y a une possibilité que les position soit identiques de liste en liste.
+
+![](./ressources/images/multiple_srs.jpg)
+![](./ressources//images/pseudo-code-multiple.jpg)
+
+Après avoir effectuer des tests dans le code, je me suis rendu compte que je faisait uniquement d'afficher les deux lsite deux fois mais dans un ordre différent. Au lieu de m'obstiner, je décide de me laisser le weekend pour réfléchir à une autre approche.
+
+### Conclusion
+
+Aujourd'hui j'ai appris à utiliser PyTest, mis à jour la triangulation et exploré une piste pour le S.R.S multiple. Je vais réfléchir à une autre façon de procéder et recommancer la semaine prochaine.
+
+## 21.05.2024
+
+#### Bilan de la dernière fois
+J'ai travaillé sur la première tentative pour identifier les objets dans l'espace, malheureusement sans succès.
+
+#### Objectifs de la journée
+Pour débuter, je vais répondre au mail envoyé par Monsieur Zanardi la semaine dernière, une fois cela fait, je vais trouver une nouvelle façon de pour déterminer les personnes dans l'espace.
+
+### 1.0 : Identification de la position des personnes
+Comme expliqué la semine dernière, Il m'est impossible determiner la position de chaque personne si y'en a plusieurs dans une pièce. Pour pallier à ça, j'ai pensé ajouter une autre caméras à l'autre bout de la pièce.
+

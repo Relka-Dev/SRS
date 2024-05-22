@@ -337,14 +337,13 @@ class ServeurCentral:
             return self.intialise_network_with_cameras(ip, subnetMask)
 
         # Utilisation d'un event loop pour exécuter la recherche des caméras de manière asynchrone
-        loop = asyncio.new_event_loop()
+        loop = asyncio.new_event_loop()     
         asyncio.set_event_loop(loop)
         cameras_in_network = loop.run_until_complete(cameraServerClient.lookForCameras())
         loop.close()
 
         # Après la récupération des adresses IP des caméras, obtenir les tokens associés
-        cameraServerClient.camerasIPs = cameras_in_network  # Assurez-vous que la liste des IPs est bien stockée dans l'attribut attendu
-        tokens_for_ip = cameraServerClient.getCamerasTokens()
+        tokens_for_ip = self.cameraServerClient.getCamerasTokens(cameras_in_network)
 
         cameras_in_db = self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)
 
@@ -474,7 +473,10 @@ class ServeurCentral:
     
     def intialise_network_with_cameras(self, networkip, subnetMask):
         # Recherche automatique des cameras
-        self.cameraServerClient.lookForCameras()
+        loop = asyncio.new_event_loop()     
+        asyncio.set_event_loop(loop)
+        cameras_in_network = loop.run_until_complete(self.cameraServerClient.lookForCameras())
+        loop.close()
         # Donne la liste des ip des cameras ainsi que leurs tokens
         tokens_for_ip = self.cameraServerClient.getCamerasTokens()
         if(tokens_for_ip == None):

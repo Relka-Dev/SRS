@@ -1,6 +1,7 @@
 from network_scanner import NetworkScanner
 import requests
 from requests.exceptions import RequestException
+import asyncio
 
 class CameraServerClient:
     __CLIENT_USERNAME = 'SRS-Server'
@@ -13,16 +14,16 @@ class CameraServerClient:
         self.subnetMask = subnetMask
         self.networkScanner = NetworkScanner("{n}/{sub}".format(n = network, sub = subnetMask))
 
-    def lookForCameras(self):
-        self.camerasIPs = self.networkScanner.scan_ips(self.__CAMERAS_SERVER_PORT)
+    async def lookForCameras(self):
+        self.camerasIPs = await self.networkScanner.scan_ips(self.__CAMERAS_SERVER_PORT)
         return self.camerasIPs
     
-    def getCamerasTokens(self):
-        if not self.camerasIPs:
+    def getCamerasTokens(self, cameraIPs):
+        if not cameraIPs:
             return None
     
         tokens_for_ip = {}
-        for cameraip in self.camerasIPs:
+        for cameraip in cameraIPs:
             camera_url = f"http://{cameraip}:{self.__CAMERAS_SERVER_PORT}/login"
             response = requests.get(camera_url, auth=(self.__CLIENT_USERNAME, self.__CLIENT_PASSWORD))
     

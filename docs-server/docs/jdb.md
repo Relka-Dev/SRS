@@ -4522,11 +4522,11 @@ $\sin(\alpha ₁) *  a₁ = y$
 
 Avec les données que nous avons récoltés, il suffit à présent d'effectuer un théorème de pythagore pour trouver la position x.
 
-$ c^2 = a^2 + b^2 $
+$c^2 = a^2 + b^2$
 
-$ a^2 = c^2 - b^2 $
+$a^2 = c^2 - b^2$
 
-$ a = \sqrt{c^2 - b^2} $
+$a = \sqrt{c^2 - b^2}$
 
 ![](./ressources/images/calcul_position_x.jpg)
 
@@ -4755,3 +4755,204 @@ Pour débuter, je vais répondre au mail envoyé par Monsieur Zanardi la semaine
 ### 1.0 : Identification de la position des personnes
 Comme expliqué la semine dernière, Il m'est impossible determiner la position de chaque personne si y'en a plusieurs dans une pièce. Pour pallier à ça, j'ai pensé ajouter une autre caméras à l'autre bout de la pièce.
 
+Si on continue à suivre la logique du projet, un angle correspond à une personne, en effectuant la suite de calculs suivants, il est possible de trouver l'angle de la personne du point de vue de la camera en haut à droite. On a ensuite plus qu'à comparer avec ce que voit la camera.
+
+#### 1.1 : Calcul pour identifier l'angle gauche
+
+Pour identifier l'angle de la camera de gauche on fait le calcul suivant :
+
+##### Variables
+
+$A = longueur\ du\ mur - y$
+
+$B = position\ X\ de\ l'utilisateur\ $
+
+$C = \sqrt{A^2 - B^2} $
+
+$\gamma = 90°$
+
+##### Théorème du sinus
+
+On utilise ensuite le théorème du sinus pour déterminer l'angle de la camera vers l'utilisateur.
+
+$\frac{a}{\sin(\alpha)} = \frac{b}{\sin(\beta)} = \frac{c}{\sin(\gamma)}$
+
+Pour trouver beta on va se servir de l'angle droit ($\gamma$),la distance camera utilisateur ($C$) et la position X de l'utilisateur ($B$).
+
+$\beta = \arcsin(\frac{\sin(\gamma)}{C}*B)$
+
+##### Représentation graphique
+
+![](./ressources/images/calcul-angle-gauche.jpg)
+
+##### Implmentation (triangulation.py)
+
+```py
+def find_angle_from_top_left(position, wall_length):
+    A = wall_length - position[1] # Distance Y entre la camera et l'objet
+    B = position[0] # Distance X entre l'objet et la camera
+    C = math.sqrt(A ** 2 + B ** 2) # Distance camera objet
+    gamma = math.radians(90) # Angle droit entre A et B
+    beta = math.asin(math.sin(gamma) / C * B) # Angle entre la camera et l'objet
+    return math.degrees(beta)
+```
+
+#### 1.2 : Calcul pour identifier l'angle droit
+
+Les étapes sont quasiment identiques que pour l'angle gauche. Il faut simplement changer les variables. 
+
+##### Variables
+
+$A = longueur\ du\ mur - y$
+
+$B = longueur\ du\ mur - x $
+
+$C = \sqrt{A^2 - B^2} $
+
+$\gamma = 90°$
+
+##### Théorème du sinus
+
+Comme précédament, on utilise le théorème du sinus pour trouver l'angle.
+
+$\frac{a}{\sin(\alpha)} = \frac{b}{\sin(\beta)} = \frac{c}{\sin(\gamma)}$
+
+Pour trouver beta on va se servir de l'angle droit ($\gamma$),la distance camera utilisateur ($C$) et la position X de l'utilisateur ($B$).
+
+$\beta = \arcsin(\frac{\sin(\gamma)}{C}*B)$
+
+##### Représentation graphique
+
+![](./ressources/images/recherche_angle_droit.jpg)
+
+##### Implémentation
+
+```py
+def find_angle_from_top_right(position, wall_length):
+    A = wall_length - position[1] # Distance Y entre la camera et l'objet
+    B = wall_length - position[0] # Distance X entre l'objet et la camera
+    C = math.sqrt(A ** 2 + B ** 2) # Distance camera objet    gamma = math.radians(90) # Angle droit entre A et B
+    beta = math.asin(math.sin(gamma) / C * B) # Angle entre la camera et l'objet
+    return math.degrees(beta)
+```
+
+### Conclusion
+
+Malgrès ma maladie, j'ai bien avancé dans mon travail, je suis capable à présent de détecter un angle d'une personne par rapports aux caméras. Demain je vais tester mes théorie sur papier et après, implémenter la vérification avec les angles captés par les caméras.
+
+## 22.05.2024
+
+#### Bilan de la veille
+Hier j'étais malade et j'ai trouvé une façon de déterniner l'angle depuis une cameras de l'autre bout de la zone à surveiller afin de déterminer les personnes dans la pièce.
+
+#### Objectif du jour
+Aujourd'hui je vais commencer par tester les calculs que j'ai effectué hier sur un papier et sur mon programme pour ensuite comparer les résultats. Une fois cela fait, je vais implémenter la vérification de sangles afin d'avoir une liste des utilisateurs à la fin. Il faut également compter avec la demo aujourd'hui dans l'après midi.
+
+### 1.0 : Tests des angles
+
+Afin d'effectuer les tests des fonctionnalités que j'ai implémenté hier. 
+
+#### 1.1 : Code (triangulation.py)
+
+Je commence par définir l'angle auquel un utilisateur est apperçu sur les deux caméras du dessous puis ensuite je le passe dans mes fonctions qui déterminent son angle vis à vis des caméras du dessus .
+
+```py
+result, response = Triangulation.get_object_position(10, -20, -25, True)
+print(response)
+print(Triangulation.find_angle_from_top_left(response, 10))
+print(Triangulation.find_angle_from_top_right(response, 10))
+```
+
+**Console :**
+
+```
+alpha : 25.0
+beta : 20.0
+gamma : 135.0
+cam_left -> object : 4.836895252959504
+position x : 4.383715832837805
+position y : 2.044160264027586
+[4.383715832837805, 2.044160264027586]
+28.855030188101914
+35.219502597708626
+```
+
+#### 1.2 : Tests sur papier
+
+À l'aide de mon rapporteur et ma règle, je dessine une pièce de 10cm par 10cm, j'ajoute les angles que j'ai entré dans mon programme.
+
+![](./ressources/images/tests-papier.jpg) 
+
+#### 1.2 : Conclusion
+
+Les résultats sont très proches et doivent surement être du à mon manque de précision sur papier. J'en conclus que c'est fonctionnel.
+
+|           | Programme          | Papier |
+|-----------|---------------------|--------|
+| Position X | 4.383715832837805  | 4.35   |
+| Position Y | 2.044160264027586  | 2.00   |
+| $\alpha$   | 28.855030188101914 | 28.5   |
+| $\beta$   | 35.219502597708626 | 35.8   |
+
+### 2.0 : Identification de plusieurs personnes
+
+#### 2.1 : Problème initial
+
+Avec deux caméras, je n'ai pas trouvé de façon pour identifier que points des intersections est la position de la personne.
+
+![](./ressources/images/positions_possibles.jpg)
+
+Comme l'image ci-dessus le montre (une donnée manque car elle sort du cadre), le nombre total d'intersection est le suivant :
+
+$x^2$
+
+$x=nb\ personnes$
+
+Dans ce cas, il y a 3 personnes dans la pièce donc :
+
+$3^2=9$
+
+#### 2.2 : Solution apportée
+
+Pour déterminer quelle interséction est correcte, j'ajoute une troisième camera, l'angle capté par cette dernière permet de savoir déterminer lesquelles sont valides.
+
+![](./ressources/images/solution_multidetection.jpg)
+
+#### 2.3 : Implémentation (triangulation.py)
+
+##### Création de liste de toutes les intersections
+
+Je crée une fonction `get_objects_positions`, je crée une liste avec tous les points possibles.
+
+```py
+all_possible_points = []
+for left_object in objects_angles_from_bot_left:
+    for right_object in objects_angles_from_bot_right:
+        result, pointXY = Triangulation.get_object_position(wall_length, left_object, right_object)
+        if result:
+            all_possible_points.append(pointXY)
+```
+
+##### Comparaison des données
+
+Avec tous les objets récupérés, je recherchere l'angle vis à vis de leurs position et la camera en haut à gauche. Si la différence est inférieur à une certaine données, elle est ajoutée à la liste des vrais points.
+
+```py
+for possible_point in all_possible_points:
+    for top_left_angle in object_angles_from_top_left:
+        top_left_angle = 90/2 + top_left_angle
+        angle_object_camera = Triangulation.find_angle_from_top_left(possible_point, wall_length)
+        if abs(angle_object_camera - top_left_angle) < tolerence:
+            list_true_points_left.append(possible_point)
+```
+
+##### Tests
+
+Pour ce tests les données suivantes correspondent, j'enlève 45° pour correspondre aux donnes envoyées par les caméras :
+
+| Personne  | Camera gauche bas | Camera droite bas | Camera gauche haut                  | Position x            | Position y            |
+|-----------|-------------------|-------------------|-------------------------------------|-----------------------|-----------------------|
+| Personne 1| -20               | -25               | 28.855030188101914 - 45            | 4.383715832837805     | 2.044160264027586     |
+| Personne 2| 15                | 12                | 68.55727721216165 - 45             | 4.7063099156843045    | 8.15156789013041      |
+
+### 3.0 : Implémentation avec les caméras

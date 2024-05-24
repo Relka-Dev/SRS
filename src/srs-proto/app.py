@@ -13,8 +13,9 @@ CAMERA_FOV = 62.2  # Angle de vue de la caméra en degrés
 ROOM_WIDTH = 10.0  # Largeur de la pièce en mètres
 ROOM_HEIGHT = 10.0  # Hauteur de la pièce en mètres
 
-# Charger le modèle YOLOv5 pré-entrainé
-model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
+# Charger le modèle YOLOv5 pré-entrainé et déplacer le modèle sur le GPU
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True).to(device)
 
 # Initialisation des captures vidéo
 cap1 = cv2.VideoCapture(CAMERA_URLS[0])
@@ -29,7 +30,8 @@ if not cap2.isOpened():
     exit()
 
 def process_frame(frame, model, fov):
-    results = model(frame)
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = model(frame_rgb)
     angles = []
     for det in results.xyxy[0].cpu().numpy():
         x1, y1, x2, y2, conf, cls = det
@@ -53,8 +55,8 @@ while True:
         print("Erreur : Impossible de lire une frame des flux vidéo")
         break
 
-    frame1 = cv2.flip(cv2.flip(frame1, 0),1)
-    frame2 = cv2.flip(cv2.flip(frame2, 0),1)
+    frame1 = cv2.flip(cv2.flip(frame1, 0), 1)
+    frame2 = cv2.flip(cv2.flip(frame2, 0), 1)
 
     # Traiter les frames pour détecter les personnes et calculer les angles
     frame1_processed, angles_cam1 = process_frame(frame1, model, CAMERA_FOV)
@@ -64,7 +66,7 @@ while True:
     cv2.imshow('Camera 1', frame1_processed)
     cv2.imshow('Camera 2', frame2_processed)
 
-    if len(angles_cam2) == 1 and len(angles_cam1) == 1: 
+    if len(angles_cam2) == 1 and len(angles_cam1) == 1:
         result, response = Triangulation.get_object_position(2.7, angles_cam1[0], angles_cam2[0])
         if result:
             map_frame = np.zeros((map_height, map_width, 3), dtype=np.uint8)

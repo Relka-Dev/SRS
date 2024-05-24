@@ -5008,3 +5008,36 @@ pip install flask opencv-python PyJWT
 sudo apt-get update && sudo apt-get install ffmpeg libsm6 libxext6  -y
 ```
 
+### 2.0 : Optimisation du serveur
+
+Lors du dernier rendez-vous avec mes suiveurs, je me suis rendu compte que mon prototype est lent, ayant un délait d'une dizaine de seconde avec le flux capté par mes caméras. Ce problème se produit uniquement quand j'utilise la librairie Yolo. Pour contrer cela, je me suis dis que j'allais profiter de la puissance de calcul qu'offre mon GPU. Pour ce faire, j'ai suivi les commandes suivantes sur Fedora :
+
+#### 2.1 : Installation des pilotes Nvidia et installation de cuda
+
+```
+sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
+sudo dnf install https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+sudo dnf install akmod-nvidia
+sudo dnf install xorg-x11-drv-nvidia-cuda
+lsmod | grep -i nvidia
+nvidia-smi
+```
+
+#### 2.2 : Déplacement des modèles pré-entrainés sur le GPU si possible
+Afin de faire cela, j'ajoute cette ligne dans mon script. Si cuda, est disponible, alors il est utilisé. Sinon c'est le processeur. :
+
+```py
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+```
+
+#### 2.3 : Tests
+
+Sur la vidéo suivante sont affichées les deux caméras fonctionnelles avec un délais fortement réduit.
+
+![](./ressources/videos/optimised_cameras.gif)
+
+### 3.0 : Tests réels
+
+Ayant accès à une grand epièce chez moi, je peux effectuer les tests en condition réele.
+
+#### 3.1 : Test single camera

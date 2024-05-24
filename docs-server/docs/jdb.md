@@ -4955,4 +4955,56 @@ Pour ce tests les données suivantes correspondent, j'enlève 45° pour correspo
 | Personne 1| -20               | -25               | 28.855030188101914 - 45            | 4.383715832837805     | 2.044160264027586     |
 | Personne 2| 15                | 12                | 68.55727721216165 - 45             | 4.7063099156843045    | 8.15156789013041      |
 
-### 3.0 : Implémentation avec les caméras
+### Conclusion
+Aujourd'hui j'ai pu effectuer les tests sur papier de mon projet, j'ai également fait un prototype qui affiche les personnes et leurs angles par rapport à la camera. Cependant, ce modèle avait beaucoups de lag, je préfère le documenter demain chez moi quand je ferai les tests en condition réels.
+
+## 23.05.2024
+
+#### Bilan de la veille
+Hier j'ai effectué les tests sur papier et j'ai fais ma première démonstration qui s'est relativement bien passé, cependant, il y avait quelques bugs mais compte les corriger.
+
+#### Objectif du jour
+Pour cette première journée de travail à la maison, je vais commencer par configurer mes deux raspberry pour mon réseau local, ensuite je vais lancer une impression pour mon troisième support. Une fois cela fait, je vais faire les tests en condition réelle.
+
+### 1.0 : Configuration des Raspberry
+
+Je reviens sur ce points pour avoir une version à jour pour la documentation.
+
+1. Créer l'environnement virtuel
+```sh
+sudo apt-get install python3-venv
+python3 -m venv venv
+```
+
+2. Activez la legacy camera
+```sh
+sudo raspi-config
+```
+Naviguez :  
+    - Interface options -> Enable legacy camera support -> yes
+
+Reboot le raspberry
+    - Appuyez sur oui à la sortie du menu.  
+
+ou
+
+```sh
+sudo reboot
+```
+
+3. Activez l'environnement virtuel
+```sh
+source venv/bin/activate
+```
+
+4. Installer les dépendances necessaires
+```sh
+pip install flask opencv-python PyJWT
+```
+
+5. Installes les librairies de vidéo.
+
+```sh
+sudo apt-get update && sudo apt-get install ffmpeg libsm6 libxext6  -y
+```
+

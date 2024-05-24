@@ -27,7 +27,7 @@ CREATE TABLE `Admin` (
   `Name` varchar(100) NOT NULL,
   `Password` varchar(255) NOT NULL,
   PRIMARY KEY (`idAdmin`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -54,13 +54,13 @@ CREATE TABLE `Cameras` (
   `JWT` varchar(255) DEFAULT NULL,
   `positionX` int DEFAULT NULL,
   `idWall` int unsigned DEFAULT NULL,
-  `macAddress` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `macAddress` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`idCamera`),
   KEY `Cameras_Networks_FK` (`idNetwork`),
   KEY `Cameras_Walls_FK` (`idWall`),
   CONSTRAINT `Cameras_Networks_FK` FOREIGN KEY (`idNetwork`) REFERENCES `Network` (`idNetwork`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `Cameras_Walls_FK` FOREIGN KEY (`idWall`) REFERENCES `Walls` (`idWall`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=82 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=82 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -85,7 +85,7 @@ CREATE TABLE `Network` (
   `subnetMask` varchar(100) DEFAULT NULL,
   `lastUpdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idNetwork`)
-) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -109,7 +109,7 @@ CREATE TABLE `PersonTypes` (
   `idPersonType` int unsigned NOT NULL AUTO_INCREMENT,
   `typeName` varchar(100) NOT NULL,
   PRIMARY KEY (`idPersonType`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -137,7 +137,7 @@ CREATE TABLE `Users` (
   PRIMARY KEY (`idUser`),
   KEY `Users_PersonTypes_FK` (`idPersonType`),
   CONSTRAINT `Users_PersonTypes_FK` FOREIGN KEY (`idPersonType`) REFERENCES `PersonTypes` (`idPersonType`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -161,7 +161,7 @@ CREATE TABLE `Walls` (
   `idWall` int unsigned NOT NULL AUTO_INCREMENT,
   `wallName` varchar(100) NOT NULL,
   PRIMARY KEY (`idWall`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --

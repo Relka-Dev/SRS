@@ -5040,4 +5040,24 @@ Sur la vidéo suivante sont affichées les deux caméras fonctionnelles avec un 
 
 Ayant accès à une grand epièce chez moi, je peux effectuer les tests en condition réele.
 
-#### 3.1 : Test single camera
+#### 3.1 : Test avec une camera
+
+l'objectif de ce test est de savoir l'angle d'où se trouve l'utilisateur par rapport à la camera. Pour résumer, avec une camera de fov de 62.2, tout à gauche serait -31.1 et tout à droite 31.1.
+
+Le résultat est fonctionnel, voici le lien vers la vidéo Youtube :
+
+[SRS - Single Camera Demo](https://www.youtube.com/watch?v=yyQEoyNrqvA)
+
+
+#### 3.2 : Test avec plusieurs cameras
+
+À présent il est temps d'essayer ce que donne le système avec plusieurs cameras et vérifier que la position x et y est correcte.
+
+Dans l'exemple suivant, les caméras sont séparée de 10m.
+
+[SRS - Double Camera Demo](https://www.youtube.com/watch?v=f4BZxshQ2D0)
+
+Le test est concluant, ma position est affichée en temps réelle dans la pièce.
+
+### Conclusion
+Aujourd'hui j'ai réussi à faire les démo ainsi qu'optimiser mon code. Je suis content que le projet fonctionne.

@@ -5061,3 +5061,14 @@ Le test est concluant, ma position est affichée en temps réelle dans la pièce
 
 ### Conclusion
 Aujourd'hui j'ai réussi à faire les démo ainsi qu'optimiser mon code. Je suis content que le projet fonctionne.
+
+## 27.05.2024
+
+#### Bilan de la dernière fois
+La semaine dernière j'ai travaillé sur la reconnaissance spatiale et j'ai terminée en faisant des tests que j'ai hébergé sur youtube.
+
+#### Objectif du jour
+Pour commencer, je vais commencer par lancer une impression afin de tester mon système de tri-caméras demain. Ensuite je vais retourner à l'école chercher le restant de mes composants. Une fois cela fait, je vais essayer d'implémenter la reconnaissance faciale.
+
+
+ 

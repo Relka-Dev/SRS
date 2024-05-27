@@ -5329,8 +5329,7 @@ def find_angle_from_top_left(position, wall_length):
 
 ##### Résultat
 
-J'ai mis la vidéo sur Youtube.
-
+J'ai mis la vidéo sur Youtube. L'objectif est d'avoir les données les plus proches entre l'angle de la camera et la personne. Sur la gauche, c'est l'angle trouvé mathématiquement et à droite, celui capté par la caméra.
 
 - [SRS Tri Camera - Test 1](https://youtu.be/AQjxHJF_0o0)
 

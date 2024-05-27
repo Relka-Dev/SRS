@@ -5070,5 +5070,280 @@ La semaine dernière j'ai travaillé sur la reconnaissance spatiale et j'ai term
 #### Objectif du jour
 Pour commencer, je vais commencer par lancer une impression afin de tester mon système de tri-caméras demain. Ensuite je vais retourner à l'école chercher le restant de mes composants. Une fois cela fait, je vais essayer d'implémenter la reconnaissance faciale.
 
+### 1.0 : Reconnaissance facaile en temps réel
 
- 
+Ayant déjà effectué un projet en utilisant la librairie [face-recognition](https://pypi.org/project/face-recognition/), j'ai voulu l'implémenter dans le projet SRS. Cependant, lors de l'exécution de mon ancien programme, je me suis rendu compte que le code était très le lent. Le temps réel était donc complexe. Je vais donc chercher d'autres altetrnatives.
+
+#### 1.1 : Recherche de la bonne technologie
+
+Avec l'aide de ChatGPT, j'ai pu trouver une alternative pour face_recongition. En premier lieu je recherche une façon qui marche c'est pour cela que j'utilise une ia.
+
+##### Code généré 
+
+```py
+import cv2
+import dlib
+import os
+import numpy as np
+
+class FaceRecognitionSRS:
+    def __init__(self):
+        self.detector = dlib.get_frontal_face_detector()
+        self.predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
+        self.face_rec_model = dlib.face_recognition_model_v1('dlib_face_recognition_resnet_model_v1.dat')
+        self.known_face_descriptors, self.known_labels = self.load_faces('faces')
+
+    # Fonction pour extraire les descripteurs de visage
+    def get_face_descriptor(self, img):
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        faces = self.detector(gray)
+
+        if len(faces) == 0:
+            return None
+
+        shape = self.predictor(gray, faces[0])
+        face_descriptor = self.face_rec_model.compute_face_descriptor(img, shape)
+        return np.array(face_descriptor)
+
+    # Chargement des images et extraction des descripteurs
+    def load_faces(self, directory):
+        face_descriptors = []
+        labels = []
+        for filename in os.listdir(directory):
+            if filename.endswith('.jpg') or filename.endswith('.png'):
+                path = os.path.join(directory, filename)
+                descriptor = self.get_face_descriptor(cv2.imread(path))
+                if descriptor is not None:
+                    face_descriptors.append(descriptor)
+                    labels.append(filename)
+        return face_descriptors, labels
+
+    # Comparaison des descripteurs
+    def compare_faces(self, descriptor, known_descriptors, threshold=0.6):
+        distances = np.linalg.norm(known_descriptors - descriptor, axis=1)
+        min_distance = np.min(distances)
+        if min_distance < threshold:
+            return True, np.argmin(distances)
+        else:
+            return False, None
+
+def main():
+    # Initialisation de l'instance de reconnaissance faciale
+    recognizer = FaceRecognitionSRS()
+
+    # Capture vidéo en temps réel
+    cap = cv2.VideoCapture(0)
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        # Redimensionnement pour accélérer le traitement
+        small_frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
+
+        # Obtenir le descripteur de visage pour la frame actuelle
+        descriptor = recognizer.get_face_descriptor(small_frame)
+
+        if descriptor is not None:
+            match, index = recognizer.compare_faces(descriptor, recognizer.known_face_descriptors)
+            if match:
+                label = recognizer.known_labels[index]
+            else:
+                label = 'Inconnu'
+
+            # Affichage de l'étiquette sur la frame
+            faces = recognizer.detector(cv2.cvtColor(small_frame, cv2.COLOR_BGR2GRAY))
+            for face in faces:
+                x, y, w, h = face.left(), face.top(), face.width(), face.height()
+                cv2.rectangle(frame, (x*2, y*2), ((x+w)*2, (y+h)*2), (0, 255, 0), 2)
+                cv2.putText(frame, label, (x*2, y*2 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+
+        cv2.imshow('Face Recognition', frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()
+```
+
+##### Résultat
+
+Sur la vidéo suivante on voit que mon visage est détecté et que c'est assez fiable. Si j'ai pas d'autres choix, je vais utiliser ce code.
+
+![](./ressources/videos/reconnaissance-faciale.gif)
+
+### 2.0 : Système tri camera
+
+Avec mon troisième modèle imprimé, je peux faire les tests du système tri-caméras.
+
+#### 2.1 : Code à tester
+
+J'adapte légérement le code des bi caméras afin de récupérer les 3 flux.
+
+##### triple-camera.py
+
+```py
+import cv2
+import torch
+import numpy as np
+from triangulation import Triangulation
+
+# Configuration
+CAMERA_URLS = [
+    "http://192.168.1.118:4298/video",
+    "http://192.168.1.115:4298/video",
+    "http://192.168.1.114:4298/video"
+]
+
+CAMERA_FOV = 62.2  # Angle de vue de la caméra en degrés
+ROOM_WIDTH = 4  # Largeur de la pièce en mètres
+ROOM_HEIGHT = 4  # Hauteur de la pièce en mètres
+
+# Charger le modèle YOLOv5 pré-entrainé et déplacer le modèle sur le GPU
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True).to(device)
+
+# Initialisation des captures vidéo
+cap1 = cv2.VideoCapture(CAMERA_URLS[0])
+cap2 = cv2.VideoCapture(CAMERA_URLS[1])
+cap3 = cv2.VideoCapture(CAMERA_URLS[2])
+
+# Vérifiez si les captures vidéo sont ouvertes correctement
+if not cap1.isOpened():
+    print("Erreur : Impossible de lire le flux vidéo de la caméra 1")
+    exit()
+if not cap2.isOpened():
+    print("Erreur : Impossible de lire le flux vidéo de la caméra 2")
+    exit()
+
+def process_frame(frame, model, fov):
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = model(frame_rgb)
+    angles = []
+    for det in results.xyxy[0].cpu().numpy():
+        x1, y1, x2, y2, conf, cls = det
+        if cls == 0:  # Détecter les personnes uniquement
+            center_x = (x1 + x2) / 2
+            angle = (center_x - frame.shape[1] / 2) / frame.shape[1] * fov
+            angles.append(angle)
+            cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+            cv2.putText(frame, f"Angle: {angle:.2f}", (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    return frame, angles
+
+map_width, map_height = 600, 600
+
+while True:
+    # Lire les frames des deux caméras
+    ret1, frame1 = cap1.read()
+    ret2, frame2 = cap2.read()
+    ret3, frame3 = cap3.read()
+
+    # Si une des captures échoue, on sort de la boucle
+    if not ret1 or not ret2:
+        print("Erreur : Impossible de lire une frame des flux vidéo")
+        break
+
+    frame1 = cv2.flip(cv2.flip(frame1, 0), 1)
+    frame2 = cv2.flip(cv2.flip(frame2, 0), 1)
+    frame3 = cv2.flip(cv2.flip(frame3, 0), 1)
+
+    # Traiter les frames pour détecter les personnes et calculer les angles
+    frame1_processed, angles_cam1 = process_frame(frame1, model, CAMERA_FOV)
+    frame2_processed, angles_cam2 = process_frame(frame2, model, CAMERA_FOV)
+    frame3_processed, angles_cam3 = process_frame(frame3, model, CAMERA_FOV)
+
+    # Afficher les frames dans des fenêtres séparées
+    cv2.imshow('Camera 1', frame1_processed)
+    cv2.imshow('Camera 2', frame2_processed)
+    cv2.imshow('Camera 3', frame3_processed)
+
+    if len(angles_cam2) >= 1 and len(angles_cam1) >= 1 and len(angles_cam3) >= 1:
+        result = Triangulation.get_objects_positions(4, angles_cam1, angles_cam2, angles_cam3, None)
+        if result:
+            print(result)
+
+        #if result:
+        #    map_frame = np.zeros((map_height, map_width, 3), dtype=np.uint8)
+        #    # Redimensionner les positions pour correspondre à la carte
+        #    map_x = int((response[1] / ROOM_WIDTH) * map_width)
+        #    map_y = int((response[0] / ROOM_HEIGHT) * map_height)
+        #    # Limiter les coordonnées à l'intérieur de la carte
+        #    map_x = np.clip(map_x, 0, map_width - 1)
+        #    map_y = np.clip(map_y, 0, map_height - 1)
+        #    # Dessiner un point à la position calculée
+        #    cv2.circle(map_frame, (map_x, map_y), 5, (0, 0, 255), -1)
+        #    cv2.putText(map_frame, f"X: {response[0]:.2f}, Y: {response[1]:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        #    cv2.imshow('Map', map_frame)
+
+    # Appuyer sur 'q' pour quitter les fenêtres
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+# Libérer les captures vidéo et fermer les fenêtres
+cap1.release()
+cap2.release()
+cv2.destroyAllWindows()
+```
+
+##### triangulation.py
+
+Pour résumer, ce code vérifie si l'angle trouvé mathématiquement par les deux caméras est plus ou moins égal à l'angle capté par la caméra.
+
+```py
+def get_objects_positions(wall_length, objects_angles_from_bot_left, objects_angles_from_bot_right, object_angles_from_top_left, object_angles_from_top_right, tolerence=10**-15):
+    all_possible_points = []
+    for left_object in objects_angles_from_bot_left:
+        for right_object in objects_angles_from_bot_right:
+            result, pointXY = Triangulation.get_object_position(wall_length, left_object, right_object)
+            if result:
+                all_possible_points.append(pointXY)
+    list_true_points_left = []
+    list_true_points_right = []
+    for possible_point in all_possible_points:
+        for top_left_angle in object_angles_from_top_left:
+            top_left_angle = 90/2 + top_left_angle
+            angle_object_camera = Triangulation.find_angle_from_top_left(possible_point, wall_length)
+            print(str(angle_object_camera) + " : "  + str(top_left_angle))
+            if abs(angle_object_camera - top_left_angle) < tolerence:
+                list_true_points_left.append(possible_point)
+    
+    list_true_points = []
+
+    list_true_points.append(list_true_points_left)
+
+    return list_true_points_left
+
+def find_angle_from_top_left(position, wall_length):
+    A = wall_length - position[1] # Distance Y entre la camera et l'objet
+    B = position[0] # Distance X entre l'objet et la camera
+    C = math.sqrt(A ** 2 + B ** 2) # Distance camera objet
+    gamma = math.radians(90) # Angle droit entre A et B
+    beta = math.asin(math.sin(gamma) / C * B) # Angle entre la camera et l'objet
+    return math.degrees(beta)
+```
+
+##### Résultat
+
+J'ai mis la vidéo sur Youtube.
+
+
+- [SRS Tri Camera - Test 1](https://youtu.be/AQjxHJF_0o0)
+
+En conclusion, on peut constater que certaines imprécisions sont à constater. Premièrement, on dirait que les angles sont parfois très identitiques à très disparates.
+
+Cela peut être dut à deux choses :
+1. Mauvais placement des caméras
+2. Lag entre les caméras
+
+Pour résoudres je vais utiliser des craies, pour tracer au sol un périmètre et tracer des angles à 45°.
+
+![](./ressources/images/piece-traces.jpg)  
+![](./ressources/images/trace-sol.jpg)
+
+### Conclusion
+J'ai avancé sur la reconnaissance faciale et sur la reconnaissance spatiale avec 3 caméras. Demain je vais essayer de trouver la source des imprécisions. Je vais également imprimmer le quatrième et le dernier support.

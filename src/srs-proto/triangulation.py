@@ -71,8 +71,9 @@ class Triangulation:
 
         for possible_point in all_possible_points:
             for top_left_angle in object_angles_from_top_left:
-                top_left_angle = 90/2 + top_left_angle
+                top_left_angle = 90/2 - top_left_angle
                 angle_object_camera = Triangulation.find_angle_from_top_left(possible_point, wall_length)
+                print(str(angle_object_camera) + " : "  + str(top_left_angle))
                 if abs(angle_object_camera - top_left_angle) < tolerence:
                     list_true_points_left.append(possible_point)
 

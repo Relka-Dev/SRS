@@ -4958,7 +4958,7 @@ Pour ce tests les données suivantes correspondent, j'enlève 45° pour correspo
 ### Conclusion
 Aujourd'hui j'ai pu effectuer les tests sur papier de mon projet, j'ai également fait un prototype qui affiche les personnes et leurs angles par rapport à la camera. Cependant, ce modèle avait beaucoups de lag, je préfère le documenter demain chez moi quand je ferai les tests en condition réels.
 
-## 23.05.2024
+## 23.05.2024 et 24.05.2024 
 
 #### Bilan de la veille
 Hier j'ai effectué les tests sur papier et j'ai fais ma première démonstration qui s'est relativement bien passé, cependant, il y avait quelques bugs mais compte les corriger.
@@ -5346,3 +5346,72 @@ Pour résoudres je vais utiliser des craies, pour tracer au sol un périmètre e
 
 ### Conclusion
 J'ai avancé sur la reconnaissance faciale et sur la reconnaissance spatiale avec 3 caméras. Demain je vais essayer de trouver la source des imprécisions. Je vais également imprimmer le quatrième et le dernier support.
+
+## 28.05.2024
+
+#### Bilan de la veille
+
+Hier, j'ai effectué un prototype de la reconnaissance faciale et j'ai débuté mes tests avec mes trois caméras.
+
+#### Objectif de la journée
+
+Je vais commencer la journée en mettant en route la quatrième impression. Ensuite, je vais effectuer les tests afin de trouver le problème.
+
+### 1.0 : Tests du système tri-caméra
+
+Je vais effectuer la série de tests suivants pour déterminer où est le problème.
+
+Je me place en haut, au millieu puis en bas de la pièce en faisant un tour sur moi à chaque fois et faisant une pose à chaque quart de tour. Je repette cette opération à gauche, au millieu puis à droite. Cela me permettra surement de déterminer le problème.
+
+#### Résultats
+
+| Position      | Calcul      | Pov Cam 3   |
+|---------------|-------------|-------------|
+| Gauche Bas    | Non détecté | Non détecté |
+| Gauche Milieu | 37°         | 27°         |
+| Gauche Haut   | 45°         | 45°         |
+| Milieu Bas    | 17.5°       | 38.5°       |
+| Milieu Milieu | 42°         | 47°         |
+| Milieu Haut   | 50°         | 67°         |
+| Droite Bas    | 41°         | 49°         |
+| Droite Milieu | 76°         | 59°         |
+| Droite Haut   | 72°         | 73°         |
+
+##### Conclusion
+Les résultats ne sont pas assez précis pour pouvoir en tirer de réeles conclusion, je dois tracer une zone plus précise au sol.
+
+#### 1.1 : Second test plus précis
+
+J'ai fais des marques au sol séparée de 60 cm. Avec cela, les résultats devrait être mieux interprétables.
+
+![](./ressources/images/9-marks-floor.jpg)
+
+J'ai également décidé de modifier ma fonction de calcul de l'angle pour calculer alpha.
+
+```py
+def find_angle_from_top_left(position, wall_length):
+    A = wall_length - position[1] # Distance Y entre la camera et l'objet
+    B = position[0] # Distance X entre l'objet et la camera
+    C = math.sqrt(A ** 2 + B ** 2) # Distance camera objet
+    gamma = math.radians(90) # Angle droit entre A et B
+    alpha = math.asin(math.sin(gamma) / C * A) # Angle entre la camera et l'objet
+    return math.degrees(alpha)
+```
+
+[SRS Tri Camera - Test 2 (Vidéo Youtube)](https://youtu.be/oRsWYY_EFWs)
+
+##### Conclusion
+
+En effectuant le test, je me suis rendu compte que les calculs était simplement correctes. Le problème vient de ma façon à trouver l'angle des utilisateurs, en effet on peut voir dans la vidéo une différence dans l'angle entre ce qui est capté et la caméra quand je trourne sur moi même, si je cumule les erreurs entre les trois caméras, cela explique les imprécisions.
+
+Pour palier à cela, je vais simplement mettre la reconnaissance multi-utilisateur en alpha. Car en théorie ça fonctionne mais en pratique c'est complexe à implémenter. Du moins avec les technologies que j'ai choisis.
+
+### 2.0 : Correction du bug du serveur
+
+Lors du sernier rendez-vous avec mes suiveurs j'ai eu un bug lors de la recherche de caméras sur le réseau. Je vais essayer de le régler.
+
+Sur le serveur j'ai trouvé que j'ai mis le mot *self* à une variable qui n'est pas d'instance. Ce qui causait un bug. Cela étant corrigé, le code fonctionne.
+
+```py
+tokens_for_ip = cameraServerClient.getCamerasTokens(cameras_in_network)
+```

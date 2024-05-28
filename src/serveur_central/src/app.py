@@ -343,7 +343,7 @@ class ServeurCentral:
         loop.close()
 
         # Après la récupération des adresses IP des caméras, obtenir les tokens associés
-        tokens_for_ip = self.cameraServerClient.getCamerasTokens(cameras_in_network)
+        tokens_for_ip = cameraServerClient.getCamerasTokens(cameras_in_network)
 
         cameras_in_db = self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)
 

@@ -45,8 +45,8 @@ class Triangulation:
         C = math.sqrt(A ** 2 + B ** 2) # Distance camera objet
 
         gamma = math.radians(90) # Angle droit entre A et B
-        beta = math.asin(math.sin(gamma) / C * B) # Angle entre la camera et l'objet
-        return math.degrees(beta)
+        alpha = math.asin(math.sin(gamma) / C * A) # Angle entre la camera et l'objet
+        return math.degrees(alpha)
 
     def find_angle_from_top_right(position, wall_length):
         A = wall_length - position[1] # Distance Y entre la camera et l'objet
@@ -71,7 +71,7 @@ class Triangulation:
 
         for possible_point in all_possible_points:
             for top_left_angle in object_angles_from_top_left:
-                top_left_angle = 90/2 - top_left_angle
+                top_left_angle = 90/2 + top_left_angle
                 angle_object_camera = Triangulation.find_angle_from_top_left(possible_point, wall_length)
                 print(str(angle_object_camera) + " : "  + str(top_left_angle))
                 if abs(angle_object_camera - top_left_angle) < tolerence:

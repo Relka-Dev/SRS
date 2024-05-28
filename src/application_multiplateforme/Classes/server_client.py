@@ -206,7 +206,7 @@ class ServerClient:
         else:
             return False, response
     
-    def update_camera(self, idCamera, idNetwork, positionX, idWall):
+    def update_camera(self, idCamera, idNetwork, idWall):
         if not self.server_ip:
             return False, "IP du serveur manquante"
 
@@ -214,7 +214,7 @@ class ServerClient:
             "token": self.API_token,
             "idCamera": idCamera,
             "idNetwork": idNetwork,
-            "positionX": positionX,
+            "positionX": 0,
             "idWall": idWall
         }
 

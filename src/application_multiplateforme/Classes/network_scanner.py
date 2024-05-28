@@ -47,5 +47,5 @@ class NetworkScanner:
     @staticmethod
     def get_local_network():
         ip = socket.gethostbyname(socket.gethostname())
-        # à remplacer, ceci est uniquement pour éviter les buggs
+        # à remplacer, ceci est uniquement pour éviter les bugs
         return '192.168.1.0/24'

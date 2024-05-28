@@ -363,34 +363,22 @@ WindowManager:
             cols: 1
             size_hint_y: 0.9
 
-            Spinner:
-                id: cameras_spinner
-                text: "Recherche des cameras en cours..."
-                disabled: True
-                on_text: root.camera_changed(self.text)
-            
             Button:
                 id: update_cameras_list_button
                 text: "Mettre à jour la liste des cameras"
                 disabled: False
                 on_release: root.update_cameras_list()
 
-            GridLayout:
-                cols:2
-            
-                Label:
-                    text: "Position relative au mur :" + str(position_slider.value)
+            Label:
+                id: status_label
+                text: "Veuillez séléctionner une caméra et modifier ses données"
+                bold: True
 
-                Slider:
-                    id: position_slider
-                    min: 0
-                    max: 100
-                    step: 1
-                    value: root.get_selected_camera_positionX()
-                    disabled: True
-                    orientation: 'horizontal'
-                    on_value: root.update_positionX(self.value)
-
+            Spinner:
+                id: cameras_spinner
+                text: "Recherche des cameras en cours..."
+                disabled: True
+                on_text: root.camera_changed(self.text)
 
             Spinner:
                 id: walls_spinner

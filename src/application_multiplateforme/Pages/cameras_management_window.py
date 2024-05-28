@@ -24,6 +24,8 @@ class CamerasManagementWindow(Screen):
         self.get_walls_thread.start()
         self.get_cameras_thread = threading.Thread(target=self.get_cameras)
         self.get_cameras_thread.start()
+
+
         
     
     def get_walls(self):
@@ -90,10 +92,6 @@ class CamerasManagementWindow(Screen):
                   break
                
           if self.selected_camera:
-              print("Position x :" + str(self.selected_camera.positionX))
-              
-              if self.selected_camera.positionX:
-                self.ids.position_slider.value = self.selected_camera.positionX
 
               # Update wall selection based on the selected camera's wall ID
               matching_wall = next((wall for wall in self.walls if wall.idWall == self.selected_camera.idWall), None)
@@ -104,20 +102,9 @@ class CamerasManagementWindow(Screen):
                   print("No matching wall found for the selected camera.")
 
 
-    def get_selected_camera_positionX(self):
-        if self.selected_camera:
-            return self.selected_camera.positionX
-        return 0
-
-    def update_positionX(self, new_position):
-        if self.selected_camera:
-            self.selected_camera.positionX = new_position
-
-
     def change_all_view_input_state(self, viewDisabled : bool):
         self.ids.cameras_spinner.disabled = viewDisabled
         self.ids.update_cameras_list_button.disabled = viewDisabled
-        self.ids.position_slider.disabled = viewDisabled
         self.ids.walls_spinner.disabled = viewDisabled
         self.ids.update_camera_button.disabled = viewDisabled
     
@@ -157,13 +144,15 @@ class CamerasManagementWindow(Screen):
         if self.selected_camera and self.selected_wall:
             idCamera = self.selected_camera.idCamera
             idNetwork = self.selected_camera.idNetwork
-            positionX = self.ids.position_slider.value
             idWall = self.selected_wall.idWall
 
-            result, response = self.server_client.update_camera(idCamera, idNetwork, positionX, idWall)
+            result, response = self.server_client.update_camera(idCamera, idNetwork, idWall)
+            
             if result:
+                self.ids.status_label.text = str(response['message'])
                 print("Camera updated successfully:", response)
             else:
+                self.ids.status_label.text = str(response)
                 print("Failed to update camera:", response)
         else:
             print("No camera or wall selected. Please select both before updating.")

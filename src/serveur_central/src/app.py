@@ -303,6 +303,7 @@ class ServeurCentral:
         # Vérification si le réseau n'existe pas
         # Recherche automatique de caméras, vérification la présence des caméras et ajout dans la base.
         if(not self.db_client.checkIfNetworkExists(ip)):
+            print(ip)
             return self.intialise_network_with_cameras(ip, subnetMask)
         
         cameras = self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)
@@ -313,8 +314,11 @@ class ServeurCentral:
         # Vérification si la durée de vie des JWT des cameras est dépassée
         if self.db_client.areTheCamerasInTheNetworkInNeedOfAnUpdate(networkId):
             for camera in cameras:
-                self.db_client.updateCameraToken(self.db_client.getByIdCameras(camera[0]), self.cameraServerClient.getCameraToken(camera[1]))
-                self.db_client.refreshNetworkTimestamp(networkId)
+                result, camera_data = self.db_client.getByIdCameras(camera[0])
+
+                self.db_client.updateCameraToken(camera_data[0], self.cameraServerClient.getCameraToken(camera[1]))
+            
+            self.db_client.refreshNetworkTimestamp(networkId)
         
         return jsonify(self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)), 201
     
@@ -324,10 +328,11 @@ class ServeurCentral:
         subnetMask = request.args.get('subnetMask')
 
         if not ip or not subnetMask:
-            return jsonify({'erreur': 'Mauvais paramètres, utilisez (ip, subnetMask) pour l\'ip du réseau et le masque de sous-réseau respectivement.'}), 400
+            return jsonify({'erreur': 'Mauvais paramètres, utilisez (ip, subnetMask) pour l\'ip du réseau et le masque de sous-réseau respectivement.'}), 401
 
         if not NetworkScanner.is_network_valid("{n}/{sub}".format(n=ip, sub=subnetMask)):
-            return jsonify({'erreur': 'Le réseau donné est invalide'}), 400
+            
+            return jsonify({'erreur': 'Le réseau donné est invalide'}), 402
 
         cameraServerClient = CameraServerClient(ip, subnetMask)
         networkId = self.db_client.getNetworkIdByIpAndSubnetMask(ip, subnetMask)
@@ -343,7 +348,7 @@ class ServeurCentral:
         loop.close()
 
         # Après la récupération des adresses IP des caméras, obtenir les tokens associés
-        tokens_for_ip = cameraServerClient.getCamerasTokens(cameras_in_network)
+        tokens_for_ip = cameraServerClient.getCamerasTokens()
 
         cameras_in_db = self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)
 

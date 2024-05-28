@@ -232,7 +232,7 @@ class ServerClient:
         if not self.server_ip:
             return False
         
-        print(ServerClient.get_netowk_from_ip(self.server_ip))
+        print(self.server_ip)
         
         params = {
             "token": self.API_token,

@@ -18,7 +18,9 @@ class CameraServerClient:
         self.camerasIPs = await self.networkScanner.scan_ips(self.__CAMERAS_SERVER_PORT)
         return self.camerasIPs
     
-    def getCamerasTokens(self, cameraIPs):
+    def getCamerasTokens(self):
+
+        cameraIPs = self.camerasIPs
         if not cameraIPs:
             return None
     

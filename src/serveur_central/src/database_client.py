@@ -140,7 +140,7 @@ class DatabaseClient:
 
             return True
         except Exception as e:
-            print(f"Erreur lors de l'insertion dans la base de données: {e}")
+            print(f"Erreur lors de l'insertion de la camera dans la base de données: {e}")
 
 
     def checkIfCameraExists(self, camera_ip: str, network_id : int):
@@ -247,16 +247,19 @@ class DatabaseClient:
             self.dbConnexion.commit()
             return True, "Token de la caméra mis à jour avec succès."
         except Exception as e:
-            print(f"Erreur lors de la mise à jour du token de la caméra : {e}")
-            return False, f"Erreur lors de la mise à jour du token de la caméra : {e}"
+            print(f"Erreur lors de la mise à jour du token de la caméra  : {e}")
+            return False, f"Erreur lors de la mise à jour du token de la caméra  : {e}"
 
     def refreshNetworkTimestamp(self, idNetwork):
         try:
-            self.cursor.execute("UPDATE Network SET lastUpdate = %s WHERE idNetwork = %s", ('CURRENT_TIMESTAMP', idNetwork))
+            print(idNetwork)
+            # Utilisez CURRENT_TIMESTAMP directement dans la requête SQL
+            self.cursor.execute("UPDATE Network SET lastUpdate = CURRENT_TIMESTAMP WHERE idNetwork = %s", (idNetwork,))
             self.dbConnexion.commit()
             return True, "Dernière mise à jour modifiée avec succès"
         except Exception as e:
             return False, f"Erreur lors de la mise à jour de la dernière modification : {e}"
+
 
 
     def getByIdCameras(self, idCamera):

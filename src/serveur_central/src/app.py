@@ -17,6 +17,7 @@ from network_scanner import NetworkScanner
 import asyncio
 import cv2
 import numpy as np
+import re
 
 from Classes.network import Network
 from Classes.camera import Camera
@@ -354,7 +355,6 @@ class ServeurCentral:
 
         cameras_to_add = ServeurCentral.get_cameras_that_are_not_in_database(cameras_in_network, cameras_in_db)
         cameras_to_remove = ServeurCentral.get_cameras_that_are_not_in_network(cameras_in_network, cameras_in_db)
-
         if cameras_to_add:
             self.db_client.addCamerasToNetwork(tokens_for_ip, networkId)
         if cameras_to_remove:
@@ -390,6 +390,8 @@ class ServeurCentral:
         if database_cameras is None:
             database_cameras = []
 
+        pattern = r"'(.*?)'"
+        network_cameras = re.findall(pattern, str(network_cameras))
 
         for network_camera in network_cameras:
             if network_camera not in [db_camera[1] for db_camera in database_cameras]:
@@ -404,10 +406,12 @@ class ServeurCentral:
             database_cameras = []
         
         result_camera_list = []
+        pattern = r"'(.*?)'"
+        network_cameras = re.findall(pattern, str(network_cameras))
+
         for database_camera in database_cameras:
-            print(database_camera[1])
-            print(network_cameras)
             if database_camera[1] not in network_cameras:
+                print("match")
                 result_camera_list.append(database_camera)
         return result_camera_list
 

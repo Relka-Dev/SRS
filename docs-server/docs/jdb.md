@@ -5415,3 +5415,18 @@ Sur le serveur j'ai trouvé que j'ai mis le mot *self* à une variable qui n'est
 ```py
 tokens_for_ip = cameraServerClient.getCamerasTokens(cameras_in_network)
 ```
+
+Je me suis ensuite rendu compte que l'application considérait son réseau local comme 127.0.0.1. Ce qui est étrange car au CFPT c'était 192.168.1.0. J'hardcode le réseau pour l'instant.
+
+Avec cette modification et quelques autres optimisations, la recherche automatique de caméra fonctionne à nouveau.
+
+### Conclusion
+J'ai bien avancé sur la gestion des JWT. Il faut cependant que je trouve une solution pour la reconnaissance spatiale, c'est un point central de mon projet et demain avec les quatres caméras disponnibles, je vais trouver une solution.
+
+## 29.05.2024
+
+### Bilan de la veille
+Hier j'ai travaillé sur les tests de mon modèle de reconnaisssance spatiale qui ne sont pas bien terminés et sur la corrections de bug de mon serveur.
+
+### Objectif du jour
+Je vais commencer par tourner une video pour montrer à mes suiveurs que la recherche automatique de caméra fonctionne. Ensuite, je dois aller à l'école pour faire l'évaluation intermédiaire ainsi qu'une présentation en anglais de mon projet.

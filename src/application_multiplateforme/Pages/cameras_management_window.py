@@ -22,10 +22,9 @@ class CamerasManagementWindow(Screen):
         self.server_client = self.app.get_server_client()
         self.get_walls_thread = threading.Thread(target=self.get_walls)
         self.get_walls_thread.start()
+        self.ask_camera_update()
         self.get_cameras_thread = threading.Thread(target=self.get_cameras)
         self.get_cameras_thread.start()
-
-
         
     
     def get_walls(self):
@@ -104,13 +103,13 @@ class CamerasManagementWindow(Screen):
 
     def change_all_view_input_state(self, viewDisabled : bool):
         self.ids.cameras_spinner.disabled = viewDisabled
-        self.ids.update_cameras_list_button.disabled = viewDisabled
         self.ids.walls_spinner.disabled = viewDisabled
         self.ids.update_camera_button.disabled = viewDisabled
     
 
     def update_cameras_list(self):
         self.change_all_view_input_state(True)
+        self.ids.update_cameras_list_button.disabled = True
         Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'text', self.TEXT_LOADING_CAMERA))
         self.ask_camera_update_thread = threading.Thread(target=self.ask_camera_update)
         self.ask_camera_update_thread.start()
@@ -154,6 +153,8 @@ class CamerasManagementWindow(Screen):
             else:
                 self.ids.status_label.text = str(response)
                 print("Failed to update camera:", response)
+            
+            self.ask_camera_update()
         else:
             print("No camera or wall selected. Please select both before updating.")
 

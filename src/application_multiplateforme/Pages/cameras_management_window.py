@@ -154,7 +154,8 @@ class CamerasManagementWindow(Screen):
                 self.ids.status_label.text = str(response)
                 print("Failed to update camera:", response)
             
-            self.ask_camera_update()
+            self.ask_camera_update_thread = threading.Thread(target=self.ask_camera_update)
+            self.ask_camera_update_thread.start()
         else:
             print("No camera or wall selected. Please select both before updating.")
 

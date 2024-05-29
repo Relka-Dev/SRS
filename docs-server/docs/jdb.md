@@ -5430,3 +5430,26 @@ Hier j'ai travaillé sur les tests de mon modèle de reconnaisssance spatiale qu
 
 ### Objectif du jour
 Je vais commencer par tourner une video pour montrer à mes suiveurs que la recherche automatique de caméra fonctionne. Ensuite, je dois aller à l'école pour faire l'évaluation intermédiaire ainsi qu'une présentation en anglais de mon projet.
+
+### 1.0 : Correction du bug du management des caméras
+
+J'ai remarqué une erreur lors de mes tests. Quand j'arrive sur la page, les caméras se remettent à zéro, cela veut dire que j'ai un problème avec les fonctions `get_cameras_that_are_not_in_database` et `get_cameras_that_are_not_in_network`. Le problème vient du format dont je récupère dans ma classe socet io qui n'est pas compatible avec ce que j'ai dans la base :
+
+```
+Format Socket.io :
+[IPv4Address('192.168.1.121')]
+Format Bdd :
+192.168.1.121
+```
+
+Pour régler le problème, j'utilise regex afin de récupérer uniquement ce qui ce situe entre les guimets.
+
+```py
+result_camera_list = []
+pattern = r"'(.*?)'"
+network_cameras = re.findall(pattern, str(network_cameras))
+```
+
+En ajoutant cette modification à mes deux fonctions, le management des caméras fonctionne.
+
+![](./ressources/videos/camera-management.gif)

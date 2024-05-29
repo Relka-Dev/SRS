@@ -1,6 +1,8 @@
 from network_scanner import NetworkScanner
 import requests
 from requests.exceptions import RequestException
+import cv2
+import numpy as np
 import asyncio
 
 class CameraServerClient:
@@ -37,16 +39,21 @@ class CameraServerClient:
         return tokens_for_ip
     
     @staticmethod
-    def getCameraImage(ip_camera, JWT):
-        camera_url = f"http://{ip_camera}:{CameraServerClient.__CAMERAS_SERVER_PORT}/image?token={JWT}"
-        try:
-            response = requests.get(camera_url)
-            if response.status_code == 200:
-                return True, response.content
+    def getCameraImage(ip, jwt):
+        url = f"http://{ip}:{CameraServerClient.__CAMERAS_SERVER_PORT}/image"
+        params = {'token': jwt}
+        response = requests.get(url, params=params)
+        if response.status_code == 200:
+            image_data = np.frombuffer(response.content, np.uint8)
+            image = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
+            if image is not None:
+                return True, image
             else:
-                return False, f"Échec de la récupération de l'image pour l'ip : {ip_camera}. Statut : {response.status_code}"
-        except RequestException as e:
-            return False, f"Erreur de connexion avec la caméra à l'ip : {ip_camera}. Détail de l'erreur : {str(e)}"
+                print("Failed to decode image")
+                return False, None
+        else:
+            print(f"Failed to get image from camera: {response.status_code}")
+            return False, None
     
     @staticmethod
     def getCameraVideo(ip_camera, JWT):
@@ -69,6 +76,7 @@ class CameraServerClient:
             return response.json().get('token')
         else:
             print("Échec de l'obtention du token JWT pour l'ip : {ip}:".format(ip=cameraIp), response.status_code)
+
 
     def getCamerasData(self):
         cameras = []

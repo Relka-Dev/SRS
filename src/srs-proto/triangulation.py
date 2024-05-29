@@ -97,7 +97,7 @@ class Triangulation:
     def convert_to_top_position(wall_length, objects_positions):
         position_from_top = []
         for position in objects_positions:
-            position_from_top.append([wall_length - position[0], wall_length - position[0]])
+            position_from_top.append([wall_length - position[0], wall_length - position[1]])
 
         return position_from_top
     
@@ -111,38 +111,24 @@ class Triangulation:
                 if result:
                     all_possible_points_bot.append(pointXY)
 
+        print(all_possible_points_bot)
         for left_object_top in objects_angles_from_top_left:
-            for right_object_top in objects_angles_from_top_left:
+            for right_object_top in objects_angles_from_top_right:
                 result, pointXY = Triangulation.get_object_position(wall_length, left_object_top, right_object_top)
                 if result:
                     all_possible_points_top.append(pointXY)
         
         all_possible_points_top = Triangulation.convert_to_top_position(wall_length, all_possible_points_top)
 
-        print(all_possible_points_top)
-        print(all_possible_points_bot)
         true_points = []
         for top_point in all_possible_points_top:
             for bot_point in all_possible_points_bot:
+                print("Top :" + str(top_point))
+                print("Bot :" + str(bot_point))
                 if(abs(top_point[0] - bot_point[0]) < tolerence and abs(top_point[1] - bot_point[1]) < tolerence):
                     true_points.append([(top_point[0] + bot_point[0]) / 2, (top_point[1] + bot_point[1]) / 2])
 
         return true_points
-
-# Test cases for get_objects_positions_v2
-def test_get_objects_positions_v2():
-    wall_length = 100
-    objects_angles_from_bot_left = [0, 16]
-    objects_angles_from_bot_right = [0, 15]
-    objects_angles_from_top_left = [-15, 0]
-    objects_angles_from_top_right = [-16, 0]
-    tolerance = 1e-1
-
-    positions = Triangulation.get_objects_positions_v2(wall_length, objects_angles_from_bot_left, objects_angles_from_bot_right, objects_angles_from_top_left, objects_angles_from_top_right, tolerance)
-    
-    print("Test Positions:", positions)
-
-test_get_objects_positions_v2()
             
                 
 

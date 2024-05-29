@@ -1,7 +1,6 @@
 import cv2
 import torch
 import numpy as np
-from triangulation import Triangulation
 
 # Configuration
 CAMERA_URLS = [
@@ -50,9 +49,7 @@ def process_frame(frame, model, fov):
             center_x = (x1 + x2) / 2
             angle = (center_x - frame.shape[1] / 2) / frame.shape[1] * fov
             angles.append(angle)
-            cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
-            cv2.putText(frame, f"Angle: {angle:.2f}", (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-    return frame, angles
+    return angles
 
 map_width, map_height = 600, 600
 
@@ -74,34 +71,18 @@ while True:
     frame4 = cv2.flip(cv2.flip(frame4, 0), 1)
 
     # Traiter les frames pour détecter les personnes et calculer les angles
-    frame1_processed, angles_cam1 = process_frame(frame1, model, CAMERA_FOV)
-    frame2_processed, angles_cam2 = process_frame(frame2, model, CAMERA_FOV)
-    frame3_processed, angles_cam3 = process_frame(frame3, model, CAMERA_FOV)
-    frame4_processed, angles_cam4 = process_frame(frame4, model, CAMERA_FOV)
+    angles_cam1 = process_frame(frame1, model, CAMERA_FOV)
+    angles_cam2 = process_frame(frame2, model, CAMERA_FOV)
+    angles_cam3 = process_frame(frame3, model, CAMERA_FOV)
+    angles_cam4 = process_frame(frame4, model, CAMERA_FOV)
 
-    # Afficher les frames dans des fenêtres séparées
-    cv2.imshow('Camera 1', frame1_processed)
-    cv2.imshow('Camera 2', frame2_processed)
-    cv2.imshow('Camera 3', frame3_processed)
-    cv2.imshow('Camera 4', frame4_processed)
-
-    if len(angles_cam2) == 1 and len(angles_cam1) == 1 and len(angles_cam3) == 1 and len(angles_cam4) == 1:
-        result = Triangulation.get_objects_positions_v2(4, angles_cam1, angles_cam2, angles_cam3, angles_cam4)
-        if result:
-            print(result)
-
-        #if result:
-        #    map_frame = np.zeros((map_height, map_width, 3), dtype=np.uint8)
-        #    # Redimensionner les positions pour correspondre à la carte
-        #    map_x = int((response[1] / ROOM_WIDTH) * map_width)
-        #    map_y = int((response[0] / ROOM_HEIGHT) * map_height)
-        #    # Limiter les coordonnées à l'intérieur de la carte
-        #    map_x = np.clip(map_x, 0, map_width - 1)
-        #    map_y = np.clip(map_y, 0, map_height - 1)
-        #    # Dessiner un point à la position calculée
-        #    cv2.circle(map_frame, (map_x, map_y), 5, (0, 0, 255), -1)
-        #    cv2.putText(map_frame, f"X: {response[0]:.2f}, Y: {response[1]:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-        #    cv2.imshow('Map', map_frame)
+    if len(angles_cam2) >= 1 and len(angles_cam1) >= 1 and len(angles_cam3) >= 1 and len(angles_cam4) >= 1:
+        print('-----------')
+        print("Sud Ouest : " + str(angles_cam1))
+        print("Sud Est : " + str(angles_cam2))
+        print("Nord Ouest : " + str(angles_cam3))
+        print("Nord Est : " + str(angles_cam4))
+        
 
     # Appuyer sur 'q' pour quitter les fenêtres
     if cv2.waitKey(1) & 0xFF == ord('q'):

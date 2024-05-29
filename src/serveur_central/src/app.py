@@ -18,6 +18,7 @@ import asyncio
 import cv2
 import numpy as np
 import re
+import torch
 
 from Classes.network import Network
 from Classes.camera import Camera
@@ -38,7 +39,10 @@ class ServeurCentral:
         self.app = Flask(__name__)
         self.db_client = None
         self.cameraServerClient = None
+        self.spaceRecognition = SpaceRecognition()
         self.initialize_routes()
+
+
 
     
     def initialize_routes(self):
@@ -70,6 +74,8 @@ class ServeurCentral:
         self.app.add_url_rule('/camera_picture', 'camera_picture', self.camera_picture, methods=['GET'])
         self.app.add_url_rule('/camera_video', 'camera_video', self.camera_picture, methods=['GET'])
         self.app.add_url_rule('/space_recognition', 'space_recognition', self.space_recognition, methods=['GET'])
+
+        self.app.add_url_rule('/calibration', 'calibration', self.calibration, methods=['GET'])
 
     
     def ping(self):
@@ -477,6 +483,26 @@ class ServeurCentral:
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
+    @JwtLibrary.API_token_required
+    def calibration(self):
+        idNetwork = request.args.get('idNetwork')
+        if not idNetwork:
+            return jsonify({'error': 'Network ID is required'}), 400
+
+        response = []
+        result, response = self.db_client.getCamerasByIdNetwork(idNetwork)
+        if not result:
+            return jsonify({'error': 'Camera not found'}), 404
+
+        cameras_angles = []
+        for data in response:
+            camera = Camera(data[0], data[1], data[2], data[3], data[4], data[5], data[6], None, None)
+            resultImg, responseImg = CameraServerClient.getCameraImage(camera.ip, camera.jwt)
+
+            if resultImg:
+                cameras_angles.append([camera.ip, self.spaceRecognition.calibration(responseImg, 62.2)])
+
+        return jsonify(cameras_angles), 200
 
     
     

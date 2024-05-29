@@ -26,7 +26,7 @@ class CamerasManagementWindow(Screen):
         self.get_cameras_thread = threading.Thread(target=self.get_cameras)
         self.get_cameras_thread.start()
         
-    
+
     def get_walls(self):
         result, response = self.server_client.get_walls()
 

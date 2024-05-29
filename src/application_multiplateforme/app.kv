@@ -9,6 +9,8 @@ WindowManager:
     CamerasManagementWindow:
     UpdateUserWindow:
     CameraStreamerWindow:
+    NavigationSrsWindow:
+    CalibrationWindow:
 
 
 <MainWindow>:
@@ -61,7 +63,7 @@ WindowManager:
                 font_size: '15sp'
                 text: "Reconnaissance Spaciale"
                 on_release:
-                    app.root.current = "cameraStreamer"
+                    app.root.current = "navigationSrs"
                     root.manager.transition.direction = "left"
                 
             
@@ -474,6 +476,8 @@ WindowManager:
                     background_color: (1, 0, 0, 1)
                     background_normal: ''
 
+
+
 <CameraStreamerWindow>
     name: "cameraStreamer"
     
@@ -529,4 +533,94 @@ WindowManager:
 
                     Image:
                         id: image_four
+
+<NavigationSrsWindow>:
+    name: "navigationSrs"
+
+    FloatLayout:
+        GridLayout:
+            cols: 3
+            size_hint: 1, 0.1
+            pos_hint: {'top': 1}
+
+            Button:
+                text: "<- Retour"
+                on_release:
+                    app.root.current = "main"
+                    root.manager.transition.direction = "right"
+
+            Label:
+                text: "Système de reconnaissance spatiale"
+                bold: True
+
+            Image:
+                source: 'Ressources/logo.png'
+        
+        GridLayout:
+            cols: 1
+            size_hint_y: 0.9
+            GridLayout:
+                cols: 2
+
+                Button:
+                    text: "Calibration"
+                    bold: True
+                    on_release:
+                        app.root.current = "calibration" 
+                        root.manager.transition.direction = "left"
+
+                Button:
+                    text: "Voir la pièce"
+                    bold: True
+                    disabled: True
+                    on_release:
+                        app.root.current = "updateUser" 
+                        root.manager.transition.direction = "left"
     
+<CalibrationWindow>:
+    name: "calibration"
+
+    FloatLayout:
+        GridLayout:
+            cols: 3
+            size_hint: 1, 0.1
+            pos_hint: {'top': 1}
+
+            Button:
+                text: "<- Retour"
+                on_release:
+                    app.root.current = "main"
+                    root.manager.transition.direction = "right"
+
+            Label:
+                text: "Système de reconnaissance spatiale"
+                bold: True
+
+            Image:
+                source: 'Ressources/logo.png'
+        
+        GridLayout:
+            cols: 1
+            size_hint_y: 0.9
+
+            GridLayout:
+                cols: 2
+
+                Label:
+                    id: camera1_label
+                    text: "camera1"
+
+                Label:
+                    id: camera2_label
+                    text: "camera2"
+            
+            GridLayout:
+                cols: 2
+
+                Label:
+                    id: camera3_label
+                    text: "camera3"
+
+                Label:
+                    id: camera4_label
+                    text: "camera4"

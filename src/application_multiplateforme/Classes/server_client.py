@@ -249,6 +249,9 @@ class ServerClient:
             cameras_data = json.loads(response_data)
 
             cameras = []
+            if cameras_data == None:
+                return False, "Aucune caméra trouvée"
+
             for camera in cameras_data:
 
                 cameras.append(Camera(camera[0],camera[1],camera[2],camera[3],camera[4],camera[5],camera[6]))
@@ -317,6 +320,22 @@ class ServerClient:
             return True, response.json()['image']
         else:
             return False, response.json().get('error', 'Failed to retrieve the camera image')
+        
+    def get_calibration(self, idNetwork):
+        endpoint_url = f"{self.server_url}/calibration?idNetwork={idNetwork}"
+
+        params = {
+            'token': self.API_token
+        }
+
+        response = requests.get(endpoint_url, params=params)
+
+        if response.status_code == 200:
+            return True, response.json()
+        else:
+            return False, response.json()
+
+
         
     @staticmethod
     def hash_password(password : str):

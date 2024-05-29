@@ -5453,3 +5453,55 @@ network_cameras = re.findall(pattern, str(network_cameras))
 En ajoutant cette modification à mes deux fonctions, le management des caméras fonctionne.
 
 ![](./ressources/videos/camera-management.gif)
+
+### 2.0 : Second système pour la multi-reconnaissance et calibration
+
+Après réfléxion, je me suis dis que ça pouvait être interessant d'avoir une page de calibration qui indique la position de l'utilisateur au milieu de la pièce. Pour ce faire, il suffirait de voir l'angle où l'utlisateur est capté et essayer de le placer aussi proche du 0 (ou 45) que possible. Je note cette idée
+
+Après cela, je me suis dis qu'il serait interessant d'explorer une nouvelle piste pour la reconnaissance spatiale avec 4 caméras. En utilisant les caméras du haut ainsi que les caméras du bas pour trouver la position des personnes. On pourrais déterminer leurs véritable position. Voici un croquis comment cela fonctionnerait :
+
+La raison pourquoi cette méthode est plus efficace est que l'angle où est capté l'utilisateur depuis le haut de la pièce est similaire à celui vers le bas. Si un utilisateur est tourné depuis le point de vue des caméeras du dessous, il le sera également depuis celles du haut.
+
+![](./ressources/images/multi-person-detection-v2.jpg)
+
+#### 2.1 : Implémentation (Triangulation.py)
+
+Je commence par créer une fonction `get_objects_positions_v2` et je crée deux liste qui me permettent de récupérer tous les points possibles.
+
+```py
+for left_object_bot in objects_angles_from_bot_left:
+    for right_object_bot in objects_angles_from_bot_right:
+        result, pointXY = Triangulation.get_object_position(wall_length, left_object_bot, right_object_bot)
+        if result:
+            all_possible_points_bot.append(pointXY)
+for left_object_top in objects_angles_from_top_left:
+    for right_object_top in objects_angles_from_top_left:
+        result, pointXY = Triangulation.get_object_position(wall_length, left_object_top, right_object_top)
+        if result:
+            all_possible_points_top.append(pointXY)
+```
+
+Je crée ensuite une fonction me permettant de convertir les points capturés depuis les caméras du haut comme s'ils étaient capturés depuis le bas afin de pouvoir les comparer.
+
+```py
+all_possible_points_top = Triangulation.convert_to_top_position(wall_length, all_possible_points_top)
+
+
+def convert_to_top_position(wall_length, objects_positions):
+    position_from_top = []
+    for position in objects_positions:
+        position_from_top.append([wall_length - position[0], wall_length - position[0]])
+    return position_from_top
+```
+
+Je termine en comparant les points avec une tolérence. Si les points correspondent, je l'ajoute à la liste en faisant une moyenne de la position.
+
+```py
+true_points = []
+for top_point in all_possible_points_top:
+    for bot_point in all_possible_points_bot:
+        if(abs(top_point[0] - bot_point[0]) < tolerence and abs(top_point[1] - bot_point[1]) < tolerence):
+            true_points.append([(top_point[0] + bot_point[0]) / 2, (top_point[1] + bot_point[1]) / 2])
+return true_points
+```
+

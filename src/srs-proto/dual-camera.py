@@ -6,12 +6,12 @@ from triangulation import Triangulation
 # Configuration
 CAMERA_URLS = [
     "http://192.168.1.115:4298/video",
-    "http://192.168.1.114:4298/video"
+    "http://192.168.1.121:4298/video"
 ]
 
 CAMERA_FOV = 62.2  # Angle de vue de la caméra en degrés
-ROOM_WIDTH = 4  # Largeur de la pièce en mètres
-ROOM_HEIGHT = 4  # Hauteur de la pièce en mètres
+ROOM_WIDTH = 3.5  # Largeur de la pièce en mètres
+ROOM_HEIGHT = 3.5 # Hauteur de la pièce en mètres
 
 # Charger le modèle YOLOv5 pré-entrainé et déplacer le modèle sur le GPU
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -67,12 +67,12 @@ while True:
     cv2.imshow('Camera 2', frame2_processed)
 
     if len(angles_cam2) == 1 and len(angles_cam1) == 1:
-        result, response = Triangulation.get_object_position(4, angles_cam1[0], angles_cam2[0])
+        result, response = Triangulation.get_object_position(3.5, angles_cam1[0], angles_cam2[0], True)
         if result:
             map_frame = np.zeros((map_height, map_width, 3), dtype=np.uint8)
             # Redimensionner les positions pour correspondre à la carte
-            map_x = int((response[1] / ROOM_WIDTH) * map_width)
-            map_y = int((response[0] / ROOM_HEIGHT) * map_height)
+            map_x = int((response[0] / ROOM_WIDTH) * map_width)
+            map_y = int((response[1] / ROOM_HEIGHT) * map_height)
             # Limiter les coordonnées à l'intérieur de la carte
             map_x = np.clip(map_x, 0, map_width - 1)
             map_y = np.clip(map_y, 0, map_height - 1)

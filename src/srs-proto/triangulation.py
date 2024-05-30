@@ -5,7 +5,7 @@ class Triangulation:
     @staticmethod
     def get_object_position(wall_length, object_angle_from_left, object_angle_from_right, debug=False):
         # Conversion des angles en radians
-        alpha = 90 / 2 + object_angle_from_left
+        alpha = 90 / 2 - object_angle_from_left
         beta = 90 / 2 + object_angle_from_right
 
         if beta > 90 or alpha > 90:
@@ -18,7 +18,7 @@ class Triangulation:
         gamma = 180 - alpha - beta
 
         # Calcul de la distance entre la caméra et l'objet
-        distance_camera_object = wall_length * math.sin(math.radians(beta)) / math.sin(math.radians(gamma))
+        distance_camera_object = wall_length / math.sin(math.radians(gamma)) * (math.sin(math.radians(beta)))
 
         # Calcul de la position X
         position_y = distance_camera_object * math.sin(math.radians(alpha))

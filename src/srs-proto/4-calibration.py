@@ -4,10 +4,10 @@ import numpy as np
 
 # Configuration
 CAMERA_URLS = [
-    "http://192.168.1.118:4298/video",
     "http://192.168.1.115:4298/video",
+    "http://192.168.1.121:4298/video",
     "http://192.168.1.114:4298/video",
-    "http://192.168.1.121:4298/video"
+    "http://192.168.1.118:4298/video"
 ]
 
 CAMERA_FOV = 62.2  # Angle de vue de la caméra en degrés

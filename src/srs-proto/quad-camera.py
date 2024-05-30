@@ -5,10 +5,10 @@ from triangulation import Triangulation
 
 # Configuration
 CAMERA_URLS = [
-    "http://192.168.1.115:4298/video",
-    
-    
     "http://192.168.1.121:4298/video",
+    
+    
+    "http://192.168.1.115:4298/video",
     "http://192.168.1.118:4298/video",
     "http://192.168.1.114:4298/video"
 ]
@@ -97,8 +97,8 @@ while True:
         
         if result_bot:
             # Redimensionner les positions pour correspondre à la carte
-            map_x_bot = int((response_bot[0] / ROOM_WIDTH) * map_width)
-            map_y_bot = int((response_bot[1] / ROOM_HEIGHT) * map_height)
+            map_x_bot = int((response_bot[1] / ROOM_WIDTH) * map_width)
+            map_y_bot = int((response_bot[0] / ROOM_HEIGHT) * map_height)
             # Limiter les coordonnées à l'intérieur de la carte
             map_x_bot = np.clip(map_x_bot, 0, map_width - 1)
             map_y_bot = np.clip(map_y_bot, 0, map_height - 1)
@@ -108,11 +108,8 @@ while True:
                         (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
         if result_top:
-            # Redimensionner les positions pour correspondre à la carte
-            response_top[0] = 3.5  - response_top[0]
-            response_top[1] = 3.5  - response_top[1]
-            map_x_top = int((response_top[0] / ROOM_WIDTH) * map_width)
-            map_y_top = int((response_top[1] / ROOM_HEIGHT) * map_height)
+            map_x_top = int((response_top[1] / ROOM_WIDTH) * map_width)
+            map_y_top = int((response_top[0] / ROOM_HEIGHT) * map_height)
             # Limiter les coordonnées à l'intérieur de la carte
             map_x_top = np.clip(map_x_top, 0, map_width - 1)
             map_y_top = np.clip(map_y_top, 0, map_height - 1)

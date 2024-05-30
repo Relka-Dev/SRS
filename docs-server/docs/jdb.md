@@ -5506,3 +5506,131 @@ return true_points
 ```
 
 ### 3.0 : Calibration
+
+Pour la calibration, l'objectif est d'afficher les angles captés par les 4 caméras.
+
+#### 3.1 : Route (Serveur : app.py)
+
+1. Récupère l'id du network passé en paramètre
+2. Récupération de la liste des caméras depuis la bdd avec l'id du network
+3. Récupération des images captés par les caméras
+4. Récupération des angles des utilisateurs présents dans l'image
+
+```py
+@JwtLibrary.API_token_required
+def calibration(self):
+    idNetwork = request.args.get('idNetwork')
+    if not idNetwork:
+        return jsonify({'error': 'Network ID is required'}), 400
+    response = []
+    result, response = self.db_client.getCamerasByIdNetwork(idNetwork)
+    if not result:
+        return jsonify({'error': 'Camera not found'}), 404
+    cameras_angles = []
+    for data in response:
+        camera = Camera(data[0], data[1], data[2], data[3], data[4], data[5], data[6], None, None)
+        resultImg, responseImg = CameraServerClient.getCameraImage(camera.ip, camera.jwt)
+        if resultImg:
+            cameras_angles.append({camera.ip: self.spaceRecognition.get_persons_angles(responseImg, 62.2)})
+        return jsonify(cameras_angles), 200
+```
+
+#### 3.2 : Récupération des angles (Serveur : space_recognition.py)
+
+La fonction `get_persons_angles` permet de récupérer les angles où les personnes sont captées.
+
+```py
+def get_persons_angles(self, frame, fov):
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = self.model(frame_rgb)
+    angles = []
+    for det in results.xyxy[0].cpu().numpy():
+        x1, y1, x2, y2, conf, cls = det
+        if cls == 0:
+            center_x = (x1 + x2) / 2
+            angle = (center_x - frame.shape[1] / 2) / frame.shape[1] * fov
+            angles.append(angle)
+    return angles
+```
+
+#### 3.3 : Récupération des données (Application : server_client.py)
+
+La fonction `get_calibration` sert de client au serveur et récupère les données.
+
+```py
+def get_calibration(self, idNetwork):
+    endpoint_url = f"{self.server_url}/calibration?idNetwork={idNetwork}"
+    params = {
+        'token': self.API_token
+    }
+    response = requests.get(endpoint_url, params=params)
+    if response.status_code == 200:
+        return True, response.json()
+    else:
+        return False, response.json()
+```
+
+#### 3.4 : Vue et interprétation des données (Application : calibration_window.py)
+
+```py
+def on_enter(self):
+    super().on_enter()
+    self.app = App.get_running_app()
+    self.server_client = self.app.get_server_client()
+    self.api_call_loop = Clock.schedule_interval(self.update, 1)
+```
+
+La fonction `update` qui s'exécute chaque seconde, elle fait un appel à l'api et interprète les résultats en fonction des longeurs de liste.
+
+```py
+def update(self, dt):
+    result, cameras_angles = self.server_client.get_calibration(44)
+    
+    if result:
+        if len(cameras_angles) > 0:
+            self.update_label(self.ids.camera1_label, list(cameras_angles[0].values())[0])
+        if len(cameras_angles) > 1:
+            self.update_label(self.ids.camera2_label, list(cameras_angles[1].values())[0])
+        if len(cameras_angles) > 2:
+            self.update_label(self.ids.camera3_label, list(cameras_angles[2].values())[0])
+        if len(cameras_angles) > 3:
+            self.update_label(self.ids.camera4_label, list(cameras_angles[3].values())[0])
+```
+
+La fonction `update_label` met à jour un label en fonction du text qui est passé, si la valeur se trouve entre -1 et 1 le texte apparait en vert sinon il apparait en rouge.
+
+```py
+def update_label(self, label, values):
+    if (len(values) > 0):
+        value = values[0]
+        label.text = str(value)
+        if -1 <= value <= 1:
+            label.color = (0, 1, 0, 1)
+        else:
+            label.color = (1, 0, 0, 1)
+```
+
+La fonction `on_leave` permet de arrêter les appels à l'api quand l'utilisateur quitte la fenêtre.
+
+```py
+def on_leave(self):
+    self.api_call_loop.cancel()
+```
+
+#### 3.5 : Résultat
+
+![](./ressources/videos/calibration.gif)
+
+### Conclusion
+
+Avec la calibration j'ai implémenté une nouvelle fonctionnalité qui fonctionne bien, je pense ajouter un affichage pour montrer la caméra et son angle plus tard. J'ai également développé une nouvelle façon de faire la reconnaissance spatiale.
+
+## 30.05.2024
+
+#### Bilan de la veille
+Hier j'ai développé la calibration et j'ai trouvé une nouvelle façon de faire la reconnaissance spatiale avec 4 caméras.
+
+#### Objectif du jour
+En premier lieu, je vais faire des tests pour mon nouveau systeme a quatres caméras. Ensuite, si j'ai le temps, je vais implémenter la reconnaissance faciale à mon système.
+
+### 

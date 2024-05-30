@@ -361,6 +361,7 @@ class ServeurCentral:
 
         cameras_to_add = ServeurCentral.get_cameras_that_are_not_in_database(cameras_in_network, cameras_in_db)
         cameras_to_remove = ServeurCentral.get_cameras_that_are_not_in_network(cameras_in_network, cameras_in_db)
+
         if cameras_to_add:
             self.db_client.addCamerasToNetwork(tokens_for_ip, networkId)
         if cameras_to_remove:
@@ -395,6 +396,7 @@ class ServeurCentral:
             network_cameras = []
         if database_cameras is None:
             database_cameras = []
+
 
         pattern = r"'(.*?)'"
         network_cameras = re.findall(pattern, str(network_cameras))
@@ -500,7 +502,7 @@ class ServeurCentral:
             resultImg, responseImg = CameraServerClient.getCameraImage(camera.ip, camera.jwt)
 
             if resultImg:
-                cameras_angles.append([camera.ip, self.spaceRecognition.calibration(responseImg, 62.2)])
+                cameras_angles.append({camera.ip: self.spaceRecognition.get_persons_angles(responseImg, 62.2)})
 
         return jsonify(cameras_angles), 200
 

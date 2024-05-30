@@ -301,7 +301,7 @@ class DatabaseClient:
             for camera in cameras:
                 ip = str(camera)
                 token = str(cameras[camera])
-                print(token)
+                print(ip)
                 self.cursor.execute("INSERT INTO Cameras (ip, idNetwork, JWT) VALUES (%s, %s, %s);", (ip, idNetwork, token))
             self.dbConnexion.commit()
             return True, "Cameras added to network successfully."

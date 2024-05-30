@@ -16,13 +16,13 @@ class SpaceRecognition:
         people = results[results['name'] == 'person']
         return people
     
-    def _get_persons_angles(self, frame, fov):
+    def get_persons_angles(self, frame, fov):
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = self.model(frame_rgb)
         angles = []
         for det in results.xyxy[0].cpu().numpy():
             x1, y1, x2, y2, conf, cls = det
-            if cls == 0:  # Détecter les personnes uniquement
+            if cls == 0:
                 center_x = (x1 + x2) / 2
                 angle = (center_x - frame.shape[1] / 2) / frame.shape[1] * fov
                 angles.append(angle)
@@ -43,10 +43,3 @@ class SpaceRecognition:
             people_positions.append(normalized_x_position)
 
         return people_positions
-    
-    def calibration(self, images, fov):
-        angles = []
-
-        angles.append(self._get_persons_angles(images, fov))
-
-        return angles

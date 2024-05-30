@@ -95,11 +95,14 @@ class Triangulation:
         return list_true_points_left
     
     def convert_to_top_position(wall_length, objects_positions):
-        position_from_top = []
+        #positions_from_top = []
         for position in objects_positions:
-            position_from_top.append([wall_length - position[0], wall_length - position[1]])
+            print(position[0])
+        #    positions_from_top.append((wall_length - position[0], wall_length - position[1]))
+        #    print(position[0])
+        #    print(position[1])
 
-        return position_from_top
+        return objects_positions
     
     def get_objects_positions_v2(wall_length, objects_angles_from_bot_left, objects_angles_from_bot_right, objects_angles_from_top_left, objects_angles_from_top_right, tolerence=10**-15):
         all_possible_points_bot = []

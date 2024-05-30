@@ -5,10 +5,8 @@ from triangulation import Triangulation
 
 # Configuration
 CAMERA_URLS = [
-    "http://192.168.1.121:4298/video",
-    
-    
     "http://192.168.1.115:4298/video",
+    "http://192.168.1.121:4298/video",
     "http://192.168.1.118:4298/video",
     "http://192.168.1.114:4298/video"
 ]
@@ -90,7 +88,7 @@ while True:
 
     if len(angles_cam1) == 1 and len(angles_cam2) == 1 and len(angles_cam3) == 1 and len(angles_cam4) == 1:
         result_bot, response_bot = Triangulation.get_object_position(3.5, angles_cam1[0], angles_cam2[0])
-        result_top, response_top = Triangulation.get_object_position(3.5, angles_cam3[0], angles_cam4[0])
+        result_top, response_top = Triangulation.get_object_position(3.5, angles_cam3[0], angles_cam4[0], reverse=True)
         
         # Créer une carte vide
         map_frame = np.zeros((map_height, map_width, 3), dtype=np.uint8)

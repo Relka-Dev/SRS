@@ -61,42 +61,33 @@ class Triangulation:
         beta = math.asin(math.sin(gamma) / C * B) # Angle entre la camera et l'objet
         return math.degrees(beta)
 
-    def get_objects_positions(wall_length, objects_angles_from_bot_left, objects_angles_from_bot_right, object_angles_from_top_left, object_angles_from_top_right, tolerence=10**-15):
-        all_possible_points = []
+    def get_objects_positions(wall_length, objects_angles_from_bot_left, objects_angles_from_bot_right, object_angles_from_top_left, object_angles_from_top_right, tolerence=0.5):
+        all_possible_points_bot = []
 
-        for left_object in objects_angles_from_bot_left:
-            for right_object in objects_angles_from_bot_right:
-                result, pointXY = Triangulation.get_object_position(wall_length, left_object, right_object)
+        print(objects_angles_from_bot_left)
+        for left_object_bot in objects_angles_from_bot_left:
+            for right_object_bot in objects_angles_from_bot_right:
+                result, pointXY = Triangulation.get_object_position(wall_length, left_object_bot, right_object_bot)
                 if result:
-                    all_possible_points.append(pointXY)
+                    all_possible_points_bot.append(pointXY)
 
-        list_true_points_left = []
-        list_true_points_right = []
+        all_possible_points_top = []
 
-        for possible_point in all_possible_points:
-            for top_left_angle in object_angles_from_top_left:
-                top_left_angle = 90/2 + top_left_angle
-                angle_object_camera = Triangulation.find_angle_from_top_left(possible_point, wall_length)
-                print(str(angle_object_camera) + " : "  + str(top_left_angle))
-                if abs(angle_object_camera - top_left_angle) < tolerence:
-                    list_true_points_left.append(possible_point)
+        for left_object_top in object_angles_from_top_left:
+            for right_object_top in object_angles_from_top_right:
+                result, pointXY = Triangulation.get_object_position(wall_length, left_object_top, right_object_top, reverse=True)
+                if result:
+                    all_possible_points_top.append(pointXY)
+        
 
-            #for top_right_angle in object_angles_from_top_right:
-            #    top_right_angle = 90/2 + top_right_angle
-            #    angle_object_camera = Triangulation.find_angle_from_top_right(possible_point, wall_length)
-            #    if abs(angle_object_camera - top_right_angle) < tolerence:
-            #        list_true_points_right.append(possible_point)
+        true_points = []
 
-        list_true_points = []
+        for possible_point_bot in all_possible_points_bot:
+            for possible_point_top in all_possible_points_top:
+                if(abs(possible_point_bot[0] - possible_point_top[0] < tolerence) and abs(possible_point_bot[1] - possible_point_top[1] < tolerence)):
+                    true_points.append([(possible_point_bot[0] + possible_point_top[0]) / 2, (possible_point_bot[1] + possible_point_top[1]) / 2])
 
-        list_true_points.append(list_true_points_left)
-
-        #for left_object in list_true_points_left:
-        #    for right_object in list_true_points_right:
-        #        if left_object != right_object:
-        #            list_true_points.append(right_object)    
-            
-        return list_true_points_left
+        return True, true_points
     
     def convert_to_top_position(wall_length, objects_positions):
         #positions_from_top = []

@@ -1,4 +1,7 @@
 import math
+from two_camera_point import TwoCameraPoint
+from four_camera_point import FourCameraPoint
+from unique_point_list import UniquePointList
 
 class Triangulation:
 
@@ -20,11 +23,11 @@ class Triangulation:
         # Calcul de la distance entre la caméra et l'objet
         distance_camera_object = wall_length / math.sin(math.radians(gamma)) * (math.sin(math.radians(beta)))
 
-        # Calcul de la position X
+        # Calcul de la position Y
         position_y = distance_camera_object * math.sin(math.radians(alpha))
 
 
-        # Calcul de la position Y
+        # Calcul de la position X
         position_x = math.sqrt(distance_camera_object**2 - position_y**2)
 
         if reverse:
@@ -40,36 +43,15 @@ class Triangulation:
             print("position y : " + str(position_y))
 
         return True, [position_x, position_y]
-    
-
-    def find_angle_from_top_left(position, wall_length):
-        A = wall_length - position[1] # Distance Y entre la camera et l'objet
-        B = position[0] # Distance X entre l'objet et la camera
-
-        C = math.sqrt(A ** 2 + B ** 2) # Distance camera objet
-
-        gamma = math.radians(90) # Angle droit entre A et B
-        alpha = math.asin(math.sin(gamma) / C * A) # Angle entre la camera et l'objet
-        return math.degrees(alpha)
-
-    def find_angle_from_top_right(position, wall_length):
-        A = wall_length - position[1] # Distance Y entre la camera et l'objet
-        B = wall_length - position[0] # Distance X entre l'objet et la camera
-        C = math.sqrt(A ** 2 + B ** 2) # Distance camera objet
-
-        gamma = math.radians(90) # Angle droit entre A et B
-        beta = math.asin(math.sin(gamma) / C * B) # Angle entre la camera et l'objet
-        return math.degrees(beta)
 
     def get_objects_positions(wall_length, objects_angles_from_bot_left, objects_angles_from_bot_right, object_angles_from_top_left, object_angles_from_top_right, tolerence=0.5):
         all_possible_points_bot = []
 
-        print(objects_angles_from_bot_left)
         for left_object_bot in objects_angles_from_bot_left:
             for right_object_bot in objects_angles_from_bot_right:
                 result, pointXY = Triangulation.get_object_position(wall_length, left_object_bot, right_object_bot)
                 if result:
-                    all_possible_points_bot.append(pointXY)
+                    all_possible_points_bot.append(TwoCameraPoint(left_object_bot, right_object_bot, pointXY))
 
         all_possible_points_top = []
 
@@ -77,56 +59,19 @@ class Triangulation:
             for right_object_top in object_angles_from_top_right:
                 result, pointXY = Triangulation.get_object_position(wall_length, left_object_top, right_object_top, reverse=True)
                 if result:
-                    all_possible_points_top.append(pointXY)
+                   all_possible_points_top.append(TwoCameraPoint(left_object_top, right_object_top, pointXY))
         
 
-        true_points = []
+        unique_point_list = UniquePointList()
 
         for possible_point_bot in all_possible_points_bot:
             for possible_point_top in all_possible_points_top:
-                if(abs(possible_point_bot[0] - possible_point_top[0] < tolerence) and abs(possible_point_bot[1] - possible_point_top[1] < tolerence)):
-                    true_points.append([(possible_point_bot[0] + possible_point_top[0]) / 2, (possible_point_bot[1] + possible_point_top[1]) / 2])
+                if(abs(possible_point_bot.value[0] - possible_point_top.value[0] < tolerence) and abs(possible_point_bot.value[1] - possible_point_top.value[1] < tolerence)):
+                    unique_point_list.add_point(FourCameraPoint(possible_point_bot, possible_point_top, [(possible_point_bot.value[0] + possible_point_top.value[0]) / 2, (possible_point_bot.value[1] + possible_point_top.value[1]) / 2]))
 
-        return True, true_points
-    
-    def convert_to_top_position(wall_length, objects_positions):
-        #positions_from_top = []
-        for position in objects_positions:
-            print(position[0])
-        #    positions_from_top.append((wall_length - position[0], wall_length - position[1]))
-        #    print(position[0])
-        #    print(position[1])
+        return True, unique_point_list
 
-        return objects_positions
-    
-    def get_objects_positions_v2(wall_length, objects_angles_from_bot_left, objects_angles_from_bot_right, objects_angles_from_top_left, objects_angles_from_top_right, tolerence=10**-15):
-        all_possible_points_bot = []
-        all_possible_points_top = []
 
-        for left_object_bot in objects_angles_from_bot_left:
-            for right_object_bot in objects_angles_from_bot_right:
-                result, pointXY = Triangulation.get_object_position(wall_length, left_object_bot, right_object_bot)
-                if result:
-                    all_possible_points_bot.append(pointXY)
-
-        print(all_possible_points_bot)
-        for left_object_top in objects_angles_from_top_left:
-            for right_object_top in objects_angles_from_top_right:
-                result, pointXY = Triangulation.get_object_position(wall_length, left_object_top, right_object_top)
-                if result:
-                    all_possible_points_top.append(pointXY)
-        
-        all_possible_points_top = Triangulation.convert_to_top_position(wall_length, all_possible_points_top)
-
-        true_points = []
-        for top_point in all_possible_points_top:
-            for bot_point in all_possible_points_bot:
-                print("Top :" + str(top_point))
-                print("Bot :" + str(bot_point))
-                if(abs(top_point[0] - bot_point[0]) < tolerence and abs(top_point[1] - bot_point[1]) < tolerence):
-                    true_points.append([(top_point[0] + bot_point[0]) / 2, (top_point[1] + bot_point[1]) / 2])
-
-        return true_points
             
                 
 

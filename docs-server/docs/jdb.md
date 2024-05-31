@@ -5633,4 +5633,152 @@ Hier j'ai développé la calibration et j'ai trouvé une nouvelle façon de fair
 #### Objectif du jour
 En premier lieu, je vais faire des tests pour mon nouveau systeme a quatres caméras. Ensuite, si j'ai le temps, je vais implémenter la reconnaissance faciale à mon système.
 
-### 
+### 1.0 : Correction de la triangulation
+J'ai refais les calculs de la triangulation sur papier et j'ai constaté quelques erreurs.
+
+1. L'angle $\alpha$ est mal calculé, je prends en considération l'angle extérieur à la place de l'angle intérieur.
+2. Une paranthèse en trop dans le calcul du théorème du sinus. 
+
+```py
+@staticmethod
+def get_object_position(wall_length, object_angle_from_left, object_angle_from_right, debug=False):
+    # Conversion des angles en radians
+
+    alpha = 90 / 2 - object_angle_from_left
+    # Anciennement : alpha = 90 / 2 + object_angle_from_left
+
+    beta = 90 / 2 + object_angle_from_right
+    if beta > 90 or alpha > 90:
+        return False, "Impossible de calculer la triangulation pour un angle supérieur à 90°"
+    
+    if beta < 0 or alpha < 0:
+        return False, "Impossible de calculer la triangulation pour un angle inférieur à 90°"
+    
+    # Calcul de gamma
+    gamma = 180 - alpha - beta
+
+    # Calcul de la distance entre la caméra et l'objet
+    distance_camera_object = wall_length / math.sin(math.radians(gamma)) * (math.sin(math.radians(beta)))
+    # Anciennement : distance_camera_object = wall_length / (math.sin(math.radians(gamma)) * (math.sin(math.radians(beta))))
+
+    # Calcul de la position Y
+    position_y = distance_camera_object * math.sin(math.radians(alpha))
+```
+
+### 2.0 : Double Triangulation
+
+L'objectif de cette fonctionnalité est de trouver les véritables points où les personnes se situent.
+
+Le problème de mon programme est que vu que je me base sur les intersections entre les détections des personnes, le problème c'est que quand il y a plusieurs personnes, il y'a plusieurs positions possible. De plus, il n'est pas possible de différencier une personne d'une autre et je ne veux pas utiliser la reconnaissance faciale pour y pallier car elle est pas suffisament fiable. Pour plus de détails, allez vers le point 2.0 du 29.05.
+
+#### 2.1 : Implémentation (srs-proto : triangulation.py)
+
+J'ai ajouté un paramètre reverse qui permet de définir que l'on recherche les position depuis les caméras qui se situent à l'autre bout de la pièce.
+
+Quand le flag reverse est à `True`, la position est convertie pour faire comme si elle avait été captée par les caméras oposée. Pour ce faire, je prends les valeurs et je les soustrais à la longeur du mur.
+
+```py
+@staticmethod
+def get_object_position(wall_length, object_angle_from_left, object_angle_from_right, debug=False, reverse=False):
+    # Conversion des angles en radians
+    alpha = 90 / 2 - object_angle_from_left
+    beta = 90 / 2 + object_angle_from_right
+    if beta > 90 or alpha > 90:
+        return False, "Impossible de calculer la triangulation pour un angle supérieur à 90°"
+    
+    if beta < 0 or alpha < 0:
+        return False, "Impossible de calculer la triangulation pour un angle inférieur à 90°"
+    
+    # Calcul de gamma
+    gamma = 180 - alpha - beta
+    # Calcul de la distance entre la caméra et l'objet
+    distance_camera_object = wall_length / math.sin(math.radians(gamma)) * (math.sin(math.radians(beta)))
+    # Calcul de la position Y
+    position_y = distance_camera_object * math.sin(math.radians(alpha))
+    # Calcul de la position X
+    position_x = math.sqrt(distance_camera_object**2 - position_y**2)
+    if reverse:
+        position_x = wall_length - position_x
+        position_y = wall_length - position_y
+    if debug:
+        print("alpha : " + str(alpha))
+        print("beta : " + str(beta))
+        print("gamma : " + str(gamma))
+        print("cam_left -> object : " + str(distance_camera_object))
+        print("position x : " + str(position_x))
+        print("position y : " + str(position_y))
+    return True, [position_x, position_y]
+```
+ 
+
+#### 2.2 : Vidéo du test
+
+Le point rouge correspond à la triangulation calculée depuis les caméras du sud et le point bleu, la triangulation inversée depuis les caméras nord.
+
+[SRS - Double Triangulation](https://youtu.be/JMINCs2bN4M)
+
+Selon moi, cette partie est fonctionnelle.
+
+### Conclusion
+Le travail que j'ai produit aujourd'hui peut paraître peut conséquent. Cependant, J'ai effectué un grand nombre de test ce qui prend du temps. Au final, le résultat est fonctionnel, il faut à présent voir ce que cela donne dans une utilisation réelle.
+
+## 31.05.2024
+
+#### Bilan de veille
+Hier j'ai corrigé le calcul de la triangulation et j'ai développé le calcul de position depuis deux set de caméras.
+
+#### Objectif du jour
+Aujourd'hui je vais commencer par effectuer les tests réels sur la double triangulation. Si elle est fonctionnelle, je vais essayer de commencer la reconnaissance faciale.
+
+### 1.0 : Exécution automatique du script sur les caméras
+En attendant que les batteries se charge, je recherche une façon s'exécuter automatiquement le script du serveur caméra.
+
+J'ai demandé à ChatGPT et il m'à donné deux façons de le faire, la première par `rc.local` je n'ai pas réussi à la faire fonctionner. la seconde par `systemctl` par deamon fonctionne parfaitement.
+
+- [Prompt ChatGPT](https://chatgpt.com/share/980b9281-335c-4caf-afb8-54e407267588)
+
+#### 1.1 : Marche à suivre
+
+Créez le fichier de service :
+
+```bash
+sudo nano /etc/systemd/system/srs.service
+```
+Copiez et collez le contenu suivant dans l'éditeur nano :
+
+```ini
+
+[Unit]
+Description=Exécuter mon script Python au démarrage
+After=network.target
+
+[Service]
+User=karelsvbd
+WorkingDirectory=/home/karelsvbd
+ExecStart=/bin/bash -c 'source /home/karelsvbd/venv/bin/activate && python /home/karelsvbd/app.py'
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Sauvegardez et quittez l'éditeur (Ctrl+X, puis Y, puis Entrée).
+
+Recharger les services systemd :
+
+```bash
+sudo systemctl daemon-reload
+```
+
+Activer et démarrer le service :
+
+```bash
+sudo systemctl enable srs.service
+sudo systemctl start srs.service
+```
+
+Vérifiez l'état du service :
+
+```bash
+sudo systemctl status srs.service
+```

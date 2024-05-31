@@ -1,6 +1,7 @@
 import cv2
 import torch
 import numpy as np
+import argparse
 from triangulation import Triangulation
 
 # Configuration
@@ -14,6 +15,11 @@ CAMERA_URLS = [
 CAMERA_FOV = 62.2  # Angle de vue de la caméra en degrés
 ROOM_WIDTH = 4  # Largeur de la pièce en mètres
 ROOM_HEIGHT = 4  # Hauteur de la pièce en mètres
+
+# Argument parser for headless mode
+parser = argparse.ArgumentParser(description="Object Detection and Triangulation")
+parser.add_argument('--headless', action='store_true', help='Run in headless mode without GUI')
+args = parser.parse_args()
 
 # Charger le modèle YOLOv5 pré-entrainé et déplacer le modèle sur le GPU
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -80,32 +86,41 @@ while True:
     frame3_processed, angles_cam3 = process_frame(frame3, model, CAMERA_FOV)
     frame4_processed, angles_cam4 = process_frame(frame4, model, CAMERA_FOV)
 
-    # Afficher les frames dans des fenêtres séparées
-    cv2.imshow('Camera 1', frame1_processed)
-    cv2.imshow('Camera 2', frame2_processed)
-    cv2.imshow('Camera 3', frame3_processed)
-    cv2.imshow('Camera 4', frame4_processed)
+    if not args.headless:
+        # Afficher les frames dans des fenêtres séparées
+        cv2.imshow('Camera 1', frame1_processed)
+        cv2.imshow('Camera 2', frame2_processed)
+        cv2.imshow('Camera 3', frame3_processed)
+        cv2.imshow('Camera 4', frame4_processed)
 
-    if len(angles_cam1) > 1 and len(angles_cam2) > 1 and len(angles_cam3) > 1 and len(angles_cam4) > 1:
-        result, response = Triangulation.get_objects_positions(3.5, angles_cam1, angles_cam2, angles_cam3, angles_cam4)
+    if len(angles_cam1) == 2 and len(angles_cam2) == 2 and len(angles_cam3) == 2 and len(angles_cam4) == 2:
+        result, response = Triangulation.get_objects_positions(3.5, angles_cam1, angles_cam2, angles_cam3, angles_cam4, tolerence=0.5)
 
         # Créer une carte vide
         map_frame = np.zeros((map_height, map_width, 3), dtype=np.uint8)
         
-        if result:
-            for point in response:
-                # Redimensionner les positions pour correspondre à la carte
-                map_x_bot = int((point[1] / ROOM_WIDTH) * map_width)
-                map_y_bot = int((point[0] / ROOM_HEIGHT) * map_height)
-                # Limiter les coordonnées à l'intérieur de la carte
-                map_x_bot = np.clip(map_x_bot, 0, map_width - 1)
-                map_y_bot = np.clip(map_y_bot, 0, map_height - 1)
-                # Dessiner un point à la position calculée
-                cv2.circle(map_frame, (map_x_bot, map_y_bot), 5, (0, 0, 255), -1)  # Rouge pour le point bot
-                cv2.putText(map_frame, f"Bot X: {point[0]:.2f}, Y: {point[1]:.2f}", 
-                            (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-        
-        cv2.imshow('Map', map_frame)
+        if result:  
+            if args.headless:
+                print("-----")
+                for point in response.points:
+                    print(point.value)
+            else:
+                i = 0
+                if len(response.points) == 2:
+                    for point in response.points:
+                        i += 1
+                                    # Redimensionner les positions pour correspondre à la carte
+                        map_x = int((point.value[0] / ROOM_WIDTH) * map_width)
+                        map_y = int((point.value[1] / ROOM_HEIGHT) * map_height)
+                        # Limiter les coordonnées à l'intérieur de la carte
+                        map_x = np.clip(map_x, 0, map_width - 1)
+                        map_y = np.clip(map_y, 0, map_height - 1)
+                        # Dessiner un point à la position calculée
+                        cv2.circle(map_frame, (map_x, map_y), 5, (0, 0, 255), -1)  # Rouge pour le point bot
+                        cv2.putText(map_frame, f"User {i} = X: {point.value[0]:.2f}, Y: {point.value[1]:.2f}", 
+                                    (10, i * 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                    cv2.imshow('Map', map_frame)
+
 
     # Appuyer sur 'q' pour quitter les fenêtres
     if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -114,4 +129,6 @@ while True:
 # Libérer les captures vidéo et fermer les fenêtres
 cap1.release()
 cap2.release()
+cap3.release()
+cap4.release()
 cv2.destroyAllWindows()

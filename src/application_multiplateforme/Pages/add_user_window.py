@@ -72,6 +72,9 @@ class AddUserWindow(Screen):
         username = self.ids.username_textInput.text
         
         if result_function and result_encodings:
-            self.server_client.add_user(username, id_function, face_encodings)
+            result, response = self.server_client.add_user(username, id_function, face_encodings)
+            print(response)
+
+
 
 

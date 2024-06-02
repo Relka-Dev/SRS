@@ -12,6 +12,7 @@ import mysql.connector
 from datetime import datetime, timedelta
 from network_scanner import NetworkScanner
 from flask import json
+import numpy as np
 
 class DatabaseClient:
     
@@ -200,22 +201,20 @@ class DatabaseClient:
 
     
     def addUser(self, idPersonType, encodings, username):
-        
         try:
-            
             if not self.checkIfIdPersonTypeExist(idPersonType):
-                return False, f"Impossible d'ajouter l'utilisateur : Le type de personne n'existe pas."
-            
+                return False, "Le type de personne n'existe pas."
             if self.checkIfUsername(username):
-                return False, f"Impossible d'ajouter l'utilisateur : Un utilisateur avec le même nom existe déjà dans la base"
+                return False, "Un utilisateur avec le même nom existe déjà."
             
-            self.cursor.execute("INSERT INTO srs.Users (idPersonType, encodings, username) VALUES(%s, %s, %s);", (int(idPersonType), encodings, username))
+            # Convert encodings list to binary
+            # encodings_binary = np.array(encodings, dtype=np.float32).tobytes()
             
+            self.cursor.execute("INSERT INTO srs.Users (idPersonType, encodings, username) VALUES (%s, %s, %s);", (int(idPersonType), encodings, username))
             self.dbConnexion.commit()
             return True, "L'utilisateur a été ajouté avec succès."
         except Exception as e:
-            print(f"Error: {e}")
-            return False, f"Impossible d'ajouter l'utilisateur : {e}"
+            return False, str(e)
 
     def getPersonTypeByName(self, typeName: str):
         try:

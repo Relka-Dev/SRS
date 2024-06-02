@@ -1,88 +1,136 @@
-import cv2
-import dlib
 import os
+import torch
+import cv2
+import face_recognition
 import numpy as np
+import ast
+import mysql.connector
+import base64
+import json
 
-class FaceRecognitionSRS:
+# Classe pour gérer la base de données
+class DatabaseClient:
+    
     def __init__(self):
-        self.detector = dlib.get_frontal_face_detector()
-        self.predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
-        self.face_rec_model = dlib.face_recognition_model_v1('dlib_face_recognition_resnet_model_v1.dat')
-        self.known_face_descriptors, self.known_labels = self.load_faces('faces')
+        self.dbConnexion = mysql.connector.connect(
+            host="127.0.0.1",
+            user="srs-admin",
+            password="fzg5jc29cHbKcSuK",
+            database="srs"
+        )
+        self.cursor = self.dbConnexion.cursor()
 
-    # Fonction pour extraire les descripteurs de visage
-    def get_face_descriptor(self, img):
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        faces = self.detector(gray)
+    def get_encodings(self):
+        try:
+            self.cursor.execute("SELECT username, encodings FROM Users")
+            return self.cursor.fetchall()
+        except Exception as e:
+            print(f"Error: {e}")
 
-        if len(faces) == 0:
-            return None
+# Charger le modèle YOLOv5 pré-entraîné
+model = torch.hub.load('ultralytics/yolov5', 'yolov5s')
 
-        shape = self.predictor(gray, faces[0])
-        face_descriptor = self.face_rec_model.compute_face_descriptor(img, shape)
-        return np.array(face_descriptor)
+# Initialiser la base de données
+db_client = DatabaseClient()
 
-    # Chargement des images et extraction des descripteurs
-    def load_faces(self, directory):
-        face_descriptors = []
-        labels = []
-        for filename in os.listdir(directory):
-            if filename.endswith('.jpg') or filename.endswith('.png'):
-                path = os.path.join(directory, filename)
-                descriptor = self.get_face_descriptor(cv2.imread(path))
-                if descriptor is not None:
-                    face_descriptors.append(descriptor)
-                    labels.append(filename)
-        return face_descriptors, labels
+# Récupérer les encodages des utilisateurs
+users_data = db_client.get_encodings()
 
-    # Comparaison des descripteurs
-    def compare_faces(self, descriptor, known_descriptors, threshold=0.6):
-        distances = np.linalg.norm(known_descriptors - descriptor, axis=1)
-        min_distance = np.min(distances)
-        if min_distance < threshold:
-            return True, np.argmin(distances)
-        else:
-            return False, None
+# Listes pour stocker les encodages de visages et les noms
+known_face_encodings = []
+known_face_names = []
 
-def main():
-    # Initialisation de l'instance de reconnaissance faciale
-    recognizer = FaceRecognitionSRS()
+# Convertir les encodages de chaînes d'octets en listes de nombres flottants
+for user_data in users_data:
+    known_face_names.append(user_data[0])
+    encoding_base64 = user_data[1]
+    encoding_json = base64.b64decode(encoding_base64).decode('utf-8')
+    encoding = json.loads(encoding_json)
+    if len(encoding) == 128:  # Vérifier la taille de chaque encodage
+        known_face_encodings.append(encoding)
+    else:
+        print(f"Encodage incorrect pour {user_data[0]}: {encoding}")
 
-    # Capture vidéo en temps réel
-    cap = cv2.VideoCapture(0)
+# Imprimer les noms et encodages récupérés pour vérification
+print("Noms récupérés de la base de données:")
+print(known_face_names)
+print("\nEncodages récupérés de la base de données:")
+for i, encoding in enumerate(known_face_encodings):
+    print(f"Nom: {known_face_names[i]}")
+    print(f"Encodage: {encoding[:5]} ...")  # Imprimer seulement les 5 premiers éléments pour chaque encodage pour plus de lisibilité
 
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
+# Fonction pour faire la reconnaissance faciale
+def recognize_faces(image, bbox, tolerance=0.6):
+    top, left, bottom, right = int(bbox[1]), int(bbox[0]), int(bbox[3]), int(bbox[2])
+    face_image = image[top:bottom, left:right]
+    
+    # Convertir l'image au format RGB
+    face_image_rgb = cv2.cvtColor(face_image, cv2.COLOR_BGR2RGB)
+    
+    # Trouver les visages et encodages de visages dans l'image
+    face_locations = face_recognition.face_locations(face_image_rgb)
+    if not face_locations:
+        return "None"
+    
+    face_encodings = face_recognition.face_encodings(face_image_rgb, face_locations)
+    if not face_encodings:
+        return "None"
+    
+    for face_encoding in face_encodings:
+        matches = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance)
+        name = "Unknown"
+        
+        if np.any(matches):  # Utiliser np.any() pour vérifier s'il y a au moins une correspondance
+            # Trouver les distances
+            face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
+            best_match_index = np.argmin(face_distances)
+            
+            # Assurez-vous que best_match_index est dans les limites de matches et matches n'est pas vide
+            if matches and best_match_index < len(matches) and matches[best_match_index]:
+                name = known_face_names[best_match_index]
+        
+        return name
+    return "None"
 
-        # Redimensionnement pour accélérer le traitement
-        small_frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
+# Capturer la vidéo en temps réel
+video_capture = cv2.VideoCapture(0)
 
-        # Obtenir le descripteur de visage pour la frame actuelle
-        descriptor = recognizer.get_face_descriptor(small_frame)
+while True:
+    # Capturer une image de la vidéo
+    ret, frame = video_capture.read()
+    
+    if not ret:
+        break
+    
+    # Détecter les personnes dans l'image avec YOLOv5
+    results = model(frame)
+    
+    # Obtenir les positions des boîtes englobantes des personnes
+    bboxes = results.xyxy[0].cpu().numpy()
+    
+    # Filtrer pour ne garder que les personnes (class 0 in COCO dataset)
+    person_bboxes = [bbox for bbox in bboxes if int(bbox[5]) == 0]
+    
+    # Liste des résultats
+    results_list = []
 
-        if descriptor is not None:
-            match, index = recognizer.compare_faces(descriptor, recognizer.known_face_descriptors)
-            if match:
-                label = recognizer.known_labels[index]
-            else:
-                label = 'Inconnu'
+    # Pour chaque personne détectée, essayer de reconnaître le visage
+    for bbox in person_bboxes:
+        name = recognize_faces(frame, bbox, tolerance=0.4)  # Ajuster la tolérance ici si nécessaire
+        results_list.append({'Position': bbox[:4], 'Personne détectée': name})
+        
+        # Dessiner la boîte englobante et le nom sur l'image
+        left, top, right, bottom = int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])
+        cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+        cv2.putText(frame, f"{name} ({left}, {top}, {right}, {bottom})", (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+    
+    # Afficher le résultat
+    cv2.imshow('Video', frame)
+    
+    # Quitter avec la touche 'q'
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
-            # Affichage de l'étiquette sur la frame
-            faces = recognizer.detector(cv2.cvtColor(small_frame, cv2.COLOR_BGR2GRAY))
-            for face in faces:
-                x, y, w, h = face.left(), face.top(), face.width(), face.height()
-                cv2.rectangle(frame, (x*2, y*2), ((x+w)*2, (y+h)*2), (0, 255, 0), 2)
-                cv2.putText(frame, label, (x*2, y*2 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
-
-        cv2.imshow('Face Recognition', frame)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-if __name__ == "__main__":
-    main()
+# Libérer la capture de la vidéo
+video_capture.release()
+cv2.destroyAllWindows()

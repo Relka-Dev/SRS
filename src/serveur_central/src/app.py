@@ -192,6 +192,8 @@ class ServeurCentral:
             encodings = data.get('encodings')
             username = data.get('username')
 
+            print(json.dumps(encodings))
+
             result, response = self.db_client.addUser(idPersonType, json.dumps(encodings), username)
 
             if result:

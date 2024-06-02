@@ -121,20 +121,14 @@ class ServerClient:
             return False, response
     
     def add_user(self, username, idPersonType, encodings):
-        if not self.server_ip:
-            return False, "ip du serveur manquante"
-
         endpoint_url = f"{self.server_url}/add_user"
-
-        encodings_list = [encoding.tolist() for encoding in encodings]
-
+        
         data = {
             "username": username,
             "idPersonType": idPersonType,
-            "encodings": encodings_list,
+            "encodings": encodings,
         }
 
-        # Encoder les données en JSON
         data_json = json.dumps(data)
 
         url_with_token = f"{endpoint_url}?token={self.API_token}"

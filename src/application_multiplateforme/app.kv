@@ -618,6 +618,11 @@ WindowManager:
                         id: camera1_data_label
                         size_hint_y: 1.0
 
+                    Label:
+                        id: camera1_size_label
+                        text: "Size : (en attente)"
+                        size_hint_y: 0.5
+
                 GridLayout:
                     cols: 1
 
@@ -629,8 +634,12 @@ WindowManager:
                     Label:
                         id: camera2_data_label
                         size_hint_y: 1.0
+
+                    Label:
+                        id: camera2_size_label
+                        text: "Size : (en attente)"
+                        size_hint_y: 0.5
                         
-            
             GridLayout:
                 cols: 2
 
@@ -646,6 +655,11 @@ WindowManager:
                         id: camera3_data_label
                         size_hint_y: 1.0
 
+                    Label:
+                        id: camera3_size_label
+                        text: "Size : (en attente)"
+                        size_hint_y: 0.5
+
                 GridLayout:
                     cols: 1
 
@@ -657,4 +671,16 @@ WindowManager:
                     Label:
                         id: camera4_data_label
                         size_hint_y: 1.0
+
+                    Label:
+                        id: camera4_size_label
+                        text: "Size : (en attente)"
+                        size_hint_y: 0.5
+
+            Label:
+                id: average_size_label
+                text: "Average Size Y: (en attente)"
+                size_hint_y: 0.5
+                pos_hint: {'center_x': 0.5}
+
 

@@ -28,6 +28,20 @@ class SpaceRecognition:
                 angles.append(angle)
         return angles
     
+    def get_persons_angles_with_size(self, frame, fov):
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = self.model(frame_rgb)
+        angles_and_sizes = []
+        for det in results.xyxy[0].cpu().numpy():
+            x1, y1, x2, y2, conf, cls = det
+            if cls == 0:
+                center_x = (x1 + x2) / 2
+                angle = (center_x - frame.shape[1] / 2) / frame.shape[1] * fov
+                size_y = y2 - y1
+                angles_and_sizes.append((angle, size_y))
+        return angles_and_sizes
+
+    
     def get_people_positions_x(self, imageBase64):
         nparr = np.frombuffer(imageBase64, np.uint8)
         image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)

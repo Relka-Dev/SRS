@@ -492,21 +492,27 @@ class ServeurCentral:
         idNetwork = request.args.get('idNetwork')
         if not idNetwork:
             return jsonify({'error': 'Network ID is required'}), 400
-
+    
         response = []
         result, response = self.db_client.getCamerasByIdNetwork(idNetwork)
         if not result:
             return jsonify({'error': 'Camera not found'}), 404
-
+    
         cameras_angles = []
         for data in response:
             camera = Camera(data[0], data[1], data[2], data[3], data[4], data[5], data[6], None, None)
             resultImg, responseImg = CameraServerClient.getCameraImage(camera.ip, camera.jwt)
-
+    
             if resultImg:
-                cameras_angles.append({camera.ip: self.spaceRecognition.get_persons_angles(responseImg, 62.2)})
-
+                angles_and_sizes = self.spaceRecognition.get_persons_angles_with_size(responseImg, 62.2)
+                cameras_angles.append({
+                    'camera_ip': camera.ip,
+                    'angles_and_sizes': [{'angle': float(angle), 'size_y': float(size_y)} for angle, size_y in angles_and_sizes]
+                })
+    
         return jsonify(cameras_angles), 200
+
+
 
     
     

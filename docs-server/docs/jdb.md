@@ -53,7 +53,6 @@ mkdocs-material            9.5.15
 mkdocs-material-extensions 1.3.1
 mkdocs-with-pdf            0.9.3
 [...]
-
 ```
 
 ### planification
@@ -61,9 +60,11 @@ mkdocs-with-pdf            0.9.3
 Pour avoir une planification précise et efficace j'ai décidé de me baser sur un système de jalons en utilisant les **diagrammes de Gantt**.
 
 Afin d'optimiser mon temps j'ai demandé à un modèle d'IA entrainé dans les diagrammes de gantt. J'ai utilisé les test ainsi que les différentes fonctionnalités prévues dans mes composants comme prompt. L'IA m'a donné un résultat satisfaisant pour les tâche cependant, pour les jalons et tâche *maîte* elle n'a pas réussi à me donner un résultat convaincant.  
+
 [Prompt Gantt Chart GPT](https://chat.openai.com/share/f782bdf4-607b-4a6e-885a-709bcd14bebd)
 
 #### Résultat de l'IA
+
 ![Planning IA](./ressources/images/PlanningIA.png)
 
 #### Ajustements personnels
@@ -76,7 +77,7 @@ J'ai ajouté les *super* tâches et les jalons. Chaque jalon correspont à une v
 Pour chacun des jalon, je vais effectuer une release du gitlab.
 
 #### Planning prévisionnel final
-![Planning Prévisionnel](./ressources/images/PlanningPrevisionnel.png)
+![Planning Prévisionnel](./ressources/images/PlanningPrevisionnel.png)  
 
 ### Caméras wifi
 Ayant terminé la planification, je vais à présent me concacrer au travail avec mes cameras wifi. Je vais commencer par les démarrer et essayer d'y accèder par ssh.
@@ -397,7 +398,7 @@ Postman me permet d'avoir un client pour mon API. Les tests se lancent de façon
 #### Endpoint /login
 Pour tester le endpoint **/login** je mets les identifiants de connexion dans la case **Authorization** :
 
-![Login Test](./ressources/images/capturepostmantestlogin.png)
+![Login Test](./ressources/images/capturepostmantestlogin.png)  
 
 Ensuite j'écris les tests :
 
@@ -434,13 +435,19 @@ pm.test("La réponse contient les données attendues", function () {
 #### Problème avec les tests
 J'ai pas réussi à faire les tests que je voulais. Pour le login, j'aimerais avoir un login fonctionnel et un autre sans identifiants etc. J'aimerais tester chaque cas pour éviter les failles sauf que j'y arrive pas avec les exemples de postman, selon moi il faudrait créer une requête pour chaque cas mais j'ai demandé confirmation à mes suiveurs par mail.  
 **Question :**
-![Question mail](./ressources/images/questionMail1.png)
+
+![Question mail](./ressources/images/questionMail1.png)  
+
 **Réponse :**
-![Réponse mail](./ressources/images/questionMail2.png)
+
+![Réponse mail](./ressources/images/questionMail2.png)  
+
 ##### Solution
 Je vais essayer de mettre les varialbes d'authentification dans la séquence de test, je ne sais pas le faire cependant.  
 J'ai pas trouvé en cherchant dans la [documentation officielle](https://learning.postman.com/docs/sending-requests/authorization/specifying-authorization-details/) j'ai du demander à chatGPT et en effet on peut faire des requêtes personnalisés dans les tests, cela va également m'aider lors du moment où je vais développer mon propre client pour mon API.  
+
 [Prompt ChatGPT](https://chat.openai.com/share/82b7a446-9f7f-4dfe-9310-22668b566353)  
+
 De plus, à présent que je sais que l'on peut faire des requête depuis les tests, je peux essayer de récupérer dynamiquement le token lors du test du endpoint **/detect**.  
 
 J'ai fais un tests pour les scenarios suivants (code attentu : 401) :

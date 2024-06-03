@@ -122,7 +122,6 @@ sudo nano /etc/systemd/system/srs.service
 Copiez et collez le contenu suivant dans l'éditeur nano, remplacez les liens pour correspondre à ceux de votre arborescence :
 
 ```ini
-
 [Unit]
 Description=Exécuter mon script Python au démarrage
 After=network.target
@@ -357,13 +356,11 @@ def login():
 
 ## Récupération d'images
 
-### Connexion
-
 Endpoint: `http://localhost:4298/image`
 
 #### Description
 
-Retourne l'image prise par la camera du serveur au moment de l'appel de la requête. L'image est au format `.jpg`
+Retourne l'image prise par la camera du serveur au moment de l'appel de la requête. L'image est au format `.jpg`.
 
 #### Requête
 
@@ -401,10 +398,81 @@ pm.test("Response time is acceptable", function () {
 });
 ```
 
+
 #### Résultat Postman
 
 ![](../ressources/images/test_postman_image.png)
 
+#### Implémentation
+
+Pour prendre une photo, j'utilise le code suivant présent dans la route `/image`.
+
+1. Récupération de l'image de la camera par openCV.
+2. Retour de l'image au format `.jpg`
+
+```py
+@app.route('/image')
+@token_required
+def image():
+    """
+    Route qui retourne une image capturée de la caméra.
+    """
+    camera = cv2.VideoCapture(0)
+    success, frame = camera.read()
+    camera.release()
+    if success:
+        ret, buffer = cv2.imencode('.jpg', frame)
+        return Response(buffer.tobytes(), mimetype='image/jpeg')
+    else:
+        return jsonify({'message': 'Failed to capture image'}), 500
+```
+
+## Récupération des vidéos
+
+Endpoint: `http://localhost:4298/video`
+
+### Description
+Cet endpoint permet de récupérer le flux vidéo capté par les caméras.
+
+#### Requête
+
+- Méthode: `GET`
+
+#### Paramètres
+
+- token: `Token JWT`
+
+#### Réponse
+
+- Corps: Flux vidéo `.jpg`
+
+### Implémentation
+Le code provient de [cette question](https://stackoverflow.com/questions/63688158/opencv-problem-because-of-frame-to-bytes-with-flask-integration) sur stack overflow.
+
+1. Lecture en boucle de la frame de la caméra.
+2. Encode l'image en format `.jpg`. La variable buffer contient l'image encodée.
+3. Conversion de l'image buffer en bytes.
+4. Génération du flux et envoi successif.
+
+
+```py
+def gen_frames():
+    camera = cv2.VideoCapture(0)
+    while True:
+        success, frame = camera.read() 
+        if not success:
+            break
+        else:
+            ret, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+            
+@app.route('/video')
+@token_required
+def video_feed():
+    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+```
 
 ## Sécurité des routes
 

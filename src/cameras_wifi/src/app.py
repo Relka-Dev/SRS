@@ -1,7 +1,7 @@
 """
 Auteur      : Karel Vilém Svoboda
 Affiliation : CFPTi - SRS
-Date        : 28.03.2024
+Date        : 03.06.2024
 
 Script      : app.py
 Description : Code pour les cameras Wifi du projet SRS
@@ -49,8 +49,6 @@ def token_required(f):
 
     return decorated
 
-
-
 @app.route('/ping', methods=['GET'])
 @token_required
 def ping():
@@ -87,24 +85,6 @@ def image():
         return Response(buffer.tobytes(), mimetype='image/jpeg')
     else:
         return jsonify({'message': 'Failed to capture image'}), 500
-
-def gen_frames_base64():
-    camera = cv2.VideoCapture(0)
-    while True:
-        success, frame = camera.read()
-        if not success:
-            break
-        else:
-            ret, buffer = cv2.imencode('.jpg', frame)
-            if ret:
-                frame_base64 = base64.b64encode(buffer).decode('utf-8')
-                yield (b'--frame\r\n'
-                       b'Content-Type: text/plain\r\n\r\n' + frame_base64.encode() + b'\r\n')
-
-@app.route('/video_base64')
-@token_required
-def video_feed_base64():
-    return Response(gen_frames_base64(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 @app.route('/login')

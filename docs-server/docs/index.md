@@ -54,12 +54,17 @@ Pour accèder à la documentation de chaque composant, cliquez sur leurs titres.
 
 
 ### Diagramme du projet
-![](./ressources/images/srs_diagramme_complet.jpg)
+![](./ressources/images/application_diagramme.png.jpg)
 
 ## Analyse fonctionnelle
 
+Pour l'analyse fonctionnelle, je me suis placé du point de vue de l'utilisateur. L'objectif est de comprendre les différentes fonctionnalités sans rentrer dans les détails techniques.
+
 ### Architecture de l'application
-![](./ressources/diagrams/application.jpg)
+
+L'application est divisée en deux parties, la partie Kivy Python et la partie OpenCV. La partie Kivy s'occupe de la navigation, des formulaires (connexion, ajout d'utilisateurs) et la partie OpenCV sert à afficher les fonctionnalités liées à la reconnaissance spatiale.
+
+![](./ressources/images/application_diagramme.png)  
 
 ### Fonctionnalité 1 : Recherche automatique de serveurs
 
@@ -74,13 +79,18 @@ Ce diagramme représente la recherche automatique de serveurs sur un réseau.
 ![us2](./ressources/diagrams/us2-recherche-serveurs.jpg)
 
 1. Cette page démarre automatiquement lorseque l'application est lancée.
-  - ![](./ressources/images/look-for-server.png)
+
+![](./ressources/images/look-for-server.png)
+
 2. L'application appelle chaque adresse sur le réseau et essaye de communiquer avec le port prévu pour les serveurs SRS.
 3. Interprétation du résultat.
   - Si aucun serveur n'est trouvé, un message d'erreur est affiché et un bouton permet à l'utilisateur d'effectuer une nouvelle recherche.  
-  - ![](./ressources/images/server-not-found.png)
+
+![](./ressources/images/server-not-found.png)
+
   - Si un serveur est trouvé, l'utilisateur est redirigé vers la page de connexion.
-    - ![](./ressources/images/login.png)
+
+![](./ressources/images/login.png)  
 
 ### Fonctionnalité 2 : Initialisation / Connexion au système
 
@@ -95,21 +105,30 @@ Ce diagramme représente un administrateur qui se connecte ou qui met en place l
 
 ![](./ressources/diagrams/us1-initialisation-connexion.jpg)
 
-1. La page de recherche détermine si le serveur est initialisé.  
+1. La page de recherche détermine si le serveur est initialisé. 
+
 ![](./ressources/images/look-for-server.png)
 
 ##### Route Verte - Le serveur est initialisé : Connexion
-2. L'utilisateur est renvoyé vers la page de connexion.  
+2. L'utilisateur est renvoyé vers la page de connexion. 
+
 ![](./ressources/images/login.png)
+
 3. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
 
 ##### Route Bleue - Le serveur est initialisé : Intialisation
 2. L'utilisateur est renvoyé vers la page de connexion avec les identifiants par défault (présents dans le manuel ou dans la documentation).  
-[](./ressources/images/intialize.png)
+
+![](./ressources/images/intialize.png)  
+
 3. Si les identifiants sont corrects, il est redirigié vers la page lui permettant d'ajouter les premier identifiants d'administrateurs.  
+
 ![ajout admin](./ressources/images/pageajoutpremieradmin.png)
+
 4. Si les identifiants du premier administrateurs sont acceptés, il est redirigé vers la page de connexion d'administrateur.  
+
 ![](./ressources/images/login.png)
+
 5. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
 
 

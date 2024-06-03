@@ -2,6 +2,8 @@
 
 Le système vise à mettre en place des caméras WiFi compactes pour la surveillance ou pour d'autres applications nécessitant la capture et la diffusion en temps réel de flux vidéo. Le cœur du système, un Raspberry Pi Zero 2 W, exécute un serveur Python Flask.
 
+![Diagramme Camera Wifi](../ressources/images/camera_wifi-diag.png)
+
 ## Informations sur l'ordinateur
 
 ⚠️ Utilisez uniquement cette version de Raspbian, les versions plus récentes ne possèdent pas la fonctionnalité `Legacy Camera` ⚠️

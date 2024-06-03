@@ -1,0 +1,99 @@
+<mxfile host="Electron" modified="2024-06-03T19:28:24.222Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.4.8 Chrome/124.0.6367.207 Electron/30.0.6 Safari/537.36" etag="ucVq_kgWnOlu0srhRFkS" version="24.4.8" type="device">
+  <diagram name="Page-1" id="WIVZRcmHPixUlir7Z3zO">
+    <mxGraphModel dx="1368" dy="838" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-3" value="" style="whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="140" y="280" width="240" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-4" value="" style="shape=mxgraph.signs.tech.camera_1;html=1;pointerEvents=1;fillColor=#000000;strokeColor=none;verticalLabelPosition=bottom;verticalAlign=top;align=center;rotation=45;" vertex="1" parent="1">
+          <mxGeometry x="110" y="250" width="60" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-5" value="" style="shape=mxgraph.signs.tech.camera_1;html=1;pointerEvents=1;fillColor=#000000;strokeColor=none;verticalLabelPosition=bottom;verticalAlign=top;align=center;rotation=-135;" vertex="1" parent="1">
+          <mxGeometry x="350" y="496" width="60" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-6" value="" style="shape=mxgraph.signs.tech.camera_1;html=1;pointerEvents=1;fillColor=#000000;strokeColor=none;verticalLabelPosition=bottom;verticalAlign=top;align=center;rotation=-45;" vertex="1" parent="1">
+          <mxGeometry x="100" y="500" width="60" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-8" value="" style="shape=mxgraph.signs.tech.camera_1;html=1;pointerEvents=1;fillColor=#000000;strokeColor=none;verticalLabelPosition=bottom;verticalAlign=top;align=center;rotation=135;" vertex="1" parent="1">
+          <mxGeometry x="350" y="250" width="60" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-11" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="210" y="390" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-13" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="670" y="230" width="260" height="340" as="geometry" />
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-14" value="" style="endArrow=classic;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="ciOI7KDHvOw57Z0bEZQT-23">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="630" y="260" as="sourcePoint" />
+            <mxPoint x="400" y="300" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="400" y="400" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-16" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/640px-Python-logo-notext.svg.png;" vertex="1" parent="1">
+          <mxGeometry x="685" y="240" width="50.33" height="55.13" as="geometry" />
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-17" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://seeklogo.com/images/J/jwt-logo-65D86B4640-seeklogo.com.png;" vertex="1" parent="1">
+          <mxGeometry x="680" y="389.99999999999994" width="60" height="60.2" as="geometry" />
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-23" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://core-electronics.com.au/media/catalog/product/cache/d5cf359726a1656c2b36f3682d3bbc67/l/o/long-camera-adaptor-for-pi-zero_1.jpg;imageBorder=default;" vertex="1" parent="1">
+          <mxGeometry x="480" y="325" width="150" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-26" value="" style="endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="400" as="sourcePoint" />
+            <mxPoint x="400" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-27" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" target="ciOI7KDHvOw57Z0bEZQT-4">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="450" y="400" as="sourcePoint" />
+            <mxPoint x="500" y="270" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="450" y="210" />
+              <mxPoint x="120" y="210" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-28" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" target="ciOI7KDHvOw57Z0bEZQT-6">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="450" y="400" as="sourcePoint" />
+            <mxPoint x="149.5418830920368" y="546.0918830920368" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="450" y="590" />
+              <mxPoint x="110" y="590" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-29" value="" style="endArrow=none;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="ciOI7KDHvOw57Z0bEZQT-23" target="ciOI7KDHvOw57Z0bEZQT-13">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="580" y="680" as="sourcePoint" />
+            <mxPoint x="630" y="630" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-30" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://flask.palletsprojects.com/en/latest/_static/flask-vertical.png;" vertex="1" parent="1">
+          <mxGeometry x="680" y="304" width="50" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-33" value="Serveur Python Flask" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="770" y="290" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-35" value="Sécurité des routes qui ont accès à la caméra" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="760" y="405.09999999999997" width="160" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-36" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/OpenCV_Logo_with_text.png/487px-OpenCV_Logo_with_text.png;" vertex="1" parent="1">
+          <mxGeometry x="680.91" y="478" width="58.5" height="72.08" as="geometry" />
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-37" value="Capture des frames" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="772.5" y="508" width="135" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ciOI7KDHvOw57Z0bEZQT-38" value="&lt;b&gt;&lt;font style=&quot;font-size: 16px;&quot;&gt;Cameras Wifi&lt;/font&gt;&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="490" y="130" width="120" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

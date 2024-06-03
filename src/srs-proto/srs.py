@@ -93,7 +93,7 @@ while True:
         cv2.imshow('Camera 3', frame3_processed)
         cv2.imshow('Camera 4', frame4_processed)
 
-    if len(angles_cam1) == 2 and len(angles_cam2) == 2 and len(angles_cam3) == 2 and len(angles_cam4) == 2:
+    if len(angles_cam1) == 1 and len(angles_cam2) == 1 and len(angles_cam3) == 1 and len(angles_cam4) == 1:
         result, response = Triangulation.get_objects_positions(3.5, angles_cam1, angles_cam2, angles_cam3, angles_cam4, tolerence=0.5)
 
         # Créer une carte vide
@@ -106,10 +106,10 @@ while True:
                     print(point.value)
             else:
                 i = 0
-                if len(response.points) == 2:
+                if len(response.points) == 1:
                     for point in response.points:
                         i += 1
-                                    # Redimensionner les positions pour correspondre à la carte
+                        # Redimensionner les positions pour correspondre à la carte
                         map_x = int((point.value[0] / ROOM_WIDTH) * map_width)
                         map_y = int((point.value[1] / ROOM_HEIGHT) * map_height)
                         # Limiter les coordonnées à l'intérieur de la carte

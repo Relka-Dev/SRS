@@ -26,7 +26,7 @@ class SpaceRecognition:
                 center_x = (x1 + x2) / 2
                 angle = (center_x - frame.shape[1] / 2) / frame.shape[1] * fov
                 angles.append(angle)
-        return angles
+        return True, angles
     
     def get_persons_angles_with_size(self, frame, fov):
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

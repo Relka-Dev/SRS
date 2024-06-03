@@ -3,6 +3,11 @@
 Le système vise à mettre en place des caméras WiFi compactes pour la surveillance ou pour d'autres applications nécessitant la capture et la diffusion en temps réel de flux vidéo. Le cœur du système, un Raspberry Pi Zero 2 W, exécute un serveur Python Flask.
 
 ## Informations sur l'ordinateur
+
+⚠️ Utilisez uniquement cette version de Raspbian, les versions plus récentes ne possèdent pas la fonctionnalité `Legacy Camera` ⚠️
+
+[Plus d'informations](https://raspberrypi.stackexchange.com/questions/135522/camera-only-working-with-deprecated-legacy-option)
+
 ```
 PRETTY_NAME="Raspbian GNU/Linux 11 (bullseye)"
 NAME="Raspbian GNU/Linux"
@@ -28,6 +33,33 @@ Le matériel a été choisi spécifiquement pour qu'il soit en adéquation avec 
 
 **Coût total:** 101.55 CHF
 
+## Support
+
+Le support permet de maintenir les différents composants en place. Il a été réalisé sous le logiciel [Blender](https://www.blender.org/) avec l'aide de [Amir Younes](mailto:amir.yns@eduge.ch), un de mes camarades de classe.
+
+### Impression 3D
+
+| Logiciel   | Imprimante         | Durée d'impression | Utilisation de fil |
+|------------|--------------------|--------------------|--------------------|
+| Cura       | Creality CR20 Pro  | 12h                | 90g |
+
+![Cura](../ressources/images/cura_support.png)
+
+### Images
+![support1](../ressources/images/support1.jpg)  
+![support2](../ressources/images/support2.jpg)  
+![support3](../ressources/images/support3.jpg)  
+### Temps de fonctionnement
+
+Les calcul ci-présents correspondent au temps de fonctionnement en cas d'utilisation intensive et moyenne. Lors du développement, les données s'approchent plus de l'utilisation moyenne. Il faut donc compter une autonomie entre les deux valeurs.
+
+$\text{Temps de fonctionnement (heures)} = \frac{\text{Capacité de la batterie (mAh)}}{\text{Consommation de courant (mA)}}$
+
+| Condition                        | Consommation (W) | Consommation (A) | Capacité de la batterie (mAh) | Temps de fonctionnement (heures) |
+|----------------------------------|------------------|------------------|-------------------------------|-----------------------------------|
+| Maximale                         | 3W               | 0.6 A            | 2600 mAh                      | $\frac{2600 \text{ mAh}}{600 \text{ mA}} = 4,33$  |
+| Moyenne (Serveur Flask)          | 1.5W             | 0.3 A            | 2600 mAh                      | $\frac{2600 \text{ mAh}}{300 \text{ mA}} = 8,67$ |
+
 ## Dépendances externes
 
 | Nom              | Description                                 | Utilisation | pypi.org          |
@@ -35,41 +67,93 @@ Le matériel a été choisi spécifiquement pour qu'il soit en adéquation avec 
 | Flask            | Framework Web pour Python                   | Serveur mettant à disposition le Web-Service | [Flask](https://pypi.org/project/Flask/)            |
 | JWT              | Implémentation de JSON Web Tokens           | Gestion de la sécurité par génération de clé | [JWT](https://pypi.org/project/PyJWT/)              |
 | OpenCV (cv2)     | Bibliothèque de vision par ordinateur       | Capture des frames des cameras | [OpenCV](https://pypi.org/project/opencv-python/)   |
-| Face Recognition| Bibliothèque de reconnaissance faciale     | Génération des points du visage quand une personne est détectée | [Face Recognition](https://pypi.org/project/face-recognition/) |
 
 ## Installation
 
 Voici la procédure étape par étape afin de bien installer le projet sur votre serveur.
 
-1. Clonez le projet sur le serveur
+1. Activez la fonctionnalité `legacy camera`
+```
+sudo raspi-config
+Interface Options -> Enable Legacy Camera -> Yes -> Reboot
+```
+
+2. Clonez le projet sur le serveur
 
 ```
 git clone https://gitlab.ictge.ch/karel-svbd/srs.git
 ```
 
-2. Naviguez jusqu'au projet des cameras.
+3. Naviguez jusqu'au projet des cameras.
 
 ```shell
-cd ./src/cameras_wifi/src/
+cd srs/src/cameras_wifi/src/
 ```
 
-3. Créez un environnement virtuel et activez le.
+4. Créez un environnement virtuel et activez le.
 
 ```shell
 python -m venv venv
-source ./venv/bin/activate
+source venv/bin/activate
 ```
 
-3. Installez les dépendances.
+5. Installez les dépendances.
 
-*Note : si vous avez l'impression que certaines étapes prennent du temps c'est normal. Surtout les étapes `Building wheel`. Cela peut vous prendre facilement 2 heures. Si le problème perciste, utilisez les commandes `apt` afin d'installer les modules globalement un par un.*
 ```shell
 pip install -r requirements.txt
 ```
 
-4. Démarrez le serveur.
+6. Démarrez le serveur.
 ```shell
 python3 ./app.py
+```
+
+### Lancement automatique et passage en service
+
+Création du service qui se lance automatiquement au démarrage du serveur.
+
+Créez le fichier de service :
+
+```bash
+sudo nano /etc/systemd/system/srs.service
+```
+Copiez et collez le contenu suivant dans l'éditeur nano, remplacez les liens pour correspondre à ceux de votre arborescence :
+
+```ini
+
+[Unit]
+Description=Exécuter mon script Python au démarrage
+After=network.target
+
+[Service]
+User=karelsvbd
+WorkingDirectory=/home/karelsvbd
+ExecStart=/bin/bash -c 'source /home/karelsvbd/venv/bin/activate && python /home/karelsvbd/app.py'
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Sauvegardez et quittez l'éditeur (Ctrl+X, puis Y, puis Entrée).
+
+Recharger les services systemd :
+
+```bash
+sudo systemctl daemon-reload
+```
+
+Activer et démarrer le service :
+
+```bash
+sudo systemctl enable srs.service
+sudo systemctl start srs.service
+```
+
+Vérifiez l'état du service :
+
+```bash
+sudo systemctl status srs.service
 ```
 
 ## Authentification
@@ -372,7 +456,7 @@ L'utilisation des [JWT](https://jwt.io/) permet de s'identifier après une conne
 
 1. Authentification avec les identifiants par défault.
 2. Récupération du token JWT
-3. Appel du endpoint `/image` pour demander une photo du serveur.
+3. Appel du endpoint `/image` (ou toutes autre route sécurisée) pour demander une photo du serveur.
 4. Récupération de l'image.
 
 ### Diagramme de séquence

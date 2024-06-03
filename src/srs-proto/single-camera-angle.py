@@ -1,9 +1,16 @@
 import cv2
 import torch
+import argparse
 
 # Configuration
-CAMERA_URL = "http://192.168.1.115:4298/video"
 CAMERA_FOV = 62.2  # Angle de vue de la caméra en degrés
+
+# Argument parser
+parser = argparse.ArgumentParser(description='Script de détection d\'angles de personnes à partir d\'une vidéo.')
+parser.add_argument('--camera_url1', type=str, required=True, help='URL du flux vidéo de la caméra')
+args = parser.parse_args()
+
+CAMERA_URL = args.camera_url1
 
 # Charger le modèle YOLOv5 pré-entrainé et déplacer le modèle sur le GPU
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

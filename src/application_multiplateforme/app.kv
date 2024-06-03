@@ -11,6 +11,7 @@ WindowManager:
     CameraStreamerWindow:
     NavigationSrsWindow:
     CalibrationWindow:
+    RoomWindow:
 
 
 <MainWindow>:
@@ -23,11 +24,9 @@ WindowManager:
             pos_hint: {'top': 1}
 
             Button:
-                text: "Déconnexion"
-                disabled: True
+                text: "À propos"
                 on_release:
-                    app.root.current = "previous_page"
-                    root.manager.transition.direction = "right"
+                    root.show_about_popup()
 
             Label:
                 text: "SRS : Page Principale"
@@ -572,9 +571,8 @@ WindowManager:
                 Button:
                     text: "Voir la pièce"
                     bold: True
-                    disabled: True
                     on_release:
-                        app.root.current = "updateUser" 
+                        app.root.current = "room" 
                         root.manager.transition.direction = "left"
     
 <CalibrationWindow>:
@@ -683,4 +681,54 @@ WindowManager:
                 size_hint_y: 0.5
                 pos_hint: {'center_x': 0.5}
 
+<RoomWindow>:
+    name: "room"
+
+    FloatLayout:
+        GridLayout:
+            cols: 3
+            size_hint: 1, 0.1
+            pos_hint: {'top': 1}
+
+            Button:
+                text: "<- Retour"
+                on_release:
+                    app.root.current = "main"
+                    root.manager.transition.direction = "right"
+
+            Label:
+                text: "Système de reconnaissance spatiale"
+                bold: True
+
+            Image:
+                source: 'Ressources/logo.png'
+        
+        GridLayout:
+            cols: 1
+            size_hint_y: 0.9
+            pos_hint: {'top': 0.9}
+
+            Button:
+                text: "Angle Camera"
+                on_release:
+                    # Ajouter ici le code pour gérer l'action du bouton
+                    root.run_angle_camera()
+
+            Button:
+                text: "Deux cameras"
+                on_release:
+                    # Ajouter ici le code pour gérer l'action du bouton
+                    root.run_two_cameras()
+
+            Button:
+                text: "Quatres cameras"
+                on_release:
+                    # Ajouter ici le code pour gérer l'action du bouton
+                    root.run_four_cameras()
+
+            Button:
+                text: "Système de reconnaissance Spatiale"
+                on_release:
+                    # Ajouter ici le code pour gérer l'action du bouton
+                    root.run_spatial_recognition_system()
 

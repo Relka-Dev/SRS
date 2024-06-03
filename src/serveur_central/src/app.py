@@ -9,16 +9,20 @@ Description : Serveur central du projet SRS
 Version     : 0.2
 """
 
-from flask import Flask, jsonify, request, json
+from flask import Flask, jsonify, request, json, Response
 from database_client import DatabaseClient
 from jwt_library import JwtLibrary
 from camera_server_client import CameraServerClient
 from network_scanner import NetworkScanner
+from Classes.triangulation import Triangulation
 import asyncio
 import cv2
 import numpy as np
 import re
 import torch
+import base64
+from PIL import Image
+import io
 
 from Classes.network import Network
 from Classes.camera import Camera
@@ -267,33 +271,6 @@ class ServeurCentral:
         
     
     @JwtLibrary.API_token_required
-    def space_recognition(self):
-        idNetwork = request.args.get('idNetwork')
-        if not idNetwork:
-            return jsonify({'error': 'Network ID is required'}), 400
-
-        response = []
-        result, response = self.db_client.getCamerasByIdNetwork(idNetwork)
-        if not result:
-            return jsonify({'error': 'Camera not found'}), 404
-
-        cameras = []
-        for data in response:
-            camera = Camera(data[0], data[1], data[2], data[3], data[4], data[5], data[6], None, None)
-            resultImg, responseImg = CameraServerClient.getCameraImage(camera.ip, camera.jwt)
-
-            if resultImg:
-                space_recongition = SpaceRecognition()
-                positions_x = space_recongition.get_people_positions_x(responseImg) 
-                camera.persons_position = positions_x
-                cameras.append(camera)
-            else:
-                return jsonify({'error': responseImg}), 401
-
-        cameras_info = [{'id': cam.idCamera, 'persons_position': cam.persons_position} for cam in cameras]
-        return jsonify(cameras_info), 200
-    
-    @JwtLibrary.API_token_required
     def cameras(self):
         ip = request.args.get('ip')
         subnetMask = request.args.get('subnetMask')
@@ -492,11 +469,86 @@ class ServeurCentral:
         idNetwork = request.args.get('idNetwork')
         if not idNetwork:
             return jsonify({'error': 'Network ID is required'}), 400
+
+        response = []
+        result, response = self.db_client.getCamerasByIdNetwork(idNetwork)
+        if not result:
+            return jsonify({'error': 'Camera not found'}), 404
+
+        cameras_angles = []
+        for data in response:
+            camera = Camera(data[0], data[1], data[2], data[3], data[4], data[5], data[6], None, None)
+            resultImg, responseImg = CameraServerClient.getCameraImage(camera.ip, camera.jwt)
+
+            if resultImg:
+                angles_and_sizes = self.spaceRecognition.get_persons_angles_with_size(responseImg, 62.2)
+                cameras_angles.append({
+                    'camera_ip': camera.ip,
+                    'angles_and_sizes': [{'angle': float(angle), 'size_y': float(size_y)} for angle, size_y in angles_and_sizes]
+                })
+
+        return jsonify(cameras_angles), 200
+    
+    @JwtLibrary.API_token_required
+    def space_recognition(self):
+        idNetwork = request.args.get('idNetwork')
+        model = request.args.get('model')
+        wallLength = request.args.get('wallLength')
+
+        if not idNetwork or not model or not wallLength:
+            return jsonify({'erreur': 'Paramètres manquants, veuillez fournir idNetwork, model, wallLength'}), 400
+        
+        model = int(model)
     
         response = []
         result, response = self.db_client.getCamerasByIdNetwork(idNetwork)
         if not result:
             return jsonify({'error': 'Camera not found'}), 404
+        
+        cameras = []
+
+        for data in response:
+            cameras.append(Camera(data[0], data[1], data[2], data[3], data[4], data[5], data[6], None, None))
+
+        match model:
+            case 0:
+                if len(cameras) >= 2:
+                    camera_gauche = None
+                    camera_droite = None
+
+                    for camera in cameras:
+                        if camera.idWall == 3:
+                            camera_gauche = camera
+                        elif camera.idWall == 4:
+                            camera_droite = camera
+
+                    if not camera_gauche or not camera_droite:
+                        return jsonify({'error': 'Les caméras ne sont pas correctement définies.'}), 400
+                    
+                    result_img_gauche, response_img_gauche = CameraServerClient.getCameraImage(camera_gauche.ip, camera_gauche.jwt)
+                    result_img_droite, response_img_droite = CameraServerClient.getCameraImage(camera_droite.ip, camera_droite.jwt)
+
+                    if not result_img_gauche or not result_img_droite:
+                        return jsonify({'error': 'Problème lors de la récupération des images des caméras'}), 500
+                    
+                    result_angles_gauche, angles_gauche = self.spaceRecognition.get_persons_angles(response_img_gauche, 62.2)
+                    result_angles_droite, angles_droite = self.spaceRecognition.get_persons_angles(response_img_droite, 62.2)
+
+                    if not result_angles_gauche or not result_angles_droite:
+                        return jsonify({'error': 'Erreur lors de la détection de personnes pour déterminer les angles'}), 500
+
+                    
+                    if len(angles_gauche) != 1 or len(angles_droite) != 1:
+                        return jsonify({'error': f'Nombre de personnes présentes sur les caméras incorrects pour le modèle. Nb Personnes gauche : {len(angles_gauche)}, Nb Personnes droite : {len(angles_droite)}. Attendu : 1'}), 400
+                    
+                    position_result, position_response = Triangulation.get_object_position(wallLength, angles_gauche[0], angles_droite[0])
+
+                    if not position_result:
+                        return jsonify({'error': position_response}), 500
+                    
+                    return jsonify(position_response), 200
+            case _:
+               return jsonify({'error': 'Modèle inconnu'}), 404 
     
         cameras_angles = []
         for data in response:
@@ -511,10 +563,6 @@ class ServeurCentral:
                 })
     
         return jsonify(cameras_angles), 200
-
-
-
-    
     
     def intialise_network_with_cameras(self, networkip, subnetMask):
         # Recherche automatique des cameras

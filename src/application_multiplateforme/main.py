@@ -15,6 +15,7 @@ from Pages.update_user_window import UpdateUserWindow
 from Pages.camera_streamer_window import CameraStreamerWindow
 from Pages.navigation_srs_window import NavigationSrsWindow
 from Pages.calibration_window import CalibrationWindow
+from Pages.room_window import RoomWindow
 
 from Classes.server_client import ServerClient
 from Classes.camera import Camera

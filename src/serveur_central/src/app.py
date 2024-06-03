@@ -428,7 +428,7 @@ class ServeurCentral:
 
     @JwtLibrary.API_token_required
     def update_user(self):
-        data = request.get_json()  # Automatically parses JSON data
+        data = request.get_json()
         if not data:
             return jsonify({"error": "No data provided"}), 400
         

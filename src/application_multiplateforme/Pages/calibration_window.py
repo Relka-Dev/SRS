@@ -15,13 +15,17 @@ class CalibrationWindow(Screen):
         
         if result:
             if len(cameras_angles) > 0:
-                self.update_label(self.ids.camera1_label, list(cameras_angles[0].values())[0])
+                self.update_label(self.ids.camera1_data_label, list(cameras_angles[0].values())[0])
+                self.ids.camera1_name_label.text = list(cameras_angles[0].keys())[0]
             if len(cameras_angles) > 1:
-                self.update_label(self.ids.camera2_label, list(cameras_angles[1].values())[0])
+                self.update_label(self.ids.camera2_data_label, list(cameras_angles[1].values())[0])
+                self.ids.camera2_name_label.text = list(cameras_angles[1].keys())[0]
             if len(cameras_angles) > 2:
-                self.update_label(self.ids.camera3_label, list(cameras_angles[2].values())[0])
+                self.update_label(self.ids.camera3_data_label, list(cameras_angles[2].values())[0])
+                self.ids.camera3_name_label.text = list(cameras_angles[2].keys())[0]
             if len(cameras_angles) > 3:
-                self.update_label(self.ids.camera4_label, list(cameras_angles[3].values())[0])
+                self.update_label(self.ids.camera4_data_label, list(cameras_angles[3].values())[0])
+                self.ids.camera4_name_label.text = list(cameras_angles[3].keys())[0]
     
 
     def update_label(self, label, values):

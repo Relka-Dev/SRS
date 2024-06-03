@@ -1,4 +1,3 @@
-from two_camera_point import TwoCameraPoint
 from four_camera_point import FourCameraPoint
 
 class UniquePointList:

@@ -5783,3 +5783,132 @@ Vérifiez l'état du service :
 sudo systemctl status srs.service
 ```
 
+### 2.0 : Gestion des multi-utilisateur
+
+J'ai trouvé une façon de gérer plusieurs personnes. Pour ce faire, quand une personne est détectée, tous les angles lié à cette personne sont supprimés.
+
+J'ai crée trois objets :
+1. TwoCameraPoint (Stocke les points détectés par deux caméras)
+2. FourCameraPoint (Contient les références des points calculé par le set des caméras du hout et bas ainsi que la valeur moyenne de la position)
+3. UniquePointList (Liste de point FourCameraPoint uniques)
+
+```py
+class TwoCameraPoint:
+    def __init__(self, angle_gauche, angle_droit, value):
+        self._angle_gauche = angle_gauche
+        self._angle_droit = angle_droit
+        self._value = value
+
+    @property
+    def angle_gauche(self):
+        return self._angle_gauche
+
+    @property
+    def angle_droit(self):
+        return self._angle_droit
+
+    @property
+    def value(self):
+        return self._value
+
+from two_camera_point import TwoCameraPoint
+
+class FourCameraPoint:
+    def __init__(self, point_bot: TwoCameraPoint, point_top: TwoCameraPoint, value):
+        self._point_bot = point_bot
+        self._point_top = point_top
+        self._value = value
+
+    @property
+    def point_bot(self):
+        return self._point_bot
+
+    @property
+    def point_top(self):
+        return self._point_top
+    
+    @property
+    def value(self):
+        return self._value
+    
+    def compare_points(self, fourCameraPoint):
+        #true : same point
+
+        if self.point_bot.angle_gauche == fourCameraPoint.point_bot.angle_gauche or self.point_bot.angle_droit == fourCameraPoint.point_bot.angle_droit:
+            return True
+        
+        if self.point_top.angle_gauche == fourCameraPoint.point_top.angle_gauche or self.point_top.angle_droit == fourCameraPoint.point_top.angle_droit:
+            return True
+        
+        return False
+
+from four_camera_point import FourCameraPoint
+
+class UniquePointList:
+    def __init__(self):
+        self._points = []
+
+    def add_point(self, fourCameraPoint : FourCameraPoint):
+        for point in self._points:
+            if fourCameraPoint.compare_points(point):
+                return False
+        
+        self._points.append(fourCameraPoint)
+        return True
+    
+    @property
+    def points(self):
+        return self._points
+
+    def __repr__(self):
+        return f"UniquePointList(points={self.points})"
+```
+
+J'implémente ces trois objets dans la classe Triangulation :
+
+```py
+def get_objects_positions(wall_length, objects_angles_from_bot_left, objects_angles_from_bot_right, object_angles_from_top_left, object_angles_from_top_right, tolerence=0.5):
+    all_possible_points_bot = []
+    for left_object_bot in objects_angles_from_bot_left:
+        for right_object_bot in objects_angles_from_bot_right:
+            result, pointXY = Triangulation.get_object_position(wall_length, left_object_bot, right_object_bot)
+            if result:
+                all_possible_points_bot.append(TwoCameraPoint(left_object_bot, right_object_bot, pointXY))
+    all_possible_points_top = []
+    for left_object_top in object_angles_from_top_left:
+        for right_object_top in object_angles_from_top_right:
+            result, pointXY = Triangulation.get_object_position(wall_length, left_object_top, right_object_top, reverse=True)
+            if result:
+               all_possible_points_top.append(TwoCameraPoint(left_object_top, right_object_top, pointXY))
+    
+    unique_point_list = UniquePointList()
+    for possible_point_bot in all_possible_points_bot:
+        for possible_point_top in all_possible_points_top:
+            if(abs(possible_point_bot.value[0] - possible_point_top.value[0] < tolerence) and abs(possible_point_bot.value[1] - possible_point_top.value[1] < tolerence)):
+                unique_point_list.add_point(FourCameraPoint(possible_point_bot, possible_point_top, [(possible_point_bot.value[0] + possible_point_top.value[0]) / 2, (possible_point_bot.value[1] + possible_point_top.value[1]) / 2]))
+    return True, unique_point_list
+```
+
+### 3.0 : Tests réels
+
+Dans ce tests, deux personnes sont dans dans la zone, il faut prendre en compte les résultats quand les deux personnes sont immobiles pour des question de lag qui est légérement présent.
+
+[SRS Multiple Recognition - Version 0.1](https://www.youtube.com/watch?v=DaS3AGwTjWM)
+
+### Conclusion
+J'approche de la fin du projet, c'est cependant rassurant de savoir que le système de reconnaissance spatiale est fonctionnel. La semaine prochaine je vais implémenter la reconnaissance facial et cloturer le projet.
+
+## 03.06.2024
+
+#### Blian de la dernière fois
+J'avais travaillé sur la reconnaissance spatiale qui est fonctionnelle.
+
+#### Objectif du jour
+Aujourd'hui je vais implémenter la reconnaissance faciale, j'ai un prototype me permettant de récupérer les encodages de la base et de faire la reconnaissance avec la caméras de mon pc. Voici les vidéo youtube en faisant la démonstration :
+
+1. [SRS - Face Recognition](https://youtu.be/IvVYjrRSz2s)
+2. [SRS - Multiple Face Recognition](https://youtu.be/TRsDz8WGZxw)
+
+## 1.0 : Reconnaissance faciale dans la reconnaissance spatiale
+
+Ma première idée est que lorsqu'une personne est détectée, la zone de frame des cameras où se situe la personne est analysée par la reconnaissance faciale.

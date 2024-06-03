@@ -606,21 +606,55 @@ WindowManager:
             GridLayout:
                 cols: 2
 
-                Label:
-                    id: camera1_label
-                    text: "camera1"
+                GridLayout:
+                    cols: 1
 
-                Label:
-                    id: camera2_label
-                    text: "camera2"
+                    Label:
+                        id: camera1_name_label
+                        text: "Camera : 1 (en attente)"
+                        size_hint_y: 0.5
+
+                    Label:
+                        id: camera1_data_label
+                        size_hint_y: 1.0
+
+                GridLayout:
+                    cols: 1
+
+                    Label:
+                        id: camera2_name_label
+                        text: "Camera : 2 (en attente)"
+                        size_hint_y: 0.5
+
+                    Label:
+                        id: camera2_data_label
+                        size_hint_y: 1.0
+                        
             
             GridLayout:
                 cols: 2
 
-                Label:
-                    id: camera3_label
-                    text: "camera3"
+                GridLayout:
+                    cols: 1
 
-                Label:
-                    id: camera4_label
-                    text: "camera4"
+                    Label:
+                        id: camera3_name_label
+                        text: "Camera : 3 (en attente)"
+                        size_hint_y: 0.5
+
+                    Label:
+                        id: camera3_data_label
+                        size_hint_y: 1.0
+
+                GridLayout:
+                    cols: 1
+
+                    Label:
+                        id: camera4_name_label
+                        text: "Camera : 4 (en attente)"
+                        size_hint_y: 0.5
+
+                    Label:
+                        id: camera4_data_label
+                        size_hint_y: 1.0
+

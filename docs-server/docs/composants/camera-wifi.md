@@ -105,7 +105,13 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-6. Démarrez le serveur.
+6. Installation des librairies vidéo
+
+```shell
+sudo apt-get update && sudo apt-get install ffmpeg libsm6 libxext6  -y
+```
+
+7. Démarrez le serveur.
 ```shell
 python3 ./app.py
 ```

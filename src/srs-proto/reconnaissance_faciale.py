@@ -57,7 +57,7 @@ print(known_face_names)
 print("\nEncodages récupérés de la base de données:")
 for i, encoding in enumerate(known_face_encodings):
     print(f"Nom: {known_face_names[i]}")
-    print(f"Encodage: {encoding[:5]} ...")  # Imprimer seulement les 5 premiers éléments pour chaque encodage pour plus de lisibilité
+    print(f"Encodage: {encoding[:5]} ...")
 
 # Fonction pour faire la reconnaissance faciale
 def recognize_faces(image, bbox, tolerance=0.6):

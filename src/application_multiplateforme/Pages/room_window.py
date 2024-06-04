@@ -6,6 +6,7 @@ from Classes.room import Room
 
 class RoomWindow(Screen):
 
+
     def on_enter(self):
         super().on_enter()
         self.app = App.get_running_app()
@@ -15,6 +16,9 @@ class RoomWindow(Screen):
     def run_angle_camera(self):
         camera_url = f"http://{self.cameras[0].ip}:4298/video?token={self.cameras[0].jwt}"  # Remplacez ceci par l'URL de votre caméra
         self._run_subprocess_script('../srs-proto/single-camera-angle.py', [camera_url])
+    
+    def run_face_recognition(self):# Remplacez ceci par l'URL de votre caméra
+        self._run_subprocess_script('../srs-proto/reconnaissance_faciale.py')
 
     def run_two_cameras(self):
         camera_url1 = f"http://{self.cameras[0].ip}:4298/video?token={self.cameras[0].jwt}"
@@ -30,6 +34,7 @@ class RoomWindow(Screen):
         self._run_subprocess_script('../srs-proto/quad-camera.py', cameras_urls)
 
     def run_spatial_recognition_system(self):
+        wall_size = self.ids.size_textInput.text
         room = Room()
 
         for camera in self.cameras:
@@ -49,28 +54,33 @@ class RoomWindow(Screen):
             f"http://{room.get_top_left().ip}:4298/video?token={room.get_top_left().jwt}",
             f"http://{room.get_top_right().ip}:4298/video?token={room.get_top_right().jwt}"
         ]
-        
-        self._run_subprocess_script('../srs-proto/srs-face_recognition.py', camera_urls)
 
-    def _run_subprocess_script(self, script_path, params):
+        self._run_subprocess_script('../srs-proto/srs-face_recognition.py', camera_urls, wall_size)
+
+    def _run_subprocess_script(self, script_path, cameras=None, wall_size=None):
         # Construire le chemin absolu pour le script
         abs_script_path = os.path.abspath(script_path)
         
-        print(f"Tentative d'exécution du script : {abs_script_path} avec les paramètres : {params}")
+        print(f"Tentative d'exécution du script : {abs_script_path} avec les paramètres : {cameras}")
 
         file_exists = os.path.exists(abs_script_path)
         
         if file_exists:
             try:
-                # Construire la commande avec les paramètres
                 command = ["python", abs_script_path]
-                for i, param in enumerate(params):
-                    command.extend([f'--camera_url{i+1}', param])
+                
+                if cameras != None:
+                    for i, param in enumerate(cameras):
+                        command.extend([f'--camera_url{i+1}', param])
+                
+                if wall_size != None:
+                    command.extend([f'--wall_size', wall_size])
 
-                # Exécuter le script avec les paramètres
                 result = subprocess.run(command, capture_output=True, text=True)
                 print(f"Sortie du script : {result.stdout}")
                 print(f"Erreurs du script : {result.stderr}")
+                
+
             except Exception as e:
                 print(f"Erreur lors de l'exécution du script : {e}")
         else:

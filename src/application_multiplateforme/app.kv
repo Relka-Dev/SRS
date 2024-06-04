@@ -275,6 +275,7 @@ WindowManager:
 
                 Button:
                     text: "Supprimer / Modifier une personne"
+                    disabled: True
                     bold: True
                     on_release:
                         app.root.current = "updateUser" 
@@ -328,7 +329,7 @@ WindowManager:
                 Spinner:
                     id: function_spinner
                     text: "Sélectionnez une fonction"
-                    values: ["Fonction 1", "Fonction 2", "Fonction 3"]
+                    values: ["Erreur lors de la récupération des fonctions"]
                     on_text: root.enable_add_button()
                 Button:
                     id: add_user_button
@@ -708,27 +709,54 @@ WindowManager:
             size_hint_y: 0.9
             pos_hint: {'top': 0.9}
 
-            Button:
-                text: "Angle Camera"
-                on_release:
-                    # Ajouter ici le code pour gérer l'action du bouton
-                    root.run_angle_camera()
+            GridLayout:
+                cols: 2
 
-            Button:
-                text: "Deux cameras"
-                on_release:
-                    # Ajouter ici le code pour gérer l'action du bouton
-                    root.run_two_cameras()
-
-            Button:
-                text: "Quatres cameras"
-                on_release:
-                    # Ajouter ici le code pour gérer l'action du bouton
-                    root.run_four_cameras()
+                Label:
+                    text: "Taille du mur"
+                
+                TextInput:
+                    id: size_textInput
 
             Button:
                 text: "Système de reconnaissance Spatiale"
                 on_release:
+                    bold: True
                     # Ajouter ici le code pour gérer l'action du bouton
                     root.run_spatial_recognition_system()
+
+            Label:
+                text: "Prototypes"
+
+            GridLayout:
+                cols: 2
+
+                Button:
+                    text: "Angle Camera"
+                    on_release:
+                        # Ajouter ici le code pour gérer l'action du bouton
+                        root.run_angle_camera()
+
+                Button:
+                    text: "Deux cameras"
+                    on_release:
+                        # Ajouter ici le code pour gérer l'action du bouton
+                        root.run_two_cameras()
+
+            GridLayout:
+                cols: 2
+
+                Button:
+                    text: "Quatres cameras"
+                    on_release:
+                        # Ajouter ici le code pour gérer l'action du bouton
+                        root.run_four_cameras()
+                
+                Button:
+                    text: "Reconnaissance faciale"
+                    disabled: True
+                    on_release:
+                        # Ajouter ici le code pour gérer l'action du bouton
+                        root.run_face_recognition()
+
 

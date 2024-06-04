@@ -32,6 +32,7 @@ parser.add_argument('--camera_url1', type=str, required=True, help='URL of the f
 parser.add_argument('--camera_url2', type=str, required=True, help='URL of the second camera')
 parser.add_argument('--camera_url3', type=str, required=True, help='URL of the third camera')
 parser.add_argument('--camera_url4', type=str, required=True, help='URL of the fourth camera')
+parser.add_argument('--wall_size', type=str, required=True, help='Size of the walls')
 parser.add_argument('--headless', action='store_true', help='Run in headless mode without GUI')
 args = parser.parse_args()
 
@@ -44,11 +45,13 @@ CAMERA_URLS = [
     args.camera_url4
 ]
 
+wall_size = float(args.wall_size)
+
 db_client = DatabaseClient()
 
 CAMERA_FOV = 62.2  # Angle de vue de la caméra en degrés
-ROOM_WIDTH = 4  # Largeur de la pièce en mètres
-ROOM_HEIGHT = 4  # Hauteur de la pièce en mètres
+ROOM_WIDTH = wall_size  # Largeur de la pièce en mètres
+ROOM_HEIGHT = wall_size  # Hauteur de la pièce en mètres
 
 # Charger le modèle YOLOv5 pré-entrainé et déplacer le modèle sur le GPU
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -205,7 +208,7 @@ while True:
         cv2.imshow('Camera 4', frame4_processed)
 
     if len(angles_cam1) == len(angles_cam2) == len(angles_cam3) == len(angles_cam4):
-        result, response = Triangulation.get_objects_positions(3.5, angles_cam1, angles_cam2, angles_cam3, angles_cam4, tolerence=0.5)
+        result, response = Triangulation.get_objects_positions(wall_size, angles_cam1, angles_cam2, angles_cam3, angles_cam4, tolerence=0.5)
 
         # Créer une carte vide
         map_frame = np.zeros((map_height, map_width, 3), dtype=np.uint8)

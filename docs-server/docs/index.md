@@ -68,8 +68,6 @@ L'application est divisée en deux parties, la partie Kivy Python et la partie O
 
 ### Fonctionnalité 1 : Recherche automatique de serveurs
 
-**Composantes impliquées :** Serveur Central, Application
-
 **Description :** Cette fonctionnalité permet de rechercher automatiquement un serveur SRS actif dans un réseau.
 
 #### User Story
@@ -94,7 +92,6 @@ Ce diagramme représente la recherche automatique de serveurs sur un réseau.
 
 ### Fonctionnalité 2 : Initialisation / Connexion au système
 
-**Composantes impliquées :** Serveur Central, Application
 
 **Description :** Cette fonctionnalité permet d'initialiser le serveur.
 
@@ -132,35 +129,7 @@ Ce diagramme représente un administrateur qui se connecte ou qui met en place l
 5. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
 
 
-### Fonctionnalité 2 : Capture et traitement d'images
-
-**Composantes impliquées :** Caméras Wifi, Serveur Central
-
-**Description :** Cette fonctionnalité concerne la capture en temps réel d'images par les caméras Wifi, le traitement de ces images par le Serveur Central, notamment la détection de corps et de visages, et le stockage des images traitées.
-
-#### Implémentation
-
-##### Application : Page de stream
-
-En naviguant sur la page de stream, on peut appercevoir la vue en temps réel des caméras. Le flux est récupéré automatiquement.
-
-![](./ressources/images/resultat_double_camera.png)
-
-#### Reconnaissance Spaciale
-
-⚠️ à ajouter ⚠️
-
-### Fonctionnalité 3 : Sécurité et Authentification
-
-**Composantes impliquées :** Caméras Wifi, Serveur Central et Application
-
-**Description :** Cette fonctionnalité concerne la sécurité des endpoints Flask utilisés par les caméras Wifi, notamment l'authentification sécurisée du serveur central via JWT (JSON Web Tokens) sur les cameras wifi ainsi que de l'application sur le serveur central.
-
-#### Implémentation
-
-### Fonctionnalité 4 : Gestion des utilisateurs
-
-**Composantes impliquées :** Serveur Central, Application
+### Fonctionnalité 3 : Gestion des utilisateurs
 
 **Description :** Cette fonctionnalité concerne la gestion des utilisateurs dans la base de données du Serveur Central, y compris l'ajout, la modification et l'initialisation de l'administrateur. Elle implique également une interface utilisateur dans l'application pour permettre ces opérations.
 
@@ -744,3 +713,5 @@ def addUser(self, idPersonType, encodings, username):
         print(f"Error: {e}")
         return False, f"Impossible d'ajouter l'utilisateur : {e}"
 ```
+
+### Système de reconnaissance spatiale

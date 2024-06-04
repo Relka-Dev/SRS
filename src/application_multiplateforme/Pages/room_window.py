@@ -37,6 +37,8 @@ class RoomWindow(Screen):
         wall_size = self.ids.size_textInput.text
         room = Room()
 
+        api_link = self.server_client.get_users_link()
+
         for camera in self.cameras:
             match camera.idWall:
                 case 1:
@@ -54,10 +56,10 @@ class RoomWindow(Screen):
             f"http://{room.get_top_left().ip}:4298/video?token={room.get_top_left().jwt}",
             f"http://{room.get_top_right().ip}:4298/video?token={room.get_top_right().jwt}"
         ]
+            
+        self._run_subprocess_script('../srs-proto/srs-face_recognition.py', camera_urls, wall_size, api_link)
 
-        self._run_subprocess_script('../srs-proto/srs-face_recognition.py', camera_urls, wall_size)
-
-    def _run_subprocess_script(self, script_path, cameras=None, wall_size=None):
+    def _run_subprocess_script(self, script_path, cameras=None, wall_size=None, api_link=None):
         # Construire le chemin absolu pour le script
         abs_script_path = os.path.abspath(script_path)
         
@@ -75,6 +77,9 @@ class RoomWindow(Screen):
                 
                 if wall_size != None:
                     command.extend([f'--wall_size', wall_size])
+                
+                if api_link != None:
+                    command.extend([f'--api_link', api_link])
 
                 result = subprocess.run(command, capture_output=True, text=True)
                 print(f"Sortie du script : {result.stdout}")

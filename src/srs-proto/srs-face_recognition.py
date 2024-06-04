@@ -4,28 +4,10 @@ import numpy as np
 import argparse
 import face_recognition
 from triangulation import Triangulation
-import mysql.connector
 import json
 import base64
 import argparse
-
-class DatabaseClient:
-    
-    def __init__(self):
-        self.dbConnexion = mysql.connector.connect(
-            host="127.0.0.1",
-            user="srs-admin",
-            password="fzg5jc29cHbKcSuK",
-            database="srs"
-        )
-        self.cursor = self.dbConnexion.cursor()
-
-    def get_encodings(self):
-        try:
-            self.cursor.execute("SELECT username, encodings FROM Users")
-            return self.cursor.fetchall()
-        except Exception as e:
-            print(f"Error: {e}")
+import requests
 
 parser = argparse.ArgumentParser(description="Object Detection and Triangulation with multiple cameras")
 parser.add_argument('--camera_url1', type=str, required=True, help='URL of the first camera')
@@ -33,6 +15,7 @@ parser.add_argument('--camera_url2', type=str, required=True, help='URL of the s
 parser.add_argument('--camera_url3', type=str, required=True, help='URL of the third camera')
 parser.add_argument('--camera_url4', type=str, required=True, help='URL of the fourth camera')
 parser.add_argument('--wall_size', type=str, required=True, help='Size of the walls')
+parser.add_argument('--api_link', type=str, required=True, help='Link to the users API')
 parser.add_argument('--headless', action='store_true', help='Run in headless mode without GUI')
 args = parser.parse_args()
 
@@ -46,8 +29,7 @@ CAMERA_URLS = [
 ]
 
 wall_size = float(args.wall_size)
-
-db_client = DatabaseClient()
+api_link = args.api_link
 
 CAMERA_FOV = 62.2  # Angle de vue de la caméra en degrés
 ROOM_WIDTH = wall_size  # Largeur de la pièce en mètres
@@ -78,7 +60,22 @@ if not cap4.isOpened():
     print("Erreur : Impossible de lire le flux vidéo de la caméra 4")
     exit()
 
-users_data = db_client.get_encodings()
+def get_users_api(api_link):
+    response = requests.get(api_link)
+    user_list = []
+
+    if response.status_code == 200:
+
+        for user in response.json():
+            user_list.append([user['username'], user['encodings']])
+
+        return True, user_list
+    else:
+        return False
+
+
+# users_data = db_client.get_encodings()
+result, users_data = get_users_api(api_link)
 
 # Listes pour stocker les encodages de visages et les noms
 known_face_encodings = []
@@ -86,22 +83,15 @@ known_face_names = []
 
 # Convertir les encodages de chaînes d'octets en listes de nombres flottants
 for user_data in users_data:
+    print(user_data)
     known_face_names.append(user_data[0])
     encoding_base64 = user_data[1]
     encoding_json = base64.b64decode(encoding_base64).decode('utf-8')
     encoding = json.loads(encoding_json)
-    if len(encoding) == 128:  # Vérifier la taille de chaque encodage
+    if len(encoding) == 128:
         known_face_encodings.append(encoding)
     else:
         print(f"Encodage incorrect pour {user_data[0]}: {encoding}")
-
-# Imprimer les noms et encodages récupérés pour vérification
-print("Noms récupérés de la base de données:")
-print(known_face_names)
-print("\nEncodages récupérés de la base de données:")
-for i, encoding in enumerate(known_face_encodings):
-    print(f"Nom: {known_face_names[i]}")
-    print(f"Encodage: {encoding[:5]} ...")
 
 def process_frame(frame, model, fov):
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

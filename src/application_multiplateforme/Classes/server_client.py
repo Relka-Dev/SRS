@@ -271,6 +271,9 @@ class ServerClient:
             error_message = response.json().get('error', 'Unexpected error occurred during user retrieval.')
             return False, error_message
     
+    def get_users_link(self):
+        return f"{self.server_url}/get_users?token={self.API_token}"
+
     def delete_user(self, user_id):
         if not self.server_ip:
             return False, "IP du serveur manquante"

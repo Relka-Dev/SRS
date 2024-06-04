@@ -9,6 +9,7 @@ import base64
 import argparse
 import requests
 
+# Récupération des arguments
 parser = argparse.ArgumentParser(description="Object Detection and Triangulation with multiple cameras")
 parser.add_argument('--camera_url1', type=str, required=True, help='URL of the first camera')
 parser.add_argument('--camera_url2', type=str, required=True, help='URL of the second camera')
@@ -35,7 +36,12 @@ CAMERA_FOV = 62.2  # Angle de vue de la caméra en degrés
 ROOM_WIDTH = wall_size  # Largeur de la pièce en mètres
 ROOM_HEIGHT = wall_size  # Hauteur de la pièce en mètres
 
-# Charger le modèle YOLOv5 pré-entrainé et déplacer le modèle sur le GPU
+ASSOCIATE_COLOR = (255, 0, 0)
+DANGER_COLOR = (0, 0, 255)
+CLIENT_COLOR = (0, 255, 0)
+UNKNOWN_COLOR = (255,255,255)
+
+# Charger le modèle YOLOv5 pré-entrainé et déplacer le modèle sur le GPU pour des quesiton de vitesse d'execution
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True).to(device)
 
@@ -45,14 +51,13 @@ cap2 = cv2.VideoCapture(CAMERA_URLS[1])
 cap3 = cv2.VideoCapture(CAMERA_URLS[2])
 cap4 = cv2.VideoCapture(CAMERA_URLS[3])
 
-# Vérifiez si les captures vidéo sont ouvertes correctement
+# Vérification si les captures vidéo sont ouvertes correctement
 if not cap1.isOpened():
     print("Erreur : Impossible de lire le flux vidéo de la caméra 1")
     exit()
 if not cap2.isOpened():
     print("Erreur : Impossible de lire le flux vidéo de la caméra 2")
     exit()
-# Vérifiez si les captures vidéo sont ouvertes correctement
 if not cap3.isOpened():
     print("Erreur : Impossible de lire le flux vidéo de la caméra 3")
     exit()
@@ -67,14 +72,13 @@ def get_users_api(api_link):
     if response.status_code == 200:
 
         for user in response.json():
-            user_list.append([user['username'], user['encodings']])
+            user_list.append([user['username'], user['encodings'], user['idPersonType']])
 
         return True, user_list
     else:
-        return False
+        print({'erreur':'Récupération des données des utilisateurs impossible.'})
+        exit()
 
-
-# users_data = db_client.get_encodings()
 result, users_data = get_users_api(api_link)
 
 # Listes pour stocker les encodages de visages et les noms
@@ -83,7 +87,6 @@ known_face_names = []
 
 # Convertir les encodages de chaînes d'octets en listes de nombres flottants
 for user_data in users_data:
-    print(user_data)
     known_face_names.append(user_data[0])
     encoding_base64 = user_data[1]
     encoding_json = base64.b64decode(encoding_base64).decode('utf-8')
@@ -94,13 +97,26 @@ for user_data in users_data:
         print(f"Encodage incorrect pour {user_data[0]}: {encoding}")
 
 def process_frame(frame, model, fov):
+    """
+    Modifie la frame, détermine les angles et retourne les noms dans la frame.
+    
+    Args:
+        frame: Une image capturée à partir d'un flux vidéo.
+        model: Le modèle de détection d'objets, par exemple YOLO, pour détecter les personnes dans l'image.
+        fov: Champ de vision (field of view) de la caméra en degrés.
+        
+    Returns:
+        frame: L'image modifiée avec les annotations des personnes détectées.
+        angles: Une liste des angles des personnes par rapport au centre de l'image.
+        names: Une liste des noms des personnes détectées dans l'image.
+    """
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     results = model(frame_rgb)
     angles = []
     names = []
     for det in results.xyxy[0].cpu().numpy():
-        x1, y1, x2, y2, conf, cls = det
-        if cls == 0:  # Détecter les personnes uniquement
+        x1, y1, x2, y2, conf, cls = det # Extraction des coordonnées des objets
+        if cls == 0: # Garde uniquement les personnes
             center_x = (x1 + x2) / 2
             angle = (center_x - frame.shape[1] / 2) / frame.shape[1] * fov
             angles.append(angle)
@@ -112,8 +128,8 @@ def process_frame(frame, model, fov):
     return frame, angles, names
 
 def get_name_per_index(name_list):
-    name_counter = {}  # Dictionnaire pour compter les occurrences des noms
-    updated_name_list = []  # Liste pour stocker les noms mis à jour avec leur compteur
+    name_counter = {}
+    updated_name_list = []  
     
     for name in name_list:
         if name != "None" and name != "Unknown":
@@ -123,14 +139,24 @@ def get_name_per_index(name_list):
                 name_counter[name] = 1
 
             updated_name_list.append(f"{name}_{name_counter[name]}")
-
-        
-    
     # Trouver le nom avec la plus grande correspondance
     if(len(name_counter) > 0):
         return max(name_counter, key=name_counter.get)
     
     return "Personne non reconnue"
+
+def get_person_type_color_by_name(name):
+    for user in users_data:
+        print(name)
+        if user[0] == name:
+            match user[2]:
+                case 1:
+                    return ASSOCIATE_COLOR
+                case 2:
+                    return DANGER_COLOR
+                case 3:
+                    return CLIENT_COLOR
+    return UNKNOWN_COLOR
 
 def recognize_faces(image, bbox, tolerance=0.6):
     top, left, bottom, right = int(bbox[1]), int(bbox[0]), int(bbox[3]), int(bbox[2])
@@ -221,7 +247,7 @@ while True:
                         map_y = np.clip(map_y, 0, map_height - 1)
                         # Dessiner un point à la position calculée
                         found_name = get_name_per_index([names_cam1[i-1], names_cam2[i-1], names_cam3[i-1], names_cam4[i-1]])
-                        cv2.circle(map_frame, (map_x, map_y), 5, (0, 0, 255), -1)  # Rouge pour le point bot
+                        cv2.circle(map_frame, (map_x, map_y), 5, get_person_type_color_by_name(found_name), -1)
                         cv2.putText(map_frame, f"{found_name} = X: {point.value[0]:.2f}, Y: {point.value[1]:.2f}", 
                                     (10, i * 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
                     cv2.imshow('Map', map_frame)

@@ -714,4 +714,224 @@ def addUser(self, idPersonType, encodings, username):
         return False, f"Impossible d'ajouter l'utilisateur : {e}"
 ```
 
-### Système de reconnaissance spatiale
+### Système de reconnaissance spatiale (srs-proto : srs-face_recognition.py)
+
+L'objectif de la reconnaissance spatiale est de déterminer la position ainsi que l'identité des personnes dans un espace 3D et le représenter sur une carte 2D.
+
+![](./ressources/images/camera_view.png)
+
+#### Récupération des arguments
+
+Pour commencer, je récupère le lien vers les caméras, la taille du mur ainsi que le lien vers l'api des utilisateurs passés en paramètre.
+
+```py
+parser = argparse.ArgumentParser(description="Object Detection and Triangulation with multiple cameras")
+parser.add_argument('--camera_url1', type=str, required=True, help='URL of the first camera')
+parser.add_argument('--camera_url2', type=str, required=True, help='URL of the second camera')
+parser.add_argument('--camera_url3', type=str, required=True, help='URL of the third camera')
+parser.add_argument('--camera_url4', type=str, required=True, help='URL of the fourth camera')
+parser.add_argument('--wall_size', type=str, required=True, help='Size of the walls')
+parser.add_argument('--api_link', type=str, required=True, help='Link to the users API')
+parser.add_argument('--headless', action='store_true', help='Run in headless mode without GUI')
+args = parser.parse_args()
+
+# Configuration
+CAMERA_URLS = [
+    args.camera_url1,
+    args.camera_url2,
+    args.camera_url3,
+    args.camera_url4
+]
+
+wall_size = float(args.wall_size)
+api_link = args.api_link
+```
+
+#### Constantes
+
+1. `CAMERA_FOV` : est l'angle de vue des caméras, utilisé pour déterminer l'angle de l'utilisateur.
+2. `ROOM_WIDTH` : Largeur de la pièce
+3. `ROOM_HEIGHT` : Hauteur de la pièce
+4. `ASSOCIATE_COLOR` : Couleur des associés sur la carte
+5. `DANGER_COLOR` = Couleur des personnes dangereuses sur la carte
+6. `CLIENT_COLOR` = Couleur des clients sur la carte
+7. `UNKNOWN_COLOR` = Couleur pour les personnes non reconnues
+
+⚠️ Les dimensions de la pièce ne sont pas prise en compte dans les calculs de position mais uniquement dans l'affichage de la pièce par OpenCV. ⚠️
+
+```py
+CAMERA_FOV = 62.2  # Angle de vue de la caméra en degrés
+ROOM_WIDTH = wall_size  # Largeur de la pièce en mètres
+ROOM_HEIGHT = wall_size  # Hauteur de la pièce en mètres
+
+ASSOCIATE_COLOR = (255, 0, 0)
+DANGER_COLOR = (0, 0, 255)
+CLIENT_COLOR = (0, 255, 0)
+UNKNOWN_COLOR = (255,255,255)
+```
+
+#### Modèle
+
+Le modèle est passé sur le GPU pour des questions de vitesse d'exécution. Le modèle Yolov5 est chargé ici depuis le dossier correspondant au lien relatif.
+
+```py
+# Charger le modèle YOLOv5 pré-entrainé et déplacer le modèle sur le GPU pour des quesiton de vitesse d'execution
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True).to(device)
+```
+
+#### Création des captures sur les différentes caméras
+
+Avec les urls passés dans les paramètre, j'essaye d'appeler l'endoint des caméras wifi afin d'avoir les vidéos en temps réel.
+
+```py
+# Initialisation des captures vidéo
+cap1 = cv2.VideoCapture(CAMERA_URLS[0])
+cap2 = cv2.VideoCapture(CAMERA_URLS[1])
+cap3 = cv2.VideoCapture(CAMERA_URLS[2])
+cap4 = cv2.VideoCapture(CAMERA_URLS[3])
+
+# Vérification si les captures vidéo sont ouvertes correctement
+if not cap1.isOpened():
+    print("Erreur : Impossible de lire le flux vidéo de la caméra 1")
+    exit()
+if not cap2.isOpened():
+    print("Erreur : Impossible de lire le flux vidéo de la caméra 2")
+    exit()
+if not cap3.isOpened():
+    print("Erreur : Impossible de lire le flux vidéo de la caméra 3")
+    exit()
+if not cap4.isOpened():
+    print("Erreur : Impossible de lire le flux vidéo de la caméra 4")
+    exit()
+```
+
+#### Récupération des données des utilisateurs
+
+En utilisant le lien vers l'api passée en paramètre, on fait une tentative d'appel vers le endpoint.
+
+- Réussite : Retourne une liste contenant les nom, les encodage ainsi que l'id de type de personne de tous les utilisateurs de la base.
+- Echec : Print d'un message d'erreur
+
+```py
+def get_users_api(api_link):
+    response = requests.get(api_link)
+    user_list = []
+
+    if response.status_code == 200:
+
+        for user in response.json():
+            user_list.append([user['username'], user['encodings'], user['idPersonType']])
+
+        return True, user_list
+    else:
+        print({'erreur':'Récupération des données des utilisateurs impossible.'})
+        exit()
+```
+
+#### Analyse des données
+
+Cette partie permet de récuprer les données présentes dans la base et les rendre utilisable dans mon application.
+
+- `known_face_encodings` : Liste contenant les encodages des utilisateurs
+- `known_face_names` : Liste contenant les noms des utilisateurs
+
+1. Ajout du nom dans la liste
+2. Conversion des encodages en base64 vers du utf-8
+3. Vérification de la longeur des encodages afin de vérifier la véracité des données
+
+- En cas d'échec : La personne n'est pas ajoutée et un message d'erreur est imprimé.
+
+```py
+# Listes pour stocker les encodages de visages et les noms
+known_face_encodings = []
+known_face_names = []
+
+for user_data in users_data:
+    known_face_names.append(user_data[0])
+    encoding_base64 = user_data[1]
+    encoding_json = base64.b64decode(encoding_base64).decode('utf-8')
+    encoding = json.loads(encoding_json)
+    if len(encoding) == 128:
+        known_face_encodings.append(encoding)
+    else:
+        print(f"Encodage incorrect pour {user_data[0]}: {encoding}")
+```
+
+#### Reconnaissance de personnes
+
+Cette fonction permet de détecter la position des personnes dans la frame et exécuter la reconnaissance faciale avec ces dites positions.
+
+Premièrement, le modèle de YoloV5, recherche la position des objets dans la frame, ensuite, on fait en sorte de garder uniquement les personnes.
+
+![](./ressources/images/camera-box.png)
+
+On recherche l'angle relatif au centre de l'angle de vue de la camera, par exemple, si l'objet est légérement à gauche, l'angle sera de `-10°` mais s'il est légérement à droite alors `10°`.
+
+![calcul angle](./ressources/images/calcul-angle.png)
+
+1. Calcul du centre X
+- $\text{center\_x} = \frac{x1 + x2}{2}$
+2. Calcul du centre de l'image
+- $\frac{\text{frame.shape}[1]}{2}$
+3. Position realative par rapport au centre
+- $\text{center\_x} - \frac{\text{frame.shape}[1]}{2}$
+4. Normalisation par rapport à la taille de l'image
+- $\frac{\text{center\_x} - \frac{\text{frame.shape}[1]}{2}}{\text{frame.shape}[1]}$
+5. Multiplication par la fov afin de trouver l'angle
+- $\frac{\text{center\_x} - \frac{\text{frame.shape}[1]}{2}}{\text{frame.shape}[1]} \times \text{fov}$
+
+L'implémentation en python est la suivante :
+
+```py
+def process_frame(frame, model, fov):
+    """
+    Modifie la frame, détermine les angles et retourne les noms dans la frame.
+    
+    Args:
+        frame: Une image capturée à partir d'un flux vidéo.
+        model: Le modèle de détection d'objets, par exemple YOLO, pour détecter les personnes dans l'image.
+        fov: Champ de vision (field of view) de la caméra en degrés.
+        
+    Returns:
+        frame: L'image modifiée avec les annotations des personnes détectées.
+        angles: Une liste des angles des personnes par rapport au centre de l'image.
+        names: Une liste des noms des personnes détectées dans l'image.
+    """
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = model(frame_rgb)
+    angles = []
+    names = []
+    for det in results.xyxy[0].cpu().numpy():
+        x1, y1, x2, y2, conf, cls = det # Extraction des coordonnées des objets
+        if cls == 0: # Garde uniquement les personnes
+            center_x = (x1 + x2) / 2
+            angle = (center_x - frame.shape[1] / 2) / frame.shape[1] * fov
+            angles.append(angle)
+            cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+            name = recognize_faces(frame, (x1, y1, x2, y2))
+            names.append(name)
+            cv2.putText(frame, f"Angle: {angle:.2f}", (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            cv2.putText(frame, name, (int(x1), int(y2) + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    return frame, angles, names
+```
+
+#### Récupération de l'angle
+
+Pour commencer, on commence par récupérer l'angles des personnes dans la frame. Cela va me permettre d'appliquer la triangulation plus tard.
+
+La librairie [YoloV5](https://pytorch.org/hub/ultralytics_yolov5/) nous avons accès à des rectangles englobants les personnes dans la frame.
+
+
+
+1. Conversion vers RGB
+2. Application du modèle de détection de YoloV5
+3. Récupération des boîtes englobantes
+4. Récupération des personnes uniquement
+
+Pour déterminer l'angle relatif d'une personne depuis une camera, on doit suivre les étapes suivantes. On effectue ce pour toutes les personnes présentes dans l'image.
+
+1. Récupération de la position x
+2. Calcul de l'angle :
+    - $\alpha$
+

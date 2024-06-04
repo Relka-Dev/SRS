@@ -83,7 +83,6 @@ def recognize_faces(image, bbox, tolerance=0.6):
             face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
             best_match_index = np.argmin(face_distances)
             
-            # Assurez-vous que best_match_index est dans les limites de matches et matches n'est pas vide
             if matches and best_match_index < len(matches) and matches[best_match_index]:
                 name = known_face_names[best_match_index]
         

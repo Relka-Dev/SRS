@@ -714,13 +714,13 @@ def addUser(self, idPersonType, encodings, username):
         return False, f"Impossible d'ajouter l'utilisateur : {e}"
 ```
 
-### Système de reconnaissance spatiale (srs-proto : srs-face_recognition.py)
+### Système de reconnaissance spatiale 
 
 L'objectif de la reconnaissance spatiale est de déterminer la position ainsi que l'identité des personnes dans un espace 3D et le représenter sur une carte 2D.
 
 ![](./ressources/images/camera_view.png)
 
-#### Récupération des arguments
+#### Récupération des arguments (srs-proto : srs-face_recognition.py)
 
 Pour commencer, je récupère le lien vers les caméras, la taille du mur ainsi que le lien vers l'api des utilisateurs passés en paramètre.
 
@@ -747,7 +747,7 @@ wall_size = float(args.wall_size)
 api_link = args.api_link
 ```
 
-#### Constantes
+#### Constantes (srs-proto : srs-face_recognition.py)
 
 1. `CAMERA_FOV` : est l'angle de vue des caméras, utilisé pour déterminer l'angle de l'utilisateur.
 2. `ROOM_WIDTH` : Largeur de la pièce
@@ -770,7 +770,7 @@ CLIENT_COLOR = (0, 255, 0)
 UNKNOWN_COLOR = (255,255,255)
 ```
 
-#### Modèle
+#### Modèle (srs-proto : srs-face_recognition.py)
 
 Le modèle est passé sur le GPU pour des questions de vitesse d'exécution. Le modèle Yolov5 est chargé ici depuis le dossier correspondant au lien relatif.
 
@@ -780,7 +780,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True).to(device)
 ```
 
-#### Création des captures sur les différentes caméras
+#### Création des captures sur les différentes caméras (srs-proto : srs-face_recognition.py)
 
 Avec les urls passés dans les paramètre, j'essaye d'appeler l'endoint des caméras wifi afin d'avoir les vidéos en temps réel.
 
@@ -806,7 +806,7 @@ if not cap4.isOpened():
     exit()
 ```
 
-#### Récupération des données des utilisateurs
+#### Récupération des données des utilisateurs (srs-proto : srs-face_recognition.py)
 
 En utilisant le lien vers l'api passée en paramètre, on fait une tentative d'appel vers le endpoint.
 
@@ -829,7 +829,7 @@ def get_users_api(api_link):
         exit()
 ```
 
-#### Analyse des données
+#### Analyse des données (srs-proto : srs-face_recognition.py)
 
 Cette partie permet de récuprer les données présentes dans la base et les rendre utilisable dans mon application.
 
@@ -858,7 +858,7 @@ for user_data in users_data:
         print(f"Encodage incorrect pour {user_data[0]}: {encoding}")
 ```
 
-#### Reconnaissance de personnes
+#### Reconnaissance de personnes (srs-proto : srs-face_recognition.py)
 
 Cette fonction permet de détecter la position des personnes dans la frame et exécuter la reconnaissance faciale avec ces dites positions.
 
@@ -881,7 +881,7 @@ On recherche l'angle relatif au centre de l'angle de vue de la camera, par exemp
 5. Multiplication par la fov afin de trouver l'angle
 - $\frac{\text{center\_x} - \frac{\text{frame.shape}[1]}{2}}{\text{frame.shape}[1]} \times \text{fov}$
 
-L'implémentation en python est la suivante :
+Ensuite, avec les contenaires trouvés par YoloV5, on envoie les position à analyser à la reconnaissance faciale. Le nom est ensuite ajouté à la liste.
 
 ```py
 def process_frame(frame, model, fov):
@@ -916,22 +916,349 @@ def process_frame(frame, model, fov):
     return frame, angles, names
 ```
 
-#### Récupération de l'angle
+#### Reconnaissance faciale (srs-proto : srs-face_recognition.py)
 
-Pour commencer, on commence par récupérer l'angles des personnes dans la frame. Cela va me permettre d'appliquer la triangulation plus tard.
+La reconnaissance faciale se fait avec la librairie [face-recognition](https://pypi.org/project/face-recognition/). Pour résumer, on compare les données présente dans la région délimité par la reconnaissance de personne avec celles présentes dans la base de données.
 
-La librairie [YoloV5](https://pytorch.org/hub/ultralytics_yolov5/) nous avons accès à des rectangles englobants les personnes dans la frame.
+1. Récupération de la position à analyser dans l'image.
+2. Recherche de la position des visages
+    - Si aucun n'est découvert, le code renvoit `None`.
+3. Avec la position des visage, la fonction des encodages
+    - Si n'est pas fonctionnel, la fonction renvoit `None`.
+4. Boucle avec toutes les visages découvert dans la frame
+5. Comparaison avec les encodages trouvés dans la base de données
+    - Si aucun visage n'est trouvé, retourne `Unknown`
+    - Si une correspondance est trouvée, la personne est recherché dans la liste avec le `best_match_index` qui retourne son index dans la liste.
+6. Retour du résultat.
 
+```py
+def recognize_faces(image, bbox, tolerance=0.6):
+    top, left, bottom, right = int(bbox[1]), int(bbox[0]), int(bbox[3]), int(bbox[2])
+    face_image = image[top:bottom, left:right]
+    
+    # Convertir l'image au format RGB
+    face_image_rgb = cv2.cvtColor(face_image, cv2.COLOR_BGR2RGB)
+    
+    # Trouver les visages et encodages de visages dans l'image
+    face_locations = face_recognition.face_locations(face_image_rgb)
+    if not face_locations:
+        return "None"
+    
+    face_encodings = face_recognition.face_encodings(face_image_rgb, face_locations)
+    if not face_encodings:
+        return "None"
+    
+    for face_encoding in face_encodings:
+        matches = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance)
+        name = "Unknown"
+        
+        if np.any(matches):  # Utiliser np.any() pour vérifier s'il y a au moins une correspondance
+            # Trouver les distances
+            face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
+            best_match_index = np.argmin(face_distances)
+            
+            # Assurez-vous que best_match_index est dans les limites de matches et matches n'est pas vide
+            if matches and best_match_index < len(matches) and matches[best_match_index]:
+                name = known_face_names[best_match_index]
+        
+        return name
+    return "None"
+```
 
+#### Tri des noms (srs-proto : srs-face_recognition.py)
 
-1. Conversion vers RGB
-2. Application du modèle de détection de YoloV5
-3. Récupération des boîtes englobantes
-4. Récupération des personnes uniquement
+Cette fonction permet de sortir le nom avec le plus d'occurence dans une liste. Cela permet de déterminer le nom d'une personne si son visage est capté par plusieurs caméras.
 
-Pour déterminer l'angle relatif d'une personne depuis une camera, on doit suivre les étapes suivantes. On effectue ce pour toutes les personnes présentes dans l'image.
+En évitant les noms **None** et **Unknown**, cela permet de ne pas prendre en considération les non détéctions.
 
-1. Récupération de la position x
-2. Calcul de l'angle :
-    - $\alpha$
+Si aucune personne n'est reconnue, la fonction retourne - `Personne non reconnue`.
+
+```py
+def get_name_per_index(name_list):
+    """
+    Met à jour les noms dans la liste avec un compteur d'index et retourne le nom avec la plus grande occurrence.
+
+    Args:
+        name_list: Liste des noms de personnes détectées.
+
+    Returns:
+        Le nom avec le plus grand nombre de correspondances. Si aucun nom n'est reconnu, retourne "Personne non reconnue".
+    """
+    name_counter = {}
+    updated_name_list = []  
+    
+    for name in name_list:
+        if name != "None" and name != "Unknown":
+            if name in name_counter:
+                name_counter[name] += 1
+            else:
+                name_counter[name] = 1
+
+            updated_name_list.append(f"{name}_{name_counter[name]}")
+    # Trouver le nom avec la plus grande correspondance
+    if(len(name_counter) > 0):
+        return max(name_counter, key=name_counter.get)
+    return "Personne non reconnue"
+```
+
+#### Récupération de la couleur du type de personne par nom Tri des noms (srs-proto : srs-face_recognition.py)
+
+Retourne la couleur associée à une personne en fonction du type de personne passée en paramètre.
+
+On parcours les utilisateurs et si une occurence est trouvée avec celui passé en paramètre. Si la personne est identifiée, le type de personne associé à son nom est passé dans un `match` et la couleur correspondante à son type de personne est retournée.
+
+Si la personne n'est pas trouvée, la couleur de l'utilisateur inconnu est retournée.
+
+```py
+def get_person_type_color_by_name(name):
+    """
+    Retourne la couleur associée à une personne en fonction de son nom et de son type.
+
+    Args:
+        name: Le nom de la personne pour laquelle la couleur doit être trouvée.
+
+    Returns:
+        La couleur associée à la personne. Si le nom n'est pas trouvé, retourne UNKNOWN_COLOR.
+    """
+    for user in users_data:
+        if user[0] == name:
+            match user[2]:
+                case 1:
+                    return ASSOCIATE_COLOR
+                case 2:
+                    return DANGER_COLOR
+                case 3:
+                    return CLIENT_COLOR
+    return UNKNOWN_COLOR
+```
+
+#### Process (srs-proto : srs-face_recognition.py)
+
+Cette boucle infinie s'exécute et affiche le résultat à l'utilisateur.
+
+1. Récupération des frames
+2. Retournement des frames (pour des quesitons de support, le flux est à l'envert verticalement)
+3. Appel de la fonction `process_frame` qui récupère les angles, l'indentidé des personnes ainsi que la frame modifiée avec les informations.
+4. La condition vérifie que le nombre de personnes détéctés par les caméras est identique afin de garantir la précision du système.
+5. Affichage des résultats de la triangulation.
+
+```py
+map_width, map_height = 600, 600
+
+while True:
+    # Lire les frames des caméras
+    ret1, frame1 = cap1.read()
+    ret2, frame2 = cap2.read()
+    ret3, frame3 = cap3.read()
+    ret4, frame4 = cap4.read()
+
+    # Si une des captures échoue, on sort de la boucle
+    if not ret1 or not ret2 or not ret3 or not ret4:
+        print("Erreur : Impossible de lire une frame des flux vidéo")
+        break
+
+    # Inverser les frames verticalement et horizontalement
+    frame1 = cv2.flip(cv2.flip(frame1, 0), 1)
+    frame2 = cv2.flip(cv2.flip(frame2, 0), 1)
+    frame3 = cv2.flip(cv2.flip(frame3, 0), 1)
+    frame4 = cv2.flip(cv2.flip(frame4, 0), 1)
+
+    # Traiter les frames pour détecter les personnes et calculer les angles
+    frame1_processed, angles_cam1, names_cam1 = process_frame(frame1, model, CAMERA_FOV)
+    frame2_processed, angles_cam2, names_cam2 = process_frame(frame2, model, CAMERA_FOV)
+    frame3_processed, angles_cam3, names_cam3 = process_frame(frame3, model, CAMERA_FOV)
+    frame4_processed, angles_cam4, names_cam4 = process_frame(frame4, model, CAMERA_FOV)
+
+    if not args.headless:
+        # Afficher les frames dans des fenêtres séparées
+        cv2.imshow('Camera 1', frame1_processed)
+        cv2.imshow('Camera 2', frame2_processed)
+        cv2.imshow('Camera 3', frame3_processed)
+        cv2.imshow('Camera 4', frame4_processed)
+
+    if len(angles_cam1) == len(angles_cam2) == len(angles_cam3) == len(angles_cam4):
+        result, response = Triangulation.get_objects_positions(wall_size, angles_cam1, angles_cam2, angles_cam3, angles_cam4, tolerence=0.5)
+
+        # Créer une carte vide
+        map_frame = np.zeros((map_height, map_width, 3), dtype=np.uint8)
+        
+        if result:  
+            if args.headless:
+                print("-----")
+                for point in response.points:
+                    print(point.value)
+            else:
+                i = 0
+                if len(response.points) == len(angles_cam1) and len(response.points) == len(angles_cam2) and len(response.points) == len(angles_cam3) and len(response.points) == len(angles_cam4):
+                    for point in response.points:
+                        i += 1
+                        # Redimensionner les positions pour correspondre à la carte
+                        map_x = int((point.value[0] / ROOM_WIDTH) * map_width)
+                        map_y = int((point.value[1] / ROOM_HEIGHT) * map_height)
+                        # Limiter les coordonnées à l'intérieur de la carte
+                        map_x = np.clip(map_x, 0, map_width - 1)
+                        map_y = np.clip(map_y, 0, map_height - 1)
+                        # Dessiner un point à la position calculée
+                        found_name = get_name_per_index([names_cam1[i-1], names_cam2[i-1], names_cam3[i-1], names_cam4[i-1]])
+                        cv2.circle(map_frame, (map_x, map_y), 5, get_person_type_color_by_name(found_name), -1)
+                        cv2.putText(map_frame, f"{found_name} = X: {point.value[0]:.2f}, Y: {point.value[1]:.2f}", 
+                                    (10, i * 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                    cv2.imshow('Map', map_frame)
+
+    # Appuyer sur 'q' pour quitter les fenêtres
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+```
+
+#### Récupération de la position d'un objet (triangulation.py : get_objet_position)
+
+Cette fonction permet de déterminer la position d'une personne en utilisant l'angle de personne capté sur seux caméras pointant vers le milieu de la pièce, ces caméras ne doivent pas être à l'opposé l'une de l'autre.
+
+Le point vert représente la personne.
+
+Pour commencer, on va recherche à trouver les deux angles. 
+
+Pour la camera de gauche, l'angle se calcule en effectuant une différence entre 45° et la l'angle relatif à la camera.
+
+Pour la camera de droite, l'angle se calcule en effectuant une addition avec 45° et la l'angle relatif à la camera.
+
+Cette différence existe à cause du positionnement des caméras. Plus l'objet se situe vers la droite, plus l'angle relatif à la camera augmente, c'est l'inverse pour la caméra de droite.
+
+$\alpha = \frac{90^\circ}{2} - \text{object\_angle\_from\_left}$
+
+$\beta = \frac{90^\circ}{2} + \text{object\_angle\_from\_right}$
+
+![angles finder](./ressources/images/angles-finder.png)
+
+Afin d'empêcher d'avoir des bugs, les angles ne doivent pas accéder 90° et ne doivent pas être inférieur à 0°. Vu la position, des caméras, cela ne devrait pas se produire.
+
+$\text{Si } \beta > 90^\circ \text{ ou } \alpha > 90^\circ, \text{ alors } \text{erreur : "Impossible de calculer la triangulation pour un angle supérieur à 90°"}$
+
+$\text{Si } \beta < 0^\circ \text{ ou } \alpha < 0^\circ, \text{ alors } \text{erreur : "Impossible de calculer la triangulation pour un angle inférieur à 0°"}$
+
+##### Recherche de la position
+
+On va à présent rechercher la postion de l'utilisateur en utilisant la trigonomètrie. Pour commencer, définition les variables que l'on possède.
+
+$\alpha=\text{angle depuis la camera gauche}$
+
+$\beta=\text{angle depuis la camera droite}$
+
+$c=\text{distance entre les caméras}$
+
+![triangulation](./ressources/images/triangulation.png)
+
+On commence par calculer l'angle gamma. 
+
+Selon le [théorème de la somme des angles d'un triangle](https://fr.wikipedia.org/wiki/Somme_des_angles_d%27un_triangle), alors :
+
+$\alpha + \beta + \gamma = 180^\circ$
+
+donc :
+
+$\gamma = 180^\circ - \alpha - \beta$
+
+On calcule ensuite la distance entre la camera de gauche et l'objet, (représentée par $b$ dans le schéma).
+
+Pour ce faire, on utilise la [loi du sinus](https://fr.wikipedia.org/wiki/Loi_des_sinus). Par conséquent :
+
+$\frac{a}{\sin(\alpha)} = \frac{b}{\sin(\beta)} = \frac{c}{\sin(\gamma)}$
+
+donc :
+
+$b = \frac{\text{c}}{\sin(\gamma)} \cdot \sin(\beta)$
+
+On applique cela à nos variables :
+
+$\text{distance\_camera\_object} = \frac{\text{wall\_length}}{\sin(\gamma)} \cdot \sin(\beta)$
+
+À présent que nous avons la distance entre la camera et l'objet, nous avons un triangle rectangle ce qui va nous permettre de connaitre la position y.
+
+![](./ressources/images/triangulation-etape2.drawio.png)
+
+Pour trouver la position y, on utilise l'angle alpha et la distance entre la camera gauche et la personne pour appliquer le [rapport trigonométrique pour le sinus](https://www.alloprof.qc.ca/fr/eleves/bv/mathematiques/les-identites-trigonometriques-m1357).
+
+$\sin(\alpha) = \frac{\text{opposé}}{\text{hypoténuse}}$
+
+Nous recherchons l'opposé, donc :
+
+$\text{opposé} = \sin(\alpha) \times \text{hypoténuse}$
+
+En appliquant nos variables :
+
+$\text{position\_y} = \text{distance\_camera\_object} \cdot \sin(\alpha)$
+
+Pour terminer, en appliquand le [théorème de Pythagore](https://fr.wikipedia.org/wiki/Th%C3%A9or%C3%A8me_de_Pythagore), on peut trouver la position x.
+
+$a = \sqrt{c^2 - b^2}$
+
+donc :
+
+$\text{position\_x} = \sqrt{\text{distance\_camera\_object}^2 - \text{position\_y}^2}$
+
+##### Invertion des résultats
+
+Le paramètre reverse sert si les caméras sont placés à l'autre bout de la pièce et qu'on recherche la position de la personne comme si elles était captés depuis l'autre bout. Cela est utile quand on recherche à trouver une correspondance entre les position captés par les caméras du haut et les caméras du bas.
+
+![reverse](./ressources/images/reverse.png)
+
+En faisant la différence entre le mur et les position, nous pouvons convertir notre position comme si la personne était vue de l'autre côté.
+
+$\text{position\_x} = \text{wall\_length} - \text{position\_x}$
+
+$\text{position\_y} = \text{wall\_length} - \text{position\_y}$
+
+##### Implémentation
+
+```py
+@staticmethod
+def get_object_position(wall_length, object_angle_from_left, object_angle_from_right, debug=False, reverse=False):
+    """
+    Calcule la position d'un objet par rapport à une caméra en utilisant la triangulation.
+    
+    Args:
+        wall_length: La longueur du mur sur lequel se trouve la caméra.
+        object_angle_from_left: L'angle de l'objet par rapport à la caméra gauche.
+        object_angle_from_right: L'angle de l'objet par rapport à la caméra droite.
+        debug: Affiche les informations de débogage si True (par défaut False).
+        reverse: Inverse les coordonnées de la position si True (par défaut False).
+    
+    Returns:
+        Un tuple contenant un booléen indiquant le succès du calcul et les coordonnées [position_x, position_y] de l'objet,
+        ou un message d'erreur si les angles sont invalides.
+    """
+    # Conversion des angles en radians
+    alpha = 90 / 2 - object_angle_from_left
+    beta = 90 / 2 + object_angle_from_right
+    if beta > 90 or alpha > 90:
+        return False, "Impossible de calculer la triangulation pour un angle supérieur à 90°"
+    
+    if beta < 0 or alpha < 0:
+        return False, "Impossible de calculer la triangulation pour un angle inférieur à 90°"
+    
+    # Calcul de gamma
+    gamma = 180 - alpha - beta
+    # Calcul de la distance entre la caméra et l'objet
+    distance_camera_object = wall_length / math.sin(math.radians(gamma)) * (math.sin(math.radians(beta)))
+    # Calcul de la position Y
+    position_y = distance_camera_object * math.sin(math.radians(alpha))
+
+        # Calcul de la position X
+        position_x = math.sqrt(distance_camera_object**2 - position_y**2)
+
+        if reverse:
+            position_x = wall_length - position_x
+            position_y = wall_length - position_y
+
+        if debug:
+            print("alpha : " + str(alpha))
+            print("beta : " + str(beta))
+            print("gamma : " + str(gamma))
+            print("cam_left -> object : " + str(distance_camera_object))
+            print("position x : " + str(position_x))
+            print("position y : " + str(position_y))
+
+        return True, [position_x, position_y]
+```
+
 

@@ -7,6 +7,20 @@ class Triangulation:
 
     @staticmethod
     def get_object_position(wall_length, object_angle_from_left, object_angle_from_right, debug=False, reverse=False):
+        """
+        Calcule la position d'un objet par rapport à une caméra en utilisant la triangulation.
+        
+        Args:
+            wall_length: La longueur du mur sur lequel se trouve la caméra.
+            object_angle_from_left: L'angle de l'objet par rapport à la caméra gauche.
+            object_angle_from_right: L'angle de l'objet par rapport à la caméra droite.
+            debug: Affiche les informations de débogage si True (par défaut False).
+            reverse: Inverse les coordonnées de la position si True (par défaut False).
+        
+        Returns:
+            Un tuple contenant un booléen indiquant le succès du calcul et les coordonnées [position_x, position_y] de l'objet,
+            ou un message d'erreur si les angles sont invalides.
+        """
         # Conversion des angles en radians
         alpha = 90 / 2 - object_angle_from_left
         beta = 90 / 2 + object_angle_from_right

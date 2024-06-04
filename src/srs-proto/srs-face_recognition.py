@@ -128,6 +128,15 @@ def process_frame(frame, model, fov):
     return frame, angles, names
 
 def get_name_per_index(name_list):
+    """
+    Met à jour les noms dans la liste avec un compteur d'index et retourne le nom avec la plus grande occurrence.
+
+    Args:
+        name_list: Liste des noms de personnes détectées.
+
+    Returns:
+        Le nom avec le plus grand nombre de correspondances. Si aucun nom n'est reconnu, retourne "Personne non reconnue".
+    """
     name_counter = {}
     updated_name_list = []  
     
@@ -142,12 +151,19 @@ def get_name_per_index(name_list):
     # Trouver le nom avec la plus grande correspondance
     if(len(name_counter) > 0):
         return max(name_counter, key=name_counter.get)
-    
     return "Personne non reconnue"
 
 def get_person_type_color_by_name(name):
+    """
+    Retourne la couleur associée à une personne en fonction de son nom et de son type.
+
+    Args:
+        name: Le nom de la personne pour laquelle la couleur doit être trouvée.
+
+    Returns:
+        La couleur associée à la personne. Si le nom n'est pas trouvé, retourne UNKNOWN_COLOR.
+    """
     for user in users_data:
-        print(name)
         if user[0] == name:
             match user[2]:
                 case 1:
@@ -159,6 +175,17 @@ def get_person_type_color_by_name(name):
     return UNKNOWN_COLOR
 
 def recognize_faces(image, bbox, tolerance=0.6):
+    """
+    Reconnaît les visages dans une région spécifiée de l'image.
+
+    Args:
+        image: Image d'entrée contenant le visage.
+        bbox: Une boîte englobante (bounding box) définissant la région du visage sous la forme (x1, y1, x2, y2).
+        tolerance: Tolérance utilisée pour comparer les encodages de visages (valeur par défaut est 0.6).
+
+    Returns:
+        Le nom de la personne reconnue. Retourne "None" si aucun visage n'est trouvé ou si la correspondance échoue.
+    """
     top, left, bottom, right = int(bbox[1]), int(bbox[0]), int(bbox[3]), int(bbox[2])
     face_image = image[top:bottom, left:right]
     

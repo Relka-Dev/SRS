@@ -2,6 +2,7 @@ from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen 
 import os
 import subprocess
+from Classes.room import Room
 
 class RoomWindow(Screen):
 
@@ -29,10 +30,26 @@ class RoomWindow(Screen):
         self._run_subprocess_script('../srs-proto/quad-camera.py', cameras_urls)
 
     def run_spatial_recognition_system(self):
+        room = Room()
+
+        for camera in self.cameras:
+            match camera.idWall:
+                case 1:
+                    room.set_top_left(camera)
+                case 2:
+                    room.set_top_right(camera)
+                case 3:
+                    room.set_bottom_left(camera)
+                case 4:
+                    room.set_bottom_right(camera)
+
         camera_urls = [
-            "http://192.168.1.115:4298/video1",  # URL de votre première caméra
-            "http://192.168.1.115:4298/video2"   # URL de votre deuxième caméra
+            f"http://{room.get_bottom_left().ip}:4298/video?token={room.get_bottom_left().jwt}",
+            f"http://{room.get_bottom_right().ip}:4298/video?token={room.get_bottom_right().jwt}",
+            f"http://{room.get_top_left().ip}:4298/video?token={room.get_top_left().jwt}",
+            f"http://{room.get_top_right().ip}:4298/video?token={room.get_top_right().jwt}"
         ]
+        
         self._run_subprocess_script('../srs-proto/srs-face_recognition.py', camera_urls)
 
     def _run_subprocess_script(self, script_path, params):

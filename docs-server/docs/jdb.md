@@ -5916,6 +5916,175 @@ Aujourd'hui je vais implémenter la reconnaissance faciale, j'ai un prototype me
 1. [SRS - Face Recognition](https://youtu.be/IvVYjrRSz2s)
 2. [SRS - Multiple Face Recognition](https://youtu.be/TRsDz8WGZxw)
 
-## 1.0 : Reconnaissance faciale dans la reconnaissance spatiale
+## 1.0 : Reconnaissance faciale dans les box
 
 Ma première idée est que lorsqu'une personne est détectée, la zone de frame des cameras où se situe la personne est analysée par la reconnaissance faciale.
+
+Cela me permettra de l'intégrer par la suite dans la reconnaissance spatiale.
+
+### 1.1 : Implémentation "reconnaissance_faciale.py"
+
+Je commence par récupérer les encodages des visages présents dans la base de données.
+
+```py
+class DatabaseClient:
+    
+    def __init__(self):
+        self.dbConnexion = mysql.connector.connect(
+            host="127.0.0.1",
+            user="srs-admin",
+            password="fzg5jc29cHbKcSuK",
+            database="srs"
+        )
+        self.cursor = self.dbConnexion.cursor()
+
+    def get_encodings(self):
+        try:
+            self.cursor.execute("SELECT username, encodings FROM Users")
+            return self.cursor.fetchall()
+        except Exception as e:
+            print(f"Error: {e}")
+```
+
+J'ai ensuite demandé à ChatGPT de trouver une façon de contrôler la véracité des données présentes dans la base :
+
+```py
+for user_data in users_data:
+    known_face_names.append(user_data[0])
+    encoding_base64 = user_data[1]
+    encoding_json = base64.b64decode(encoding_base64).decode('utf-8')
+    encoding = json.loads(encoding_json)
+    if len(encoding) == 128:  # Vérifier la taille de chaque encodage
+        known_face_encodings.append(encoding)
+    else:
+        print(f"Encodage incorrect pour {user_data[0]}: {encoding}")
+```
+
+Dans une boucle infinie, on détecte les personnes dans la pièce. L'algorithme fonctionne de la façon suivante :
+
+1. Récupèration des données en utilisant le modèle de YoloV5
+2. Filtrage afin de garder les personnes
+3. Pour chaque personne détectée
+    - Tentative de reconnaissance faciale
+    - Ajout du résultat dans la frame
+4. Affichage de la frame
+
+```py
+video_capture = cv2.VideoCapture(0)
+
+while True:
+    ret, frame = video_capture.read()
+    
+    if not ret:
+        break
+    
+    results = model(frame)
+    
+    bboxes = results.xyxy[0].cpu().numpy()
+    
+    # Filtrage afin de garder uniquement les personnes
+    person_bboxes = [bbox for bbox in bboxes if int(bbox[5]) == 0]
+    
+    # Liste des résultats
+    results_list = []
+
+    # Pour chaque personne détectée, essayer de reconnaître le visage
+    for bbox in person_bboxes:
+        name = recognize_faces(frame, bbox, tolerance=0.4)
+        results_list.append({'Position': bbox[:4], 'Personne détectée': name})
+        
+        # Affichage final des résultats
+        left, top, right, bottom = int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])
+        cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+        cv2.putText(frame, f"{name} ({left}, {top}, {right}, {bottom})", (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+    
+    # Afficher le résultat
+    cv2.imshow('Video', frame)
+    
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+```
+
+La reconnaissance faciale fonctionne de la façon suivante :
+
+1. Récupération de la position de la personne
+2. Isolation de la partie de l'image à détecter
+3. Tentative de détection de visages
+4. Vérification de la bonne capture des encodage des visages
+5. Pour chaque visage détectée dans l'image isolée
+    - Recherche de correspondance entre les encodages de la base et ceux dans l'image
+    - Si correspondance trouvée, retour des utilisateurs trouvés.
+
+
+```py
+def recognize_faces(image, bbox, tolerance=0.6):
+    top, left, bottom, right = int(bbox[1]), int(bbox[0]), int(bbox[3]), int(bbox[2])
+    face_image = image[top:bottom, left:right]
+    
+    # Conversion au format RGB
+    face_image_rgb = cv2.cvtColor(face_image, cv2.COLOR_BGR2RGB)
+    
+    # Recherche de visage dans l'image
+    face_locations = face_recognition.face_locations(face_image_rgb)
+    if not face_locations:
+        return "Personne"
+    
+    face_encodings = face_recognition.face_encodings(face_image_rgb, face_locations)
+    if not face_encodings:
+        return "Personne"
+    
+    for face_encoding in face_encodings:
+        matches = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance)
+        name = "Visage inconnu"
+        
+        if np.any(matches):  # Permet de déterminer s'il y a une corresponsance dans la liste
+            face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
+            best_match_index = np.argmin(face_distances)
+            
+            if matches and best_match_index < len(matches) and matches[best_match_index]:
+                name = known_face_names[best_match_index]
+        
+        return name
+    return "Personne"
+```
+
+### 1.2 : Résultat
+
+J'ai fais une vidéo youtube montrant le tests, et comme vous pouvez le voir le script fonctionne cependant, il est moins fiable de faire la reconnaissance faciale par rapport à la détection de personnes. Ce qui veut dire que l'architecture de mon projet était bien trouvée (détection de personnes -> reconnaissance faciale).
+
+Dans la vidéo, la personne s'ajoute dans la base puis se fait détecter par la suite.
+
+- [SRS - Face Recognition](https://www.youtube.com/watch?v=IvVYjrRSz2s)
+
+Ici, on fait le test avec deux personnes.
+
+- [SRS - Multiple Face Recognition](https://youtu.be/TRsDz8WGZxw)
+
+### 2.0 : Reconnaissance Faciale dans la reconnaissance spatiale (srs-face_recognition.py)
+
+Je vais uniquement expliquer comment j'ai intégré la reconnaissace faciale dans la reconnaissance spatiale, pour plus de détails sur cette dernière, allez consulter l'entrée du jdb du 31.05.2024.
+
+L'objectif est de reconnaitre les personnes uniquement si elles sont détectés par le système.
+
+J'ajoute la reconnaissance faciale dans le projet et j'appèle la fonction `recognize_faces` dans le process frame, comme ça quand une personne est détectée par le système via Yolov5, il y a également une tentative au niveau de space recognition.
+
+```py
+def process_frame(frame, model, fov):
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = model(frame_rgb)
+    angles = []
+    names = []
+    for det in results.xyxy[0].cpu().numpy():
+        x1, y1, x2, y2, conf, cls = det
+        if cls == 0:
+            center_x = (x1 + x2) / 2
+            angle = (center_x - frame.shape[1] / 2) / frame.shape[1] * fov
+            angles.append(angle)
+            cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+            # Ici
+            name = recognize_faces(frame, (x1, y1, x2, y2))
+            names.append(name)
+            cv2.putText(frame, f"Angle: {angle:.2f}", (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            cv2.putText(frame, name, (int(x1), int(y2) + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    return frame, angles, names
+```

@@ -7,6 +7,7 @@ from triangulation import Triangulation
 import mysql.connector
 import json
 import base64
+import argparse
 
 class DatabaseClient:
     
@@ -26,12 +27,21 @@ class DatabaseClient:
         except Exception as e:
             print(f"Error: {e}")
 
+parser = argparse.ArgumentParser(description="Object Detection and Triangulation with multiple cameras")
+parser.add_argument('--camera_url1', type=str, required=True, help='URL of the first camera')
+parser.add_argument('--camera_url2', type=str, required=True, help='URL of the second camera')
+parser.add_argument('--camera_url3', type=str, required=True, help='URL of the third camera')
+parser.add_argument('--camera_url4', type=str, required=True, help='URL of the fourth camera')
+parser.add_argument('--headless', action='store_true', help='Run in headless mode without GUI')
+args = parser.parse_args()
+
+
 # Configuration
 CAMERA_URLS = [
-    "http://192.168.1.115:4298/video",
-    "http://192.168.1.121:4298/video",
-    "http://192.168.1.118:4298/video",
-    "http://192.168.1.114:4298/video"
+    args.camera_url1,
+    args.camera_url2,
+    args.camera_url3,
+    args.camera_url4
 ]
 
 db_client = DatabaseClient()
@@ -39,11 +49,6 @@ db_client = DatabaseClient()
 CAMERA_FOV = 62.2  # Angle de vue de la caméra en degrés
 ROOM_WIDTH = 4  # Largeur de la pièce en mètres
 ROOM_HEIGHT = 4  # Hauteur de la pièce en mètres
-
-# Argument parser for headless mode
-parser = argparse.ArgumentParser(description="Object Detection and Triangulation")
-parser.add_argument('--headless', action='store_true', help='Run in headless mode without GUI')
-args = parser.parse_args()
 
 # Charger le modèle YOLOv5 pré-entrainé et déplacer le modèle sur le GPU
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -112,6 +117,27 @@ def process_frame(frame, model, fov):
             cv2.putText(frame, f"Angle: {angle:.2f}", (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             cv2.putText(frame, name, (int(x1), int(y2) + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
     return frame, angles, names
+
+def get_name_per_index(name_list):
+    name_counter = {}  # Dictionnaire pour compter les occurrences des noms
+    updated_name_list = []  # Liste pour stocker les noms mis à jour avec leur compteur
+    
+    for name in name_list:
+        if name != "None" and name != "Unknown":
+            if name in name_counter:
+                name_counter[name] += 1
+            else:
+                name_counter[name] = 1
+
+            updated_name_list.append(f"{name}_{name_counter[name]}")
+
+        
+    
+    # Trouver le nom avec la plus grande correspondance
+    if(len(name_counter) > 0):
+        return max(name_counter, key=name_counter.get)
+    
+    return "Personne non reconnue"
 
 def recognize_faces(image, bbox, tolerance=0.6):
     top, left, bottom, right = int(bbox[1]), int(bbox[0]), int(bbox[3]), int(bbox[2])
@@ -201,14 +227,16 @@ while True:
                         map_x = np.clip(map_x, 0, map_width - 1)
                         map_y = np.clip(map_y, 0, map_height - 1)
                         # Dessiner un point à la position calculée
+                        found_name = get_name_per_index([names_cam1[i-1], names_cam2[i-1], names_cam3[i-1], names_cam4[i-1]])
                         cv2.circle(map_frame, (map_x, map_y), 5, (0, 0, 255), -1)  # Rouge pour le point bot
-                        cv2.putText(map_frame, f"{names_cam1[i-1]} = X: {point.value[0]:.2f}, Y: {point.value[1]:.2f}", 
+                        cv2.putText(map_frame, f"{found_name} = X: {point.value[0]:.2f}, Y: {point.value[1]:.2f}", 
                                     (10, i * 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
                     cv2.imshow('Map', map_frame)
 
     # Appuyer sur 'q' pour quitter les fenêtres
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+
 
 # Libérer les captures vidéo et fermer les fenêtres
 cap1.release()

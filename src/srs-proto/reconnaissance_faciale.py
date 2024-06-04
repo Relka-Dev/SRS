@@ -59,29 +59,27 @@ for i, encoding in enumerate(known_face_encodings):
     print(f"Nom: {known_face_names[i]}")
     print(f"Encodage: {encoding[:5]} ...")
 
-# Fonction pour faire la reconnaissance faciale
 def recognize_faces(image, bbox, tolerance=0.6):
     top, left, bottom, right = int(bbox[1]), int(bbox[0]), int(bbox[3]), int(bbox[2])
     face_image = image[top:bottom, left:right]
     
-    # Convertir l'image au format RGB
+    # Conversion au format RGB
     face_image_rgb = cv2.cvtColor(face_image, cv2.COLOR_BGR2RGB)
     
-    # Trouver les visages et encodages de visages dans l'image
+    # Recherche de visage dans l'image
     face_locations = face_recognition.face_locations(face_image_rgb)
     if not face_locations:
-        return "None"
+        return "Personne"
     
     face_encodings = face_recognition.face_encodings(face_image_rgb, face_locations)
     if not face_encodings:
-        return "None"
+        return "Personne"
     
     for face_encoding in face_encodings:
         matches = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance)
-        name = "Unknown"
+        name = "Visage inconnu"
         
-        if np.any(matches):  # Utiliser np.any() pour vérifier s'il y a au moins une correspondance
-            # Trouver les distances
+        if np.any(matches):  # Permet de déterminer s'il y a une corresponsance dans la liste
             face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
             best_match_index = np.argmin(face_distances)
             
@@ -90,7 +88,7 @@ def recognize_faces(image, bbox, tolerance=0.6):
                 name = known_face_names[best_match_index]
         
         return name
-    return "None"
+    return "Personne"
 
 # Capturer la vidéo en temps réel
 video_capture = cv2.VideoCapture(0)
@@ -102,10 +100,8 @@ while True:
     if not ret:
         break
     
-    # Détecter les personnes dans l'image avec YOLOv5
     results = model(frame)
     
-    # Obtenir les positions des boîtes englobantes des personnes
     bboxes = results.xyxy[0].cpu().numpy()
     
     # Filtrer pour ne garder que les personnes (class 0 in COCO dataset)

@@ -47,8 +47,8 @@ pip install -r requirements.txt
 python3 ./app.py
 ```
 
-## Architecture du projet
-⚠️ À ajouter à la fin du développement ⚠️
+## Diagramme de classe
+![Diagramme de classe](../ressources/diagrams/diagramme_serveur.svg)
 
 ## Initialisation
 Les étapes suivantes servent aux clients à configurer le premier administrateur. Pour ce faire ils doivent suivre les étapes suivantes :

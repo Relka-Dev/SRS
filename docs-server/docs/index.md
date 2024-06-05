@@ -53,9 +53,6 @@ Pour accèder à la documentation de chaque composant, cliquez sur leurs titres.
   - Connexion au serveur par scan des ports réseau
 
 
-### Diagramme du projet
-![](./ressources/images/application_diagramme.png.jpg)
-
 ## Analyse fonctionnelle
 
 Pour l'analyse fonctionnelle, je me suis placé du point de vue de l'utilisateur. L'objectif est de comprendre les différentes fonctionnalités sans rentrer dans les détails techniques.
@@ -148,7 +145,11 @@ Ce diagramme représente un administrateur qui se connecte ou qui met en place l
 
 ## Analyse organique
 
-Implémentation technique de l'analyse fonctionnelle. 
+Implémentation technique de l'analyse fonctionnelle.
+
+### Base de données
+
+![diagramme bdd](./ressources/diagrams/bdd.png)
 
 ### Initialisation / Connexion
 
@@ -1283,6 +1284,230 @@ On peut voir que les points réels sont captés par les deux set de caméra. Ce 
 
 ##### Solution
 
-Pour trouver la position des personnes
+Pour trouver la position des personnes, nous suivons les étapes suivantes :
 
 ![Multiple triangulation de triangulation](./ressources/images/multiple-triangulation-solution.png)
+
+1. On crée une liste de tous les points possibles pour les caméras du sud et du nord, en utilisant le paramètre `reverse` pour ajuster les points selon la vue des caméras du sud. 
+    - Les positions sont stockées dans des objets `TwoCameraPoint`, qui contiennent la position ainsi que les angles gauche et droit.
+
+2. On boucle ensuite sur les points trouvés par les caméras du sud et ceux du nord.
+3. Si les points sont proches, ils sont ajoutés à une liste unique.
+    - Le système de tolérance détermine si les points sont proches. Ce système est utile car les positions calculées par les caméras peuvent varier légèrement entre le nord et le sud, en raison de la calibration ou de l'angle capturé par Yolov5.
+    - Si la position de la personne est dans la tolérance, une instance de `FourPointList` est créée et ajoutée à une liste dans l'objet `UniquePointList`. On vérifie ensuite si un objet `FourPointList` dans la liste a un angle identique. Si c'est le cas, alors la personne est déjà ajoutée et n'est pas rajoutée à la liste.
+
+
+**Système de tolérence**
+
+| Couleur   | Signification                                             |
+|-----------|-----------------------------------------------------------|
+| Rouge     | Position captée par les caméras du nord                   |
+| Vert      | Position captée par les caméras du sud                    |
+| Gris      | Position finale (Moyenne de la position entre les deux points) |
+
+![tolerence](./ressources/images/tolerence.png)
+
+##### Implémentation
+
+```py
+@staticmethod
+def get_objects_positions(wall_length, objects_angles_from_bot_left, objects_angles_from_bot_right, object_angles_from_top_left, object_angles_from_top_right, tolerence=0.5):
+    all_possible_points_bot = []
+    for left_object_bot in objects_angles_from_bot_left:
+        for right_object_bot in objects_angles_from_bot_right:
+            result, pointXY = Triangulation.get_object_position(wall_length, left_object_bot, right_object_bot)
+            if result:
+                all_possible_points_bot.append(TwoCameraPoint(left_object_bot, right_object_bot, pointXY))
+    all_possible_points_top = []
+    for left_object_top in object_angles_from_top_left:
+        for right_object_top in object_angles_from_top_right:
+            result, pointXY = Triangulation.get_object_position(wall_length, left_object_top, right_object_top, reverse=True)
+            if result:
+               all_possible_points_top.append(TwoCameraPoint(left_object_top, right_object_top, pointXY))
+    
+    unique_point_list = UniquePointList()
+    for possible_point_bot in all_possible_points_bot:
+        for possible_point_top in all_possible_points_top:
+            if(abs(possible_point_bot.value[0] - possible_point_top.value[0] < tolerence) and abs(possible_point_bot.value[1] - possible_point_top.value[1] < tolerence)):
+                unique_point_list.add_point(FourCameraPoint(possible_point_bot, possible_point_top, [(possible_point_bot.value[0] + possible_point_top.value[0]) / 2, (possible_point_bot.value[1] + possible_point_top.value[1]) / 2]))
+    return True, unique_point_list
+```
+
+```py
+class TwoCameraPoint:
+    def __init__(self, angle_gauche, angle_droit, value):
+        self._angle_gauche = angle_gauche
+        self._angle_droit = angle_droit
+        self._value = value
+
+    @property
+    def angle_gauche(self):
+        return self._angle_gauche
+
+    @property
+    def angle_droit(self):
+        return self._angle_droit
+
+    @property
+    def value(self):
+        return self._value
+```
+
+```py
+from two_camera_point import TwoCameraPoint
+
+class FourCameraPoint:
+    def __init__(self, point_bot: TwoCameraPoint, point_top: TwoCameraPoint, value):
+        self._point_bot = point_bot
+        self._point_top = point_top
+        self._value = value
+
+    @property
+    def point_bot(self):
+        return self._point_bot
+
+    @property
+    def point_top(self):
+        return self._point_top
+    
+    @property
+    def value(self):
+        return self._value
+    
+    def compare_points(self, fourCameraPoint):
+
+        if self.point_bot.angle_gauche == fourCameraPoint.point_bot.angle_gauche or self.point_bot.angle_droit == fourCameraPoint.point_bot.angle_droit:
+            return True
+        
+        if self.point_top.angle_gauche == fourCameraPoint.point_top.angle_gauche or self.point_top.angle_droit == fourCameraPoint.point_top.angle_droit:
+            return True
+        
+        return False
+```
+
+```py
+from four_camera_point import FourCameraPoint
+
+class UniquePointList:
+    def __init__(self):
+        self._points = []
+
+    def add_point(self, fourCameraPoint : FourCameraPoint):
+        for point in self._points:
+            if fourCameraPoint.compare_points(point):
+                return False
+        
+        self._points.append(fourCameraPoint)
+        return True
+    
+    @property
+    def points(self):
+        return self._points
+
+    def __repr__(self):
+        return f"UniquePointList(points={self.points})"
+```
+
+### Calibration
+
+L'objectif de la calibration est d'avoir le bon positionnement des caméras afin de rendre la reconnaissance spatiale plus précise.
+
+#### Explication du modèle
+
+Pour la calibration de l'angle, les quatres caméras sont pointés vers le milieu de la pièce. L'objectif est que chaque camera capte la personne au milieu avec un angle de 0° relatif (45° réel).
+
+Pour la calibration de la distance, l'objetif est d'avoir la hauteur de la bbox (bounding box) de l'utilisateur similaire sur chaque camera. Cela permettra de savoir que toutes les caméras sont à une distance similaire de la personne. 
+
+![Calibration](./ressources/images/calibration.png)
+
+##### Récupération des données des caméras (Serveur central : database_client.py)
+
+Récupération des données des caméras depuis la base.
+
+```py
+def getCamerasByIdNetwork(self, id_network):
+    try:
+        self.cursor.execute("SELECT * FROM Cameras WHERE idNetwork = %s", (id_network,))
+        results = self.cursor.fetchall()
+        if results:
+            return True, results
+        else:
+            return False, None
+    except Exception as e:
+        print(f"Error: {e}")
+        return False
+```
+
+##### Route (Serveur central : app.py)
+
+La route est sécurisée par la fonction décoratrice `@JwtLibrary.API_token_required`.
+
+1. Récupération de la liste des caméras
+2. Parsing des données en instances d'objet `camera`
+3. Tentative de récupération des images depuis chaque camera
+4. Calcul de l'angle et des tailles
+
+```py
+@JwtLibrary.API_token_required
+def calibration(self):
+    idNetwork = request.args.get('idNetwork')
+    if not idNetwork:
+        return jsonify({'error': 'Network ID is required'}), 400
+    response = []
+    result, response = self.db_client.getCamerasByIdNetwork(idNetwork)
+    if not result:
+        return jsonify({'error': 'Camera not found'}), 404
+    cameras_angles = []
+    for data in response:
+        camera = Camera(data[0], data[1], data[2], data[3], data[4], data[5], data[6], None, None)
+        resultImg, responseImg = CameraServerClient.getCameraImage(camera.ip, camera.jwt)
+        if resultImg:
+            angles_and_sizes = self.spaceRecognition.get_persons_angles_with_size(responseImg, 62.2)
+            cameras_angles.append({
+                'camera_ip': camera.ip,
+                'angles_and_sizes': [{'angle': float(angle), 'size_y': float(size_y)} for angle, size_y in angles_and_sizes]
+            })
+    return jsonify(cameras_angles), 200
+```
+
+##### Récupération de l'angle des personnes dans l'image avec la taille des personnes (Serveur Central : space_recognition.py)
+
+1. Retourne une la liste des position et des tailles des personnes dans les frame des caméras.
+    - Pour les tailles, on calcule la différence entre le point **y2** et **y1**.
+
+
+```py
+def get_persons_angles_with_size(self, frame, fov):
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = self.model(frame_rgb)
+    angles_and_sizes = []
+    for det in results.xyxy[0].cpu().numpy():
+        x1, y1, x2, y2, conf, cls = det
+        if cls == 0:
+            center_x = (x1 + x2) / 2
+            angle = (center_x - frame.shape[1] / 2) / frame.shape[1] * fov
+            size_y = y2 - y1
+            angles_and_sizes.append((angle, size_y))
+    return angles_and_sizes
+```
+
+##### Récupération des images capturés par les caméras (Serveur central : camera_server_client.py)
+
+```py
+@staticmethod
+def getCameraImage(ip, jwt):
+    url = f"http://{ip}:{CameraServerClient.__CAMERAS_SERVER_PORT}/image"
+    params = {'token': jwt}
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        image_data = np.frombuffer(response.content, np.uint8)
+        image = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
+        if image is not None:
+            return True, image
+        else:
+            print("Failed to decode image")
+            return False, None
+    else:
+        print(f"Failed to get image from camera: {response.status_code}")
+        return False, None
+```

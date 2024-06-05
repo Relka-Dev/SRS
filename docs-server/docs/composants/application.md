@@ -33,6 +33,10 @@ Codename:       mantic
 
 ![Architercture de l'application](../ressources/diagrams/application.jpg)
 
+##### Diagramme UML
+
+![Architercture de l'application](../ressources/diagrams/applicationuml.png)
+
 
 
 

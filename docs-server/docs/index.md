@@ -1,8 +1,7 @@
 # Documentation : Système de reconnaissance Spatiale
 Le SRS (Système de Reconnaissance Spatiale) est un projet destiné à localiser les individus dans un environnement 3D et à présenter visuellement leur position en 2D en utilisant des caméras et des technologies de reconnaissance faciale.
 
-
-![](./ressources/images/logo.png)  
+![logo](./ressources/images/logo.png)  
 
 ## Informations
 
@@ -126,9 +125,11 @@ Ce diagramme représente un administrateur qui se connecte ou qui met en place l
 5. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
 
 
-### Fonctionnalité 3 : Gestion des utilisateurs
+### Fonctionnalité 3 : Ajout d'utilisateurs
 
-**Description :** Cette fonctionnalité concerne la gestion des utilisateurs dans la base de données du Serveur Central, y compris l'ajout, la modification et l'initialisation de l'administrateur. Elle implique également une interface utilisateur dans l'application pour permettre ces opérations.
+**Description :** Cette fonctionnalité concerne l'ajout des utilisateurs dans la base de données. Permetttant de stocker les nom, le type et les encodages faciaux des utilisateurs.
+
+
 
 ### Fonctionnalité 5 : Connectivité et Interaction Application-Serveur
 

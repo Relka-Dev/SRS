@@ -69,11 +69,18 @@ class AddUserWindow(Screen):
 
         result_encodings, face_encodings = LibFaceRecognition.get_face_encodings(self.get_picture())
 
+        if not result_encodings:
+            self.ids.add_user_button.text = f"{face_encodings} Veuillez cliquer réessayer"
+
         username = self.ids.username_textInput.text
         
         if result_function and result_encodings:
             result, response = self.server_client.add_user(username, id_function, face_encodings)
-            print(response)
+
+            if result:
+                self.ids.add_user_button.text = f"{response['message']} Veuillez cliquer pour ajouter une autre personne"
+            else:
+                self.ids.add_user_button.text = f"{response['erreur']} Veuillez cliquer réessayer"
 
 
 

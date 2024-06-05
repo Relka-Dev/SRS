@@ -52,6 +52,73 @@ Pour accèder à la documentation de chaque composant, cliquez sur leurs titres.
   - Connexion au serveur par scan des ports réseau
 
 
+## Rappel du cahier des charges
+
+Cette partie vise à résumer le cahier des charges effectué lors du travail de semestre au cours des deux premiers trimestres de ma seconde année en technicien.
+
+### Diagramme complet du projet
+
+![Diagramme complet](./ressources/diagrams/DiagrammeComplet.png)
+
+### Cas d'utilisation
+
+Après avoir travaillé dans le domaine de la sécurité, j'ai identifié une application utile pour ce système, notamment dans la gestion de l'accès aux événements privés ou aux manifestations sur invitation. Il est essentiel de connaître la position des employés, des visiteurs et d'identifier les intrus sur le stand d'une marque de luxe. Mon projet vise à automatiser cette solution.
+
+### Problèmes Potentiels
+
+| Problèmes Potentiels    | Solutions                                                                                     |
+|-------------------------|-----------------------------------------------------------------------------------------------|
+| Puissance de Calcul     | Utilisation d'un serveur puissant pour gérer les flux vidéo.                                  |
+| Système de Détection    | Solutions pour la détection en cas de vue obstruée ou de visage partiellement visible.         |
+| Approches Algorithmiques| Développement d'algorithmes complexes pour la détection et l'identification en temps réel.     |
+
+### Analyse de l'existant
+
+Recherche de projets similaire afin de trouver des aspects d'inspiration ou/et d'inspiration.
+
+#### Multi Camera People Tracking
+
+Ce projet vise à améliorer les système de surveillance existants en utilisant plusieurs caméras pour suivre et identifier les individus de manière unique.
+
+#### Technologies Utilisées
+
+- **YOLOv4-tiny** : Utilisé pour la détection d'objets afin d'identifier les personnes dans les vidéos.
+- **Omni-Scale** : Employé pour la ré-identification des personnes, permettant de distinguer et suivre les mêmes individus à travers différentes caméras.
+- **OpenCV** et **PyTorch** : Utilisés pour le traitement vidéo et l'apprentissage profond.
+
+#### Fonctionnalités
+
+1. **Enregistrement Vidéo** : Les caméras de surveillance enregistrent le flux des lieux surveillés.
+2. **Analyse Vidéo** : Les flux vidéo sont analysées pour détecter et identifier les personnes.
+3. **Étiquetage des Individus** : Chaque personne détectée est étiquetée avec un identifiant unique.
+4. **Suivi Continu** : Les informations sont agrégées pour permettre un suivi continu des individus à travers plusieurs caméras.
+
+#### Liens avec SRS
+Le projet n'utilise pas la triangulation ni la reconnaissance faciale avec la librairie face_recognition. Cependant, il utilise des modèles comme YoloV4 permettant de faire le tracking, ce qui est similaire à mon projet.
+
+[Dépôt Github](https://github.com/hafidh561/multi-camera-people-tracking)
+
+### Composant 1 : Caméras Wifi
+
+Le système vise à mettre en place des caméras WiFi compactes et personnalisables pour la surveillance ou pour d'autres applications nécessitant la capture et la diffusion en temps réel de flux vidéo. Le cœur du système, un Raspberry Pi Zero 2 W, exécute un serveur Python Flask.
+
+![Diagramme Camera Wifi](./ressources/diagrams/CameraWifi.png)
+
+### Composant 2 : Serveur
+
+Le système de serveur central vise à centraliser la surveillance en recevant et en traitant les flux vidéo de caméras WiFi dispersées dans un environnement surveillé. Ses objectifs principaux sont d'assurer une sécurité renforcée grâce à un chiffrement symétrique, de détecter et de reconnaître les personnes dans les flux vidéo, d'offrir une interface en http pour visualiser en temps réel les flux vidéo et les informations sur les personnes détectées et de faciliter l'intégration avec d'autres systèmes via des API.
+
+#### Sécurité
+La sécurité de l'API se fera par le système d'utilisateur de la base de données. Quand un utilisateur se connecte, tous les appels à l'API se font avec son nom d'utilisateur et son mot de passe chiffré en SHA256. Ensuite, un JWT est crée pour la durée de la session puis détruit lors de la déconnexion.
+
+![Diagramme Serveur Central](./ressources/diagrams/serveur.png)
+
+#### Composant 3 : Application
+
+L'application est l'interface que possède l'utilisateur final avec le système. Il se connecte automatiquement au serveur et permet d'en manipuler les information en tant que client API. Il permet également d'accèder aux fonctionnalités tel que la reconnaissance spatiale.
+
+![Diagramme Application](./ressources/diagrams/ApplicationMultiplateforme.png)
+
 ## Analyse fonctionnelle
 
 Pour l'analyse fonctionnelle, je me suis placé du point de vue de l'utilisateur. L'objectif est de comprendre les différentes fonctionnalités sans rentrer dans les détails techniques.

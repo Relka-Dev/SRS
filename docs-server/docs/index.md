@@ -1261,4 +1261,28 @@ def get_object_position(wall_length, object_angle_from_left, object_angle_from_r
         return True, [position_x, position_y]
 ```
 
+#### Récupération de la position de plusieurs objets (triangulation.py : get_objets_positions)
 
+Cette fonctionnalité permet de récupérer la position de plusieurs objets dans un espace en utilisant quatres caméras.
+
+##### Problèmatique avec deux caméras
+
+Pour déterminer la position d'une personne dans un espace avec deux caméras, on utilise le point d'indersection entre les deux angles captés par les caméras.
+
+Le problème c'est que quand il y a plus d'une personne, le nombre d'interséction possible est de $x^2$ pour $x$ étant le nombre de personnes détectées.
+
+Dans cet exemple, deux personnes sont détectés (point vert et rouge), par conséquent, deux autres points sont présents mais sont incorrects (points noirs).
+
+En ajoutant un second set de camera avec lequel on effectue également la triangulation, cela permet de confirmer la position des personnes.
+
+Dans ce schema, la première pièce représente les positions captés par les caméras du sud, sur le second, on voit les positions captés par les caméras du nord. Sur la dernière pièce rassemble tous les points. 
+
+On peut voir que les points réels sont captés par les deux set de caméra. Ce qui permet de les discerner.
+
+![multiple triangulation problem](./ressources/images/multiple-triangulation-problem.png)
+
+##### Solution
+
+Pour trouver la position des personnes
+
+![Multiple triangulation de triangulation](./ressources/images/multiple-triangulation-solution.png)

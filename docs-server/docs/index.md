@@ -544,9 +544,70 @@ La page d'ajout d'utilisateur permet d'ajouter les données d'un individus dans 
 2. Type de personne (Employé, dangereux, etc.)
 3. Données faciales
 
+#### Interface graphique (app.kv)
+
 <p align="center">
   <img src="./ressources/videos/addUser.gif">
 </p>
+
+```
+<AddUserWindow>:
+    name: "addUser"
+
+    FloatLayout:
+        GridLayout:
+            cols: 3
+            size_hint: 1, 0.1  
+            pos_hint: {'top': 1} 
+
+            Button:
+                text: "<- Retour"       
+                on_release:
+                    app.root.current = "navigationFaceManagement" 
+                    root.manager.transition.direction = "right"
+
+            Label:
+                text: "Ajout de personnes"
+                bold: True
+
+            Image:
+                source: 'Ressources/logo.png'
+
+        GridLayout:
+            cols: 1
+            size_hint_y: 0.9
+
+            Camera:
+                id: qrcam
+                play: False
+                resolution: (640, 480)
+
+            GridLayout:
+                cols: 1
+
+                Button:
+                    id: camera_button
+                    text: "Prendre une photo"       
+                    on_release: 
+                        root.camera_button_pressed()
+                        root.enable_add_button()
+
+                TextInput:
+                    id: username_textInput
+                    hint_text: "Nom de la personne"
+                    on_text: root.enable_add_button()
+                Spinner:
+                    id: function_spinner
+                    text: "Sélectionnez une fonction"
+                    values: ["Erreur lors de la récupération des fonctions"]
+                    on_text: root.enable_add_button()
+                Button:
+                    id: add_user_button
+                    text: "Ajouter l'utilisateur"
+                    on_release: root.add_user_button_pressed()
+                    disabled: True
+                    bold: True
+```
 
 #### Récupération du type de personnes
 
@@ -638,22 +699,24 @@ def add_user_button_pressed(self):
 
 ##### Application : LibFaceRecognition
 
-Cette fonction permet de récupérer les données faciale dans une iamge, s'il y a plus de un visage présent, alors elle retourne faux car elle ne peut pas déterminer lequel choisir. Si aucun visage n'est détecté, retourne faux également.
+Cette fonction permet de récupérer les données faciale dans une iamge, s'il y a plus de un visage présent, alors elle retourne faux car elle ne peut pas déterminer lequel choisir. Si aucun visage n'est détecté, la fonction retourne faux également.
+
+Les encodages des visages sont stockés en base64 pour des quesitons de stockage dans la base de données.
 
 ```py
 @staticmethod
 def get_face_encodings(image):
-    """
-    Récupère les données faciales de la personne dans l'image
-    """
     face_locations = face_recognition.face_locations(image)
     face_encodings = face_recognition.face_encodings(image, face_locations)
-    if len(face_encodings) < 1:
+    if len(face_encodings) == 1:
+        # Convert the encodings to a list of floats and then to a base64 string
+        encodings_json = json.dumps(face_encodings[0].tolist())
+        encodings_base64 = base64.b64encode(encodings_json.encode('utf-8')).decode('utf-8')
+        return True, encodings_base64
+    elif len(face_encodings) < 1:
         return False, "Aucun visage détecté."
-    elif len(face_encodings) > 1:
+    else:
         return False, "Trop de visages détectés, veuillez vous isoler."
-
-    return True, face_encodings
 ```
 
 ##### Application : ServerClient
@@ -781,6 +844,227 @@ def addUser(self, idPersonType, encodings, username):
     except Exception as e:
         print(f"Error: {e}")
         return False, f"Impossible d'ajouter l'utilisateur : {e}"
+```
+
+### Gestion des fonctionnalités
+
+Les fonctionnalités sont des script externes accédés depuis l'application par subprocess. Les dépendances externes tel que les liens vers les caméras wifi ou les données faciles sont passés par paramètre.
+
+#### Emplacement dans le projet
+
+![Subprocess](./ressources/images/subprocess.png)
+
+#### Interface graphique (app.kv)
+
+1. Le text input permet de renseigner la taille du mur.
+2. Le bouton `Système de reconnaissance spatiale` lance la fonctionnalité de reconnaissance spatiale avec la reconnaissance faciale.
+3. Le bouton `Angle Camera` affiche les angles des personnes dans la frame captée par une cameras.
+4. Le bouton `Deux Cameras`, permet de faire la reconnaissance spatiale avec une seule personne.
+5. Le bouton `Quatres Cameras`, fait la triangulation avec les camera du nord et du sud.
+6. Le bouton `Reconnaissance faciale` est désactivé car il m'est impossible de désactiver la caméra utilisée dans l'application. En effet, c'est un bug comme vous pouvez le constater [ici](https://www.reddit.com/r/kivy/comments/15tq5aq/fixing_camera/).
+
+![room Window](./ressources/images/room_window.png)
+
+**Implémentation kivy**
+
+```
+<RoomWindow>:
+    name: "room"
+
+    FloatLayout:
+        GridLayout:
+            cols: 3
+            size_hint: 1, 0.1
+            pos_hint: {'top': 1}
+
+            Button:
+                text: "<- Retour"
+                on_release:
+                    app.root.current = "main"
+                    root.manager.transition.direction = "right"
+
+            Label:
+                text: "Système de reconnaissance spatiale"
+                bold: True
+
+            Image:
+                source: 'Ressources/logo.png'
+        
+        GridLayout:
+            cols: 1
+            size_hint_y: 0.9
+            pos_hint: {'top': 0.9}
+
+            GridLayout:
+                cols: 2
+
+                Label:
+                    text: "Taille du mur"
+                
+                TextInput:
+                    id: size_textInput
+
+            Button:
+                text: "Système de reconnaissance Spatiale"
+                on_release:
+                    bold: True
+                    # Ajouter ici le code pour gérer l'action du bouton
+                    root.run_spatial_recognition_system()
+
+            Label:
+                text: "Prototypes"
+
+            GridLayout:
+                cols: 2
+
+                Button:
+                    text: "Angle Camera"
+                    on_release:
+                        # Ajouter ici le code pour gérer l'action du bouton
+                        root.run_angle_camera()
+
+                Button:
+                    text: "Deux cameras"
+                    on_release:
+                        # Ajouter ici le code pour gérer l'action du bouton
+                        root.run_two_cameras()
+
+            GridLayout:
+                cols: 2
+
+                Button:
+                    text: "Quatres cameras"
+                    on_release:
+                        # Ajouter ici le code pour gérer l'action du bouton
+                        root.run_four_cameras()
+                
+                Button:
+                    text: "Reconnaissance faciale"
+                    disabled: True
+                    on_release:
+                        # Ajouter ici le code pour gérer l'action du bouton
+                        root.run_face_recognition()
+```
+
+#### Implémentation (application : room_window.py)
+
+**Création des paramètres**
+
+1. Recherche des cameras
+2. Création du lien des caméras
+    - Ajout de l'adresse ip ainsi que du JWT
+3. Ajout de la taille du mur en paramètre
+4. Ajout du lien vers l'api des données faciale
+    - On ne peut pas les transmettre direcement dans les paramètre pour des questions de taille et de format.
+
+Les autres fonctionnalités ont un schema de fonctionnement similaire mais avec moins de paramètres.
+
+**Appel du subprocess (_run_subprocess_script)**
+
+1. S'il y a des paramètres supplémentaires dans la fonction (cameras, wall_size, api_link), on les ajoute dans les paramètres du subprocess.
+2. On lance le subprocess avec le script_path et les paramètres.
+
+**Légende**
+
+| Fonction         | Couleur de Flèche  |
+|------------------|-----------------|
+| subprocess       |  Bleue    |
+| Appel API        |  Rouge    |
+
+
+![](./ressources/images/subrocess-parameters.png)
+
+```py
+from kivy.app import App
+from kivy.uix.screenmanager import ScreenManager, Screen 
+import os
+import subprocess
+from Classes.room import Room
+
+class RoomWindow(Screen):
+
+    def on_enter(self):
+        super().on_enter()
+        self.app = App.get_running_app()
+        self.server_client = self.app.get_server_client()
+        result, self.cameras = self.server_client.get_cameras()
+
+    def run_angle_camera(self):
+        camera_url = f"http://{self.cameras[0].ip}:4298/video?token={self.cameras[0].jwt}"  # Remplacez ceci par l'URL de votre caméra
+        self._run_subprocess_script('../srs-proto/single-camera-angle.py', [camera_url])
+    
+    def run_face_recognition(self):# Remplacez ceci par l'URL de votre caméra
+        self._run_subprocess_script('../srs-proto/reconnaissance_faciale.py')
+
+    def run_two_cameras(self):
+        camera_url1 = f"http://{self.cameras[0].ip}:4298/video?token={self.cameras[0].jwt}"
+        camera_url2 = f"http://{self.cameras[1].ip}:4298/video?token={self.cameras[1].jwt}"
+        self._run_subprocess_script('../srs-proto/dual-camera.py', [camera_url1, camera_url2])
+
+    def run_four_cameras(self):
+        cameras_urls = []
+
+        for i in range(4):
+            cameras_urls.append(f"http://{self.cameras[i+1].ip}:4298/video?token={self.cameras[i+1].jwt}")
+
+        self._run_subprocess_script('../srs-proto/quad-camera.py', cameras_urls)
+
+    def run_spatial_recognition_system(self):
+        wall_size = self.ids.size_textInput.text
+        room = Room()
+
+        api_link = self.server_client.get_users_link()
+
+        for camera in self.cameras:
+            match camera.idWall:
+                case 1:
+                    room.set_top_left(camera)
+                case 2:
+                    room.set_top_right(camera)
+                case 3:
+                    room.set_bottom_left(camera)
+                case 4:
+                    room.set_bottom_right(camera)
+
+        camera_urls = [
+            f"http://{room.get_bottom_left().ip}:4298/video?token={room.get_bottom_left().jwt}",
+            f"http://{room.get_bottom_right().ip}:4298/video?token={room.get_bottom_right().jwt}",
+            f"http://{room.get_top_left().ip}:4298/video?token={room.get_top_left().jwt}",
+            f"http://{room.get_top_right().ip}:4298/video?token={room.get_top_right().jwt}"
+        ]
+            
+        self._run_subprocess_script('../srs-proto/srs-face_recognition.py', camera_urls, wall_size, api_link)
+
+    def _run_subprocess_script(self, script_path, cameras=None, wall_size=None, api_link=None):
+        abs_script_path = os.path.abspath(script_path)
+        
+        print(f"Tentative d'exécution du script : {abs_script_path} avec les paramètres : {cameras}")
+
+        file_exists = os.path.exists(abs_script_path)
+        
+        if file_exists:
+            try:
+                command = ["python", abs_script_path]
+                
+                if cameras != None:
+                    for i, param in enumerate(cameras):
+                        command.extend([f'--camera_url{i+1}', param])
+                
+                if wall_size != None:
+                    command.extend([f'--wall_size', wall_size])
+                
+                if api_link != None:
+                    command.extend([f'--api_link', api_link])
+
+                result = subprocess.run(command, capture_output=True, text=True)
+                print(f"Sortie du script : {result.stdout}")
+                print(f"Erreurs du script : {result.stderr}")
+                
+
+            except Exception as e:
+                print(f"Erreur lors de l'exécution du script : {e}")
+        else:
+            print("Le fichier spécifié n'existe pas.")
 ```
 
 ### Système de reconnaissance spatiale 
@@ -1477,6 +1761,8 @@ class UniquePointList:
 ```
 
 ##### Tests unitaires (srs-proto : test_triangulation.py)
+
+Les tests unitaires sont écrits sous [PyTest](https://docs.pytest.org/en/8.2.x/) et permettent de vérifier le fonctionnement des calculs mathématiques.
 
 ```py
 import pytest

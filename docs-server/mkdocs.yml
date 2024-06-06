@@ -3,9 +3,12 @@ site_author: Karel Vilém Svoboda
 site_description: Documentation technique du Système de Reconnaissance Spatiale
 copyright: Copyright &copy; 2023 - 2024 Karel Vilém Svoboda / CFPT Informatique
 
-
 theme:
   name: 'material'
+
+extra_css:
+  - 'pdf_custom.css'
+  - https://unpkg.com/katex@0/dist/katex.min.css
 
 nav:
   - Accueil: 'index.md'
@@ -30,5 +33,27 @@ plugins:
       cover_title: 'Système de Reconnaissance Spatiale'
       cover_subtitle: 'Projet de diplôme Technicien ES 2024'
       cover_author: 'Karel Vilém Svoboda'
-      cover_date: 'Mai 2024'
-      version: '1.0'  
+      cover_date: 'Juin 2024'
+      version: '1.0'
+      css:
+        - 'pdf_custom.css'
+
+extra_javascript:
+  - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+  - https://unpkg.com/katex@0/dist/katex.min.js
+  - https://unpkg.com/katex@0/dist/contrib/auto-render.min.js
+
+markdown_extensions:
+  - pymdownx.extra
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.arithmatex:
+      generic: true
+
+extra:
+  mathjax_config: |
+    MathJax.Hub.Config({
+      tex2jax: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+    });

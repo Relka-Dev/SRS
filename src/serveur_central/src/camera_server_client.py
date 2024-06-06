@@ -26,13 +26,13 @@ class CameraServerClient:
         if not cameraIPs:
             return None
     
-        tokens_for_ip = {}
+        tokens_for_ip = []
         for cameraip in cameraIPs:
             camera_url = f"http://{cameraip}:{self.__CAMERAS_SERVER_PORT}/login"
             response = requests.get(camera_url, auth=(self.__CLIENT_USERNAME, self.__CLIENT_PASSWORD))
     
             if response.status_code == 200:
-                tokens_for_ip[cameraip] = response.json().get('token')
+                tokens_for_ip.append([cameraip, response.json().get('token')])
             else:
                 print(f"Échec de l'obtention du token JWT pour l'ip : {cameraip}:", response.status_code)
     

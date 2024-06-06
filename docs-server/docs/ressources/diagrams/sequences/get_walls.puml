@@ -1,0 +1,40 @@
+@startuml
+
+participant "CameraManagementWindow" as CMW
+participant "ServerClient" as SC
+participant "App"
+participant "DataBaseClient" as DBC
+participant "Database" as DB
+
+activate CMW
+
+CMW -> CMW : Thread(target=self.get_walls)
+activate SC
+
+CMW -> SC : get_walls()
+activate App
+
+SC -> App : Http request: /walls\nParams: JWT
+App -> DBC : getWalls()
+activate DBC
+
+DBC -> DB : SQL Query\nSELECT * FROM Walls
+activate DB
+
+DB -> DBC : SQL Response\nPerson All walls data
+deactivate DB
+
+DBC -> App : Returns: Wall data
+deactivate DBC
+
+App -> SC : Http Response\nCode: 200
+deactivate App
+
+SC -> CMW : For each wall data ->\n setattr(self.ids.cameras_spinner, 'values', [])
+deactivate SC
+
+
+deactivate CMW
+
+
+@enduml

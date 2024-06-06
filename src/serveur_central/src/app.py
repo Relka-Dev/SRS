@@ -234,7 +234,6 @@ class ServeurCentral:
         # Vérification si le réseau n'existe pas
         # Recherche automatique de caméras, vérification la présence des caméras et ajout dans la base.
         if(not self.db_client.checkIfNetworkExists(ip)):
-            print(ip)
             return self.intialise_network_with_cameras(ip, subnetMask)
         
         cameras = self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)
@@ -283,11 +282,14 @@ class ServeurCentral:
 
         cameras_in_db = self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)
 
-        cameras_to_add = ServeurCentral.get_cameras_that_are_not_in_database(cameras_in_network, cameras_in_db)
+        cameras_to_add = ServeurCentral.get_cameras_that_are_not_in_database(tokens_for_ip, cameras_in_db)
+
+
+
         cameras_to_remove = ServeurCentral.get_cameras_that_are_not_in_network(cameras_in_network, cameras_in_db)
 
         if cameras_to_add:
-            self.db_client.addCamerasToNetwork(tokens_for_ip, networkId)
+            self.db_client.addCamerasToNetwork(cameras_to_add, networkId)
         if cameras_to_remove:
             self.db_client.deleteCamerasFromNetwork(cameras_to_remove, networkId)
 
@@ -315,19 +317,35 @@ class ServeurCentral:
 
     @staticmethod
     def get_cameras_that_are_not_in_database(network_cameras, database_cameras):
+        """
+        Cette fonction prend en entrée deux listes : une liste de caméras de réseau et une liste de caméras de base de données.
+        Elle retourne une liste des caméras de réseau qui ne sont pas présentes dans la base de données.
+
+        :param network_cameras: Liste des caméras de réseau. Chaque caméra est représentée par une liste contenant une adresse IP (IPv4Address) et un token.
+        :param database_cameras: Liste des caméras de la base de données. Chaque caméra est représentée par une liste contenant une adresse IP (IPv4Address) et un token.
+        :return: Liste des caméras de réseau qui ne sont pas dans la base de données. Chaque caméra est représentée par une liste contenant une adresse IP (str) et un token.
+        """
+
         result_camera_list = []
+
+        # Affectation des listes si aucune donnée n'est présente
         if network_cameras is None:
             network_cameras = []
         if database_cameras is None:
             database_cameras = []
 
-
-        pattern = r"'(.*?)'"
-        network_cameras = re.findall(pattern, str(network_cameras))
+        # Extraction des tokens des caméras dans la base de données pour les comparer
+        database_camera_tokens = [str(db_camera[1]) for db_camera in database_cameras]
 
         for network_camera in network_cameras:
-            if network_camera not in [db_camera[1] for db_camera in database_cameras]:
-                result_camera_list.append(network_camera)
+            ip_address_str = str(network_camera[0])
+            print(f"ip adress network: {ip_address_str}")
+            print(f"database data = {database_camera_tokens}")
+
+            if ip_address_str not in database_camera_tokens:
+                print("match")
+                result_camera_list.append([ip_address_str, network_camera[1]])
+
         return result_camera_list
 
     @staticmethod
@@ -343,7 +361,6 @@ class ServeurCentral:
 
         for database_camera in database_cameras:
             if database_camera[1] not in network_cameras:
-                print("match")
                 result_camera_list.append(database_camera)
         return result_camera_list
 
@@ -438,7 +455,7 @@ class ServeurCentral:
         # Recherche automatique des cameras
         loop = asyncio.new_event_loop()     
         asyncio.set_event_loop(loop)
-        cameras_in_network = loop.run_until_complete(self.cameraServerClient.lookForCameras())
+        # cameras_in_network = loop.run_until_complete(self.cameraServerClient.lookForCameras())
         loop.close()
         # Donne la liste des ip des cameras ainsi que leurs tokens
         tokens_for_ip = self.cameraServerClient.getCamerasTokens()

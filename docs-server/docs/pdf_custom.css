@@ -1,0 +1,27 @@
+/* pdf_custom.css */
+
+img {
+    max-height: 500px;
+    width: auto;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.katex {
+    font-family: 'KaTeX_Main', 'Times New Roman', serif;
+}
+
+.katex-display {
+  display: block;
+  text-align: center;
+  margin: 1em 0;
+}
+
+.katex .katex-html {
+  display: inline-block;
+}
+
+.katex .katex-mathml {
+  display: none;
+}

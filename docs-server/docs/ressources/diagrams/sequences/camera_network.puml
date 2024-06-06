@@ -1,0 +1,48 @@
+@startuml
+actor User
+participant "CameraManagementWindow" as CMW
+participant "ServerClient" as SC
+participant "CameraServerClient" as CSC
+participant "NetworkScanner" as NS
+participant "Camera" as CAM
+
+User -> CMW : Initialize network with cameras
+CMW -> SC : intialise_network_with_cameras(ip, subnetMask)
+activate SC
+
+SC -> CSC : Initialize CameraServerClient(ip, subnetMask)
+activate CSC
+
+SC -> CSC : lookForCameras()
+activate NS
+
+NS -> NS : scan_ips(self.__CAMERAS_SERVER_PORT)
+NS -> CAM : check_port(ip, port)
+CAM --> NS : Response (Port status)
+deactivate CAM
+
+NS -> SC : Return camerasIPs
+deactivate NS
+
+SC -> CSC : getCamerasTokens()
+activate CAM
+
+loop for each cameraIP in camerasIPs
+    CSC -> CAM : requests.get(camera_url, auth)
+    alt Token received
+        CAM --> CSC : response.json().get('token')
+    else Token not received
+        CAM --> CSC : response.status_code
+    end
+end
+deactivate CAM
+
+CSC --> SC : Return tokens_for_ip
+deactivate CSC
+
+SC -> CMW : Return Camera List
+deactivate SC
+
+User -> CMW : Display Camera List
+
+@enduml

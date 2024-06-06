@@ -1,0 +1,176 @@
+@startuml
+
+participant "CameraManagementWindow" as CMW
+participant "ServerClient" as SC
+participant "CameraServerClient" as CSC
+participant "App"
+participant "DataBaseClient" as DBC
+participant "Database" as DB
+
+activate CMW
+
+CMW -> CMW : Thread(target=self.get_cameras)
+activate SC
+
+CMW -> SC : get_cameras()
+activate App
+
+SC -> App : Http request: /cameras\nParams: JWT ip subnetMask
+
+App -> DBC : getNetworkIdByIpAndSubnetMask(ip, subnetMask)
+activate DBC
+
+DBC -> DB : SQL Query\nSELECT idNetwork FROM Network WHERE ip = %s AND subnetMask = %s
+activate DB
+
+DB -> DBC : SQL Response\n Network id
+deactivate DB
+
+DBC -> App : Network id
+deactivate DBC
+
+alt Network does not exist
+    App -> DBC : checkIfNetworkExists(ip)
+    activate DBC
+
+    DBC -> DB : SQL Query\nSELECT * FROM Network WHERE ip = %s
+    activate DB
+
+    DB -> DBC : SQL Response\nEmpty or Network Data
+    deactivate DB
+
+    DBC -> App : Network does not exist
+    deactivate DBC
+
+    App -> CSC : initialize_network_with_cameras(ip, subnetMask)
+    activate CSC
+
+    CSC -> CSC : lookForCameras()
+    CSC -> CSC : getCamerasTokens()
+    deactivate CSC
+
+    App -> DBC : addNetwork(ip, subnetMask)
+    activate DBC
+
+    DBC -> DB : SQL Insert\nINSERT INTO Network (ip, subnetMask) VALUES (%s, %s)
+    activate DB
+
+    DB -> DBC : SQL Response\nSuccess
+    deactivate DB
+
+    DBC -> App : Network Added
+    deactivate DBC
+
+    App -> DBC : addCameras(cameras, networkId)
+    activate DBC
+
+    DBC -> DB : SQL Insert\nINSERT INTO Cameras (ip, idNetwork, JWT) VALUES (%s, %s, %s)
+    activate DB
+
+    DB -> DBC : SQL Response\nSuccess
+    deactivate DB
+
+    DBC -> App : Cameras Added
+    deactivate DBC
+end
+
+App -> DBC : getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)
+activate DBC
+
+DBC -> DB : SQL Query\nSELECT * FROM Cameras c JOIN Network n ON c.idNetwork = n.idNetwork WHERE n.ip = %s AND n.subnetMask = %s
+activate DB
+
+DB -> DBC : SQL Response\n Camera List
+deactivate DB
+
+DBC -> App : Returns: Camera List
+deactivate DBC
+
+alt No cameras in network
+    App -> CSC : initialize_cameras_in_network(ip, subnetMask)
+    activate CSC
+
+    CSC -> CSC : lookForCameras()
+    CSC -> CSC : getCamerasTokens()
+    deactivate CSC
+
+    App -> DBC : addCamerasToNetwork(cameras, networkId)
+    activate DBC
+
+    DBC -> DB : SQL Insert\nINSERT INTO Cameras (ip, idNetwork, JWT) VALUES (%s, %s, %s)
+    activate DB
+
+    DB -> DBC : SQL Response\nSuccess
+    deactivate DB
+
+    DBC -> App : Cameras Added
+    deactivate DBC
+end
+
+alt JWT tokens need update
+    App -> DBC : areTheCamerasInTheNetworkInNeedOfAnUpdate(networkId)
+    activate DBC
+
+    DBC -> DB : SQL Query\nSELECT lastUpdate FROM Network WHERE idNetwork = %s
+    activate DB
+
+    DB -> DBC : SQL Response\nTimestamp
+    deactivate DB
+
+    DBC -> App : Needs update
+    deactivate DBC
+
+    loop Update each camera token
+        App -> DBC : getByIdCameras(cameraId)
+        activate DBC
+
+        DBC -> DB : SQL Query\nSELECT * FROM Cameras WHERE idCamera = %s
+        activate DB
+
+        DB -> DBC : SQL Response\nCamera Data
+        deactivate DB
+
+        DBC -> App : Returns: Camera Data
+        deactivate DBC
+
+        App -> CSC : getCameraToken(cameraIp)
+        activate CSC
+
+        CSC -> CSC : Request new token from camera
+        deactivate CSC
+
+        App -> DBC : updateCameraToken(cameraId, token)
+        activate DBC
+
+        DBC -> DB : SQL Update\nUPDATE Cameras SET JWT = %s WHERE idCamera = %s
+        activate DB
+
+        DB -> DBC : SQL Response\nSuccess
+        deactivate DB
+
+        DBC -> App : Token Updated
+        deactivate DBC
+    end
+
+    App -> DBC : refreshNetworkTimestamp(networkId)
+    activate DBC
+
+    DBC -> DB : SQL Update\nUPDATE Network SET lastUpdate = CURRENT_TIMESTAMP WHERE idNetwork = %s
+    activate DB
+
+    DB -> DBC : SQL Response\nSuccess
+    deactivate DB
+
+    DBC -> App : Timestamp Updated
+    deactivate DBC
+end
+
+App -> SC : Http Response\nCode: 200\nBody: Camera List
+deactivate App
+
+SC -> CMW : For each camera data ->\n setattr(self.ids.cameras_spinner, 'values', camera data)
+deactivate SC
+
+deactivate CMW
+
+@enduml

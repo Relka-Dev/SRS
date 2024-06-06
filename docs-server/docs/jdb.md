@@ -4007,12 +4007,17 @@ Les améliorations sont visible et le support fonctionne bien pour une version e
 
 1. Viser la camera ainsi que le Raspberry sur le support directement.
 2. Trouver une façon de fixer la batterie de façon plus professionnelle.
-3. Fermer le support sur le haut pour protéger le Raspberry.
+3. Fermer le support sur le haut pour protéger le Raspberry. 
 
-![](./ressources/images/support-v0.2a.jpg)
-![](./ressources/images/support-v0.2b.jpg)
-![](./ressources/images/support-v0.2c.jpg)
-![](./ressources/images/support-v0.1d.jpg)
+![](./ressources/images/support-v0.2a.jpg){: style="max-height:200px;"}
+
+
+![](./ressources/images/support-v0.2b.jpg){: style="max-height:200px;"}
+
+![](./ressources/images/support-v0.2c.jpg){: style="max-height:200px;"}
+
+![](./ressources/images/support-v0.1d.jpg){: style="max-height:200px;"}
+
 
 ### Conslusion
 Aujourd'hui j'ai réussi à avoir un support assez satisfaisant pour la suite de mon développement. J'ai effectué également mon rendu intermédiaire, demain je vais effectuer mon auto-évaluation.
@@ -4498,7 +4503,7 @@ $ɑ₁ = \frac{90}{2} + \alpha$
 
 Pour trouver le dernier angle de la personne vis à vis des caméras, il suffit de complèter les angles du triangle.
 
-$ϑ₁ = 180 - $ɑ₁ - β₁
+ϑ₁ = 180 - $ɑ₁ - β₁
 
 ![](./ressources/images/triangle_camera_personne.jpg)
 
@@ -4517,7 +4522,10 @@ $a = \frac{c}{\sin(\gamma)} * \sin(\alpha)$
 
 À présent, nous avons un triangle rectangle, par conséquent on peut utiliser la trigonométrie.
 
-$\sin(\alpha) = \frac{opp}{hyp}$  
+$$
+\sin(\alpha) = \frac{\text{opp}}{\text{hyp}}
+$$
+
 
 $\sin(\alpha ₁) = \frac{y}{a₁}$  
 
@@ -5916,7 +5924,7 @@ Aujourd'hui je vais implémenter la reconnaissance faciale, j'ai un prototype me
 1. [SRS - Face Recognition](https://youtu.be/IvVYjrRSz2s)
 2. [SRS - Multiple Face Recognition](https://youtu.be/TRsDz8WGZxw)
 
-## 1.0 : Reconnaissance faciale dans les box
+### 1.0 : Reconnaissance faciale dans les box
 
 Ma première idée est que lorsqu'une personne est détectée, la zone de frame des cameras où se situe la personne est analysée par la reconnaissance faciale.
 
@@ -6088,3 +6096,255 @@ def process_frame(frame, model, fov):
             cv2.putText(frame, name, (int(x1), int(y2) + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
     return frame, angles, names
 ```
+
+#### 2.1 : Vérification de l'identité des personnes
+
+J'ai du trouver une façon de déterminer l'identidé de la personnes avec la reconnaissance faciale depuis les différentes cameras. Pour ce faire j'ai crée une fonction `get_name_per_index`.
+
+```py
+def get_name_per_index(name_list):
+    """
+    Met à jour les noms dans la liste avec un compteur d'index et retourne le nom avec la plus grande occurrence.
+
+    Args:
+        name_list: Liste des noms de personnes détectées.
+
+    Returns:
+        Le nom avec le plus grand nombre de correspondances. Si aucun nom n'est reconnu, retourne "Personne non reconnue".
+    """
+    name_counter = {}
+    updated_name_list = []  
+    
+    for name in name_list:
+        if name != "None" and name != "Unknown":
+            if name in name_counter:
+                name_counter[name] += 1
+            else:
+                name_counter[name] = 1
+
+            updated_name_list.append(f"{name}_{name_counter[name]}")
+    # Trouver le nom avec la plus grande correspondance
+    if(len(name_counter) > 0):
+        return max(name_counter, key=name_counter.get)
+    return "Personne non reconnue"
+```
+
+#### 2.2 Tests
+
+[SRS - Version 0.1](https://www.youtube.com/watch?v=RFYBNXF6DCQ)
+
+Pour conclure, ça fonctionne cependant il y a pas mal de lag, si j'ai le temps je vais optimiser cela mais je vais me concentrer à documenter mes fonctionnalités.
+
+### Conclusion
+
+J'ai réussi à développer la reconnaissance spatiale avec la reconnaissance faciale de façon dynamique.
+
+## 04.06.2024
+
+#### Bilan de la veille
+
+Hier j'ai implémenté la reconnaissance faciale dans la reconnaissance spatiale.
+
+#### Objectif du jour
+
+Je vais implémenter mes fonctionnalités dans l'application Kivy.
+
+### 1.0 : Implémentation des subprocess
+
+Je pense que j'ai plus le temps pour implémenter les focntionnalités directement dans Kivy, je recherche donc une façon de lancer un script depuis mon application. J'utilise les [subprocess](https://stackoverflow.com/questions/6945466/using-python-to-run-another-program/6945501#6945501) pour faire fonctionner cela.
+
+#### 1.1 : Ajout des arguments (srs-proto : srs-face_recognition.py)
+
+Ensuite, il me faut trouver une façon de passer les liens vers les cameras et d'autres variables afin de rendre le script dynamique. Pour ce faire, j'utilise la librairie [argparse](https://docs.python.org/3/library/argparse.html).
+
+```py
+# Récupération des arguments
+parser = argparse.ArgumentParser(description="Object Detection and Triangulation with multiple cameras")
+parser.add_argument('--camera_url1', type=str, required=True, help='URL of the first camera')
+parser.add_argument('--camera_url2', type=str, required=True, help='URL of the second camera')
+parser.add_argument('--camera_url3', type=str, required=True, help='URL of the third camera')
+parser.add_argument('--camera_url4', type=str, required=True, help='URL of the fourth camera')
+parser.add_argument('--wall_size', type=str, required=True, help='Size of the walls')
+parser.add_argument('--api_link', type=str, required=True, help='Link to the users API')
+parser.add_argument('--headless', action='store_true', help='Run in headless mode without GUI')
+args = parser.parse_args()
+
+
+# Configuration
+CAMERA_URLS = [
+    args.camera_url1,
+    args.camera_url2,
+    args.camera_url3,
+    args.camera_url4
+]
+
+wall_size = float(args.wall_size)
+api_link = args.api_link
+```
+
+### 1.2 : Intégration (room_window.py)
+
+**Création des paramètres**
+
+1. Recherche des cameras
+2. Création du lien des caméras
+    - Ajout de l'adresse ip ainsi que du JWT
+3. Ajout de la taille du mur en paramètre
+4. Ajout du lien vers l'api des données faciale
+    - On ne peut pas les transmettre direcement dans les paramètre pour des questions de taille et de format.
+
+Les autres fonctionnalités ont un schema de fonctionnement similaire mais avec moins de paramètres.
+
+**Appel du subprocess (_run_subprocess_script)**
+
+1. S'il y a des paramètres supplémentaires dans la fonction (cameras, wall_size, api_link), on les ajoute dans les paramètres du subprocess.
+2. On lance le subprocess avec le script_path et les paramètres.
+
+```py
+def run_spatial_recognition_system(self):
+    wall_size = self.ids.size_textInput.text
+    room = Room()
+    api_link = self.server_client.get_users_link()
+    for camera in self.cameras:
+        match camera.idWall:
+            case 1:
+                room.set_top_left(camera)
+            case 2:
+                room.set_top_right(camera)
+            case 3:
+                room.set_bottom_left(camera)
+            case 4:
+                room.set_bottom_right(camera)
+    camera_urls = [
+        f"http://{room.get_bottom_left().ip}:4298/video?token={room.get_bottom_left().jwt}",
+        f"http://{room.get_bottom_right().ip}:4298/video?token={room.get_bottom_right().jwt}",
+        f"http://{room.get_top_left().ip}:4298/video?token={room.get_top_left().jwt}",
+        f"http://{room.get_top_right().ip}:4298/video?token={room.get_top_right().jwt}"
+    ]
+        
+    self._run_subprocess_script('../srs-proto/srs-face_recognition.py', camera_urls, wall_size, api_link)
+def _run_subprocess_script(self, script_path, cameras=None, wall_size=None, api_link=None):
+    # Construire le chemin absolu pour le script
+    abs_script_path = os.path.abspath(script_path)
+    
+    print(f"Tentative d'exécution du script : {abs_script_path} avec les paramètres : {cameras}")
+    file_exists = os.path.exists(abs_script_path)
+    
+    if file_exists:
+        try:
+            command = ["python", abs_script_path]
+            
+            if cameras != None:
+                for i, param in enumerate(cameras):
+                    command.extend([f'--camera_url{i+1}', param])
+            
+            if wall_size != None:
+                command.extend([f'--wall_size', wall_size])
+            
+            if api_link != None:
+                command.extend([f'--api_link', api_link])
+            result = subprocess.run(command, capture_output=True, text=True)
+            print(f"Sortie du script : {result.stdout}")
+            print(f"Erreurs du script : {result.stderr}")
+            
+        except Exception as e:
+            print(f"Erreur lors de l'exécution du script : {e}")
+    else:
+        print("Le fichier spécifié n'existe pas.")
+```
+
+#### Implémentation graphique
+
+![room](./ressources/images/room_window.png)
+
+```
+<RoomWindow>:
+    name: "room"
+
+    FloatLayout:
+        GridLayout:
+            cols: 3
+            size_hint: 1, 0.1
+            pos_hint: {'top': 1}
+
+            Button:
+                text: "<- Retour"
+                on_release:
+                    app.root.current = "main"
+                    root.manager.transition.direction = "right"
+
+            Label:
+                text: "Système de reconnaissance spatiale"
+                bold: True
+
+            Image:
+                source: 'Ressources/logo.png'
+        
+        GridLayout:
+            cols: 1
+            size_hint_y: 0.9
+            pos_hint: {'top': 0.9}
+
+            GridLayout:
+                cols: 2
+
+                Label:
+                    text: "Taille du mur"
+                
+                TextInput:
+                    id: size_textInput
+
+            Button:
+                text: "Système de reconnaissance Spatiale"
+                on_release:
+                    bold: True
+                    # Ajouter ici le code pour gérer l'action du bouton
+                    root.run_spatial_recognition_system()
+
+            Label:
+                text: "Prototypes"
+
+            GridLayout:
+                cols: 2
+
+                Button:
+                    text: "Angle Camera"
+                    on_release:
+                        # Ajouter ici le code pour gérer l'action du bouton
+                        root.run_angle_camera()
+
+                Button:
+                    text: "Deux cameras"
+                    on_release:
+                        # Ajouter ici le code pour gérer l'action du bouton
+                        root.run_two_cameras()
+
+            GridLayout:
+                cols: 2
+
+                Button:
+                    text: "Quatres cameras"
+                    on_release:
+                        # Ajouter ici le code pour gérer l'action du bouton
+                        root.run_four_cameras()
+                
+                Button:
+                    text: "Reconnaissance faciale"
+                    disabled: True
+                    on_release:
+                        # Ajouter ici le code pour gérer l'action du bouton
+                        root.run_face_recognition()
+```
+
+J'ai appliqué les subprocess à d'autres script me permettant de montrer quelques prototypes en plus. Cela me permettra de mieux expliquer le fonctionnement du système en montrant plus d'étapes.
+
+#### Conclusion
+
+J'ai implémenté les subprocess, cela m'a permis de régler le problème de temps et les éventuels défis liés à l'intégration opencv dans kivy.
+
+## 05.06.2024
+
+## 06.06.2024
+
+#### Bilan de la veille
+Hier 

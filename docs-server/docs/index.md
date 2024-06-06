@@ -1,3 +1,9 @@
+---
+title: Accueil
+created: "2023-06-01T12:00:00Z"
+modified: "2024-06-01T12:00:00Z"
+---
+
 # Documentation : Système de reconnaissance Spatiale
 Le SRS (Système de Reconnaissance Spatiale) est un projet destiné à localiser les individus dans un environnement 3D et à présenter visuellement leur position en 2D en utilisant des caméras et des technologies de reconnaissance faciale.
 
@@ -846,6 +852,496 @@ def addUser(self, idPersonType, encodings, username):
         return False, f"Impossible d'ajouter l'utilisateur : {e}"
 ```
 
+### Gestion des caméras
+
+Cette fonction sert à gérer les caméras automatiquement. Quand une caméra est allumée, elle est accessible depuis l'application, si elle est éteinte elle est enlevée.
+
+L'objectif est que ça fonctionne de façon dynamique. Cet à dire quand une nouvelle camera est détectée dans le réseau, elle est ajoutée sans compremettre les données des autres cameras. Pareil si elle est supprimée.
+
+#### Interface graphique (app.kv)
+
+| Composant                      | Fonction                                                                                           |
+|-------------------------------|----------------------------------------------------------------------------------------------------|
+| `update_cameras_list_button`   | Met à jour la liste de caméras en comparant les données présentes sur le réseau et celles dans la BDD. |
+| `status_label`                 | Indique les commandes à effectuer par l'utilisateur ainsi que les réponses de l'API.                |
+| `cameras_spinner`              | Affiche la liste de caméras. L'utilisateur peut en sélectionner une pour en modifier les données.   |
+| `walls_spinner`                | Récupère le nom des murs présents dans la base.                                                     |
+| `update_camera_button`         | Permet de faire un appel à l'API afin de mettre à jour les données de la caméra sélectionnée par le `cameras_spinner`. |
+
+
+![camera management](./ressources/images/interface_camera_management.png)
+
+```
+<CamerasManagementWindow>:
+    name: "camerasManagement"
+
+    FloatLayout:
+        GridLayout:
+            cols: 3
+            size_hint: 1, 0.1  
+            pos_hint: {'top': 1} 
+
+            Button:
+                text: "<- Retour"       
+                on_release:
+                    app.root.current = "main" 
+                    root.manager.transition.direction = "right"
+
+            Label:
+                text: "Gestion des cameras"
+                bold: True
+
+            Image:
+                source: 'Ressources/logo.png'
+
+        GridLayout:
+            cols: 1
+            size_hint_y: 0.9
+
+            Button:
+                id: update_cameras_list_button
+                text: "Mettre à jour la liste des cameras"
+                disabled: False
+                on_release: root.update_cameras_list()
+
+            Label:
+                id: status_label
+                text: "Veuillez séléctionner une caméra et modifier ses données"
+                bold: True
+
+            Spinner:
+                id: cameras_spinner
+                text: "Recherche des cameras en cours..."
+                disabled: True
+                on_text: root.camera_changed(self.text)
+
+            Spinner:
+                id: walls_spinner
+                text: "Select a Wall"
+                disabled: True
+                values: root.get_wall_names()
+                on_text: root.wall_changed(self.text)
+
+            
+            Button:
+                id: update_camera_button
+                text: "Mettre à jour la camera"
+                disabled: True
+                on_release: root.update_camera()
+                disabled: True
+                bold: True
+```
+
+#### Séquences d'initialisation de la page
+
+Ces séquences sont démarées automatiquement lors du démarrage de la page. Ils sont lancés par le script suivant :
+
+##### (Application : cameras_management_window.py)
+
+```py
+def on_enter(self):
+    super().on_enter()
+    self.app = App.get_running_app()
+    self.server_client = self.app.get_server_client()
+    self.get_walls_thread = threading.Thread(target=self.get_walls)
+    self.get_walls_thread.start()
+    self.ask_camera_update()
+    self.get_cameras_thread = threading.Thread(target=self.get_cameras)
+    self.get_cameras_thread.start()
+```
+
+**Récupération des mur**
+
+La récupération des données du mur se fait de façon asyncrone.
+
+![Get Walls](./ressources/diagrams/sequences/get_walls.png)
+
+##### Affichage des résultats API asyncrone (Application : cameras_management_window.py)
+
+L'affichage des données est programmé par la librairie [Clock](https://kivy.org/doc/stable/api-kivy.clock.html). Cela permet de mettre les composant en asyncrone également.
+
+```py
+def get_walls(self):
+    result, response = self.server_client.get_walls()
+    if result:
+        self.walls = response
+        wall_names = [wall.wallName for wall in self.walls]
+        Clock.schedule_once(lambda dt: setattr(self.ids.walls_spinner, 'values', wall_names))
+    else:
+        Clock.schedule_once(lambda dt: setattr(self.ids.walls_spinner, 'values', []))
+        Clock.schedule_once(lambda dt: setattr(self.ids.walls_spinner, 'text', "Aucun mur trouvé"))
+        Clock.schedule_once(lambda dt: setattr(self.ids.walls_spinner, 'disabled', True))
+```
+
+##### Client API (Application : server_client.py)
+
+Si le serveur API retourne le code réponse `200`, alors les données sont parsées en objet `Wall`.
+
+```py
+def get_walls(self):
+    """Récupérer la liste des murs depuis le serveur."""
+    if not self.server_ip:
+        return False, "IP du serveur manquante"
+    
+    params = {"token": self.API_token}
+    endpoint_url = f"{self.server_url}/walls"
+    response = requests.get(endpoint_url, params=params)
+    
+    if response.status_code == 200:
+        walls_data = response.json()
+        walls = [Wall(wall[0], wall[1]) for wall in walls_data]
+        return True, walls
+    else:
+        return False, response.json()
+```
+
+##### Classe encapsulatrice Wall (Application : Classes.wall.py)
+
+Cette classe réplique la structure de la table Wall dans la base de données.
+
+```py
+class Wall:
+    def __init__(self, idWall, wallName):
+        self._idWall = idWall
+        self._wallName = wallName
+
+    @property
+    def idWall(self):
+        """Getter for the wall ID"""
+        return self._idWall
+
+    @idWall.setter
+    def idWall(self, value):
+        """Setter for the wall ID"""
+        self._idWall = value
+
+    @property
+    def wallName(self):
+        """Getter for the wall name"""
+        return self._wallName
+
+    @wallName.setter
+    def wallName(self, value):
+        """Setter for the wall name"""
+        self._wallName = value
+```
+
+##### Route pour récupérer les données du mur (Serveur : app.py)
+
+```py
+@JwtLibrary.API_token_required
+def walls(self):
+    try:
+        return jsonify(self.db_client.getWalls()), 200
+    except Exception as e:
+        return jsonify({'erreur' : str(e)}), 500
+```
+
+##### Query vers la base de données (database_client.py)
+
+```py
+def getWalls(self):
+    try:
+        self.cursor.execute("SELECT * FROM Walls")
+        return self.cursor.fetchall()
+    except Exception as e:
+        print(f"Error: {e}")
+```
+
+**Récupération des caméras**
+
+Cette partie gère la récupération des données des caméras ainsi que la gestion des tokens JWT.
+
+1. **Initialisation** : La fenêtre de gestion des caméras lance un thread pour récupérer les caméras.
+2. **Requête de Caméras** : Le client serveur envoie une requête HTTP à l'application serveur pour obtenir la liste des caméras.
+3. **Vérification du Réseau** : L'application serveur vérifie l'existence du réseau dans la base de données.
+4. **Initialisation du Réseau** : Si le réseau n'existe pas, il est initialisé avec les caméras et ajouté à la base de données.
+5. **Récupération des Caméras** : L'application récupère les caméras associées au réseau depuis la base de données.
+6. **Ajout de Caméras** : Si aucune caméra n'est trouvée, elles sont recherchées et ajoutées au réseau.
+7. **Mise à Jour des Tokens** : Les tokens JWT des caméras sont mis à jour si nécessaire.
+8. **Retour des Données** : L'application renvoie la liste des caméras au client serveur qui met à jour l'interface utilisateur.
+
+
+![sequence cameras](./ressources/diagrams/sequences/cameras.png)
+
+##### Récupération des caméras (Application : cameras_management_window.py)
+
+```py
+    def get_cameras(self):
+        result, response = self.server_client.get_cameras()
+
+        camera_details = []
+        if result:
+            self.cameras = response
+            for camera in response:
+                display_text = f"IP: {camera.ip} - Wall: {camera.idWall}"
+                camera_details.append(display_text)
+
+            if not camera_details:
+                Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'values', []))
+                Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'text', self.TEXT_NO_CAMERA_FOUND))
+                Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'disabled', True))
+            else:
+                Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'values', camera_details))
+                Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'text', self.TEXT_CAMERA_FOUND))
+                Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'disabled', False))
+        else:
+            Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'values', []))
+            Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'text', self.TEXT_NO_CAMERA_FOUND))
+            Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'disabled', True))
+        
+        self.ids.update_cameras_list_button.disabled = False
+```
+
+##### Appel à l'API : (Application : server_client.py)
+
+L'objectif est que le client api aie le moins de tâches possibles, par conséquent, il envoie une simple requête au endpoint `/camera` qui lui s'occupe de la logique de gestion.
+
+```py
+def get_cameras(self):
+    if not self.server_ip:
+        return False
+    
+    params = {
+        "token": self.API_token,
+        "ip": ServerClient.get_netowk_from_ip(self.server_ip),
+        "subnetMask": 24
+    }
+    
+    endpoint_url = f"{self.server_url}/cameras"
+    response = requests.get(endpoint_url, params=params)
+    if response.status_code == 201:
+        response_data = response.content.decode('utf-8')
+        cameras_data = json.loads(response_data)
+        cameras = []
+        for camera in cameras_data:
+            cameras.append(Camera(camera[0],camera[1],camera[2],camera[3],camera[4],camera[5],camera[6]))
+        return True, cameras
+    else:
+        return False, response
+```
+
+##### Encapsulation des cameras (Application : Classes.camera.py)
+
+Cette classe reprend la structure de la de la table `Cameras` dans la base de données.
+
+```py
+class Camera:
+    def __init__(self, idCamera, ip, idNetwork, jwt, positionX, idWall, macAddress):
+        self._idCamera = idCamera
+        self._ip = ip
+        self._idNetwork = idNetwork
+        self._jwt = jwt
+        self._positionX = positionX
+        self._idWall = idWall
+        self._macAddress = macAddress
+
+    @property
+    def idCamera(self):
+        """Getter for the camera ID"""
+        return self._idCamera
+
+    @idCamera.setter
+    def idCamera(self, value):
+        """Setter for the camera ID"""
+        self._idCamera = value
+
+    @property
+    def ip(self):
+        """Getter for the IP address"""
+        return self._ip
+
+    @ip.setter
+    def ip(self, new_ip):
+        """Setter for the IP address"""
+        # Add IP validation if necessary
+        self._ip = new_ip
+
+    @property
+    def idNetwork(self):
+        """Getter for the network ID"""
+        return self._idNetwork
+
+    @idNetwork.setter
+    def idNetwork(self, value):
+        """Setter for the network ID"""
+        self._idNetwork = value
+
+    @property
+    def jwt(self):
+        """Getter for the JWT token"""
+        return self._jwt
+
+    @jwt.setter
+    def jwt(self, new_jwt):
+        """Setter for the JWT token"""
+        self._jwt = new_jwt
+
+    @property
+    def positionX(self):
+        """Getter for the X position"""
+        return self._positionX
+
+    @positionX.setter
+    def positionX(self, value):
+        """Setter for the X position"""
+        self._positionX = value
+
+    @property
+    def idWall(self):
+        """Getter for the wall ID"""
+        return self._idWall
+
+    @idWall.setter
+    def idWall(self, value):
+        """Setter for the wall ID"""
+        self._idWall = value
+
+    @property
+    def macAddress(self):
+        """Getter for the MAC address"""
+        return self._macAddress
+
+    @macAddress.setter
+    def macAddress(self, value):
+        """Setter for the MAC address"""
+        self._macAddress = value
+```
+
+##### Routes (Serveur : app.py)
+
+
+La méthode `cameras` gère les requêtes pour obtenir et gérer les caméras sur un réseau donné. Voici une explication rapide de chaque étape de la méthode :
+
+1. **Validation des paramètres** :
+    - Les paramètres `ip` et `subnetMask` sont récupérés à partir des arguments de la requête HTTP.
+    - Si ces paramètres sont absents ou invalides, une réponse JSON avec un message d'erreur et un code d'état 400 est renvoyée.
+
+2. **Validation du réseau** :
+    - La méthode `is_network_valid` de `NetworkScanner` est utilisée pour vérifier si l'adresse réseau et le masque de sous-réseau sont valides.
+    - Si le réseau n'est pas valide, une réponse JSON avec un message d'erreur et un code d'état 400 est renvoyée.
+
+3. **Initialisation de `CameraServerClient`** :
+    - Un objet `CameraServerClient` est initialisé avec l'adresse IP et le masque de sous-réseau.
+
+4. **Récupération de l'ID du réseau** :
+    - L'ID du réseau est récupéré en utilisant `getNetworkIdByIpAndSubnetMask` de `db_client`.
+
+5. **Vérification de l'existence du réseau** :
+    - Si le réseau n'existe pas, la méthode `initialise_network_with_cameras` est appelée pour rechercher automatiquement les caméras, vérifier leur présence et les ajouter à la base de données.
+
+6. **Récupération des caméras** :
+    - La liste des caméras associées au réseau est récupérée à partir de la base de données.
+    - Si aucune caméra n'est trouvée, la méthode `initialize_cameras_in_network` est appelée pour rechercher et ajouter les caméras.
+
+7. **Mise à jour des tokens JWT** :
+    - Si les tokens JWT des caméras sont expirés, la méthode `areTheCamerasInTheNetworkInNeedOfAnUpdate` est utilisée pour vérifier si les caméras nécessitent une mise à jour.
+    - Pour chaque caméra nécessitant une mise à jour, le token est mis à jour en utilisant `updateCameraToken`.
+
+8. **Rafraîchissement du timestamp du réseau** :
+    - Le timestamp du réseau est mis à jour pour refléter la dernière mise à jour des caméras.
+
+9. **Retour de la liste des caméras** :
+    - Une réponse JSON avec la liste des caméras et un code d'état 201 est renvoyée.
+
+
+```py
+    @JwtLibrary.API_token_required
+    def cameras(self):
+        ip = request.args.get('ip')
+        subnetMask = request.args.get('subnetMask')
+
+        if not ip or not subnetMask:
+            return jsonify({'erreur': 'Mauvais paramètres, utilisez (ip, subnetMask) pour l\ip du réseau et le masque de sous-réseau respectivement.'}), 400
+
+        if not NetworkScanner.is_network_valid("{n}/{sub}".format(n = ip, sub = subnetMask)):
+            return jsonify({'erreur': 'Le réseau donné est inavalide'}), 400
+        
+
+        self.cameraServerClient = CameraServerClient(ip, subnetMask)
+
+        networkId = self.db_client.getNetworkIdByIpAndSubnetMask(ip, subnetMask)
+
+        # Vérification si le réseau n'existe pas
+        # Recherche automatique de caméras, vérification la présence des caméras et ajout dans la base.
+        if(not self.db_client.checkIfNetworkExists(ip)):
+            return self.intialise_network_with_cameras(ip, subnetMask)
+        
+        cameras = self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)
+        # Si aucune camera n'est dans le network, recheche de cameras.
+        if cameras == None:
+            return self.initialize_cameras_in_network(ip, subnetMask)
+        
+        # Vérification si la durée de vie des JWT des cameras est dépassée
+        if self.db_client.areTheCamerasInTheNetworkInNeedOfAnUpdate(networkId):
+            for camera in cameras:
+                result, camera_data = self.db_client.getByIdCameras(camera[0])
+
+                self.db_client.updateCameraToken(camera_data[0], self.cameraServerClient.getCameraToken(camera[1]))
+            
+            self.db_client.refreshNetworkTimestamp(networkId)
+        
+        return jsonify(self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)), 201
+```
+
+##### Initialisation du réseau
+
+Cette fonction initialise un réseau en effectuant la recherche asyncrone du réseau. Les données sont ensuite ajoutées dans la base.
+
+1. **Recherche des caméras sur le réseau** :
+    - Un nouveau loop asyncio est créé pour exécuter les tâches asynchrones.
+    - La méthode `lookForCameras` de `CameraServerClient` est appelée pour rechercher les caméras présentes sur le réseau.
+    - Le loop asyncio est ensuite fermé.
+
+2. **Obtention des tokens pour les caméras** :
+    - La méthode `getCamerasTokens` de `CameraServerClient` est appelée pour obtenir les tokens JWT pour chaque caméra détectée.
+    - Si aucune caméra n'est trouvée, une réponse JSON avec un message d'erreur et un code d'état 400 est renvoyée.
+
+3. **Ajout du réseau et des caméras à la base de données** :
+    - Le réseau est ajouté à la base de données en utilisant `addNetwork`.
+    - Les caméras et leurs tokens sont ajoutés à la base de données en utilisant `addCameras`.
+
+4. **Retour de la liste des caméras** :
+    - Une réponse JSON avec la liste des caméras et un code d'état 201 est renvoyée.
+
+```py
+def intialise_network_with_cameras(self, networkip, subnetMask):
+    # Recherche automatique des cameras
+    loop = asyncio.new_event_loop()     
+    asyncio.set_event_loop(loop)
+    cameras_in_network = loop.run_until_complete(self.cameraServerClient.lookForCameras())
+    loop.close()
+    # Donne la liste des ip des cameras ainsi que leurs tokens
+    tokens_for_ip = self.cameraServerClient.getCamerasTokens()
+    if(tokens_for_ip == None):
+        return jsonify({'erreur' : 'Aucune caméra active n\'est présente sur le réseau'}), 400
+    
+    self.db_client.addNetwork(networkip, subnetMask)
+    self.db_client.addCameras(tokens_for_ip, self.db_client.getNetworkIdByIpAndSubnetMask(networkip, subnetMask))
+    return jsonify(self.db_client.getCamerasByNetworkIpAndSubnetMask(networkip, subnetMask)), 201
+```
+
+####
+
+
+
+
+
+#### Recherche automatique des cameras
+
+La recherche automatique des camera se passe de la façon suivante.
+
+![Camera network](./ressources/diagrams/sequences/camera_network.png)
+
+#### Mise à jour des données de la camera
+
+
+
+
+
+
+
+
 ### Gestion des fonctionnalités
 
 Les fonctionnalités sont des script externes accédés depuis l'application par subprocess. Les dépendances externes tel que les liens vers les caméras wifi ou les données faciles sont passés par paramètre.
@@ -1224,15 +1720,17 @@ On recherche l'angle relatif au centre de l'angle de vue de la camera, par exemp
 ![calcul angle](./ressources/images/calcul-angle.png)
 
 1. Calcul du centre X
-- $\text{center\_x} = \frac{x1 + x2}{2}$
+
+\( \text{center\_x} = \frac{x1 + x2}{2} \)
+
 2. Calcul du centre de l'image
-- $\frac{\text{frame.shape}[1]}{2}$
+$\frac{\text{frame.shape}[1]}{2}$
 3. Position realative par rapport au centre
-- $\text{center\_x} - \frac{\text{frame.shape}[1]}{2}$
+$\text{center\_x} - \frac{\text{frame.shape}[1]}{2}$
 4. Normalisation par rapport à la taille de l'image
-- $\frac{\text{center\_x} - \frac{\text{frame.shape}[1]}{2}}{\text{frame.shape}[1]}$
+$\frac{\text{center\_x} - \frac{\text{frame.shape}[1]}{2}}{\text{frame.shape}[1]}$
 5. Multiplication par la fov afin de trouver l'angle
-- $\frac{\text{center\_x} - \frac{\text{frame.shape}[1]}{2}}{\text{frame.shape}[1]} \times \text{fov}$
+$\frac{\text{center\_x} - \frac{\text{frame.shape}[1]}{2}}{\text{frame.shape}[1]} \times \text{fov}$
 
 Ensuite, avec les contenaires trouvés par YoloV5, on envoie les position à analyser à la reconnaissance faciale. Le nom est ensuite ajouté à la liste.
 

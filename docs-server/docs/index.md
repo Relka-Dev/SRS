@@ -202,6 +202,36 @@ Ce diagramme représente un administrateur qui se connecte ou qui met en place l
 
 **Description :** Cette fonctionnalité concerne l'ajout des utilisateurs dans la base de données. Permetttant de stocker les nom, le type et les encodages faciaux des utilisateurs.
 
+![ajout de personnes](./ressources/images/applicationajout.png)
+
+#### Sécurité
+
+L'utilisateur est dans l'obligation de :
+1. Prendre une **photo**.
+2. Entrer un nom **unique**.
+3. Séléctionner un **type de personne**.
+4. Avoir des données faciales valides et être seule sur la photo.
+
+##### Figure 1 : Aucune personne détectée
+
+Ici, je couvre mon visage avec ma main. Le système ne me détectant pas, il lui est impossible de effectuer les étapes necessaires pour m'ajouter dans le système. Par conséquent, un message d'erreur est renvoyé.
+
+![Personne détécté](./ressources/images/personne_non_detectee.png)
+
+
+
+##### Figure 2 : Nom dumpliqué
+
+Dans ce cas, nous voyons que le nom est déjà présent dans la base de données. L'utilisateur a donc un message lui affichant son erreur.
+
+![Nom déjà pris](./ressources/images/already_taken_name.png)
+
+##### Figure 3 : Formulaire incomplet
+
+Ici, l'utilisateur n'a pas entré son nom, par conséquent, le bouton pour ajouter l'utilisateur n'est pas activé.
+
+![formulaire incomplet](./ressources/images/incomplet_form.png)
+
 
 
 ### Fonctionnalité 5 : Connectivité et Interaction Application-Serveur
@@ -219,7 +249,7 @@ Ce diagramme représente un administrateur qui se connecte ou qui met en place l
 
 ## Analyse organique
 
-Implémentation technique de l'analyse fonctionnelle.
+Documentation technique du projet. Son objectif est de documenter les technologies, logiques et fonctions qui ont permis l'implémentation des fonctionnalités finale de l'application.
 
 ### Base de données
 

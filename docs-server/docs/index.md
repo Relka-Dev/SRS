@@ -327,6 +327,7 @@ Je définis la distance entre les deux cameras à **3.5 mètres**. Une fois la v
 
 #### Résultat dans l'application
 
+![2 camera application](./ressources/images/double_triangulation.png)
 
 ### Fonctionnalité 8 : Calibration
 
@@ -372,7 +373,6 @@ Les identité des personnes ainsi que leurs positions sont affichés sur une car
 #### Résultat dans l'application
 
 ![Space recognition](./ressources/images/space_recognition_func.png)
-
 
 ## Analyse organique
 

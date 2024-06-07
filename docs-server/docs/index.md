@@ -1836,18 +1836,16 @@ On recherche l'angle relatif au centre de l'angle de vue de la camera, par exemp
 
 ![calcul angle](./ressources/images/calcul-angle.png)
 
-1. Calcul du centre X
-
-![calcul_centre_x](./ressources/images/calcul_centre_x.png)
-
-2. Calcul du centre de l'image
-$\frac{\text{frame.shape}[1]}{2}$
-3. Position realative par rapport au centre
-$\text{center\_x} - \frac{\text{frame.shape}[1]}{2}$
-4. Normalisation par rapport à la taille de l'image
-$\frac{\text{center\_x} - \frac{\text{frame.shape}[1]}{2}}{\text{frame.shape}[1]}$
-5. Multiplication par la fov afin de trouver l'angle
-$\frac{\text{center\_x} - \frac{\text{frame.shape}[1]}{2}}{\text{frame.shape}[1]} \times \text{fov}$
+1. Calcul du centre X  
+![calcul_centre_x](./ressources/images/calcul_centre_x.png)  
+2. Calcul du centre de l'image  
+![centre_image](./ressources/images/centre_image.png)  
+3. Position realative par rapport au centre  
+![centre_image](./ressources/images/position_realtive.png)  
+4. Normalisation par rapport à la taille de l'image  
+![rapport taille image](./ressources/images/rapport_taille_image.png)   
+5. Multiplication par la fov afin de trouver l'angle  
+![rapport taille image](./ressources/images/fov_angle.png)     
 
 Ensuite, avec les contenaires trouvés par YoloV5, on envoie les position à analyser à la reconnaissance faciale. Le nom est ensuite ajouté à la liste.
 
@@ -2092,27 +2090,23 @@ Pour la camera de droite, l'angle se calcule en effectuant une addition avec 45�
 
 Cette différence existe à cause du positionnement des caméras. Plus l'objet se situe vers la droite, plus l'angle relatif à la camera augmente, c'est l'inverse pour la caméra de droite.
 
-$\alpha = \frac{90^\circ}{2} - \text{object\_angle\_from\_left}$
+![angle alpha](./ressources/images/find_angle_alpha.png)  
 
-$\beta = \frac{90^\circ}{2} + \text{object\_angle\_from\_right}$
+![angles beta](./ressources/images/find_angle_beta.png)  
 
-![angles finder](./ressources/images/angles-finder.png)
+![angles finder](./ressources/images/angles-finder.png)  
 
 Afin d'empêcher d'avoir des bugs, les angles ne doivent pas accéder 90° et ne doivent pas être inférieur à 0°. Vu la position, des caméras, cela ne devrait pas se produire.
 
-$\text{Si } \beta > 90^\circ \text{ ou } \alpha > 90^\circ, \text{ alors } \text{erreur : "Impossible de calculer la triangulation pour un angle supérieur à 90°"}$
+![angles beta](./ressources/images/over_test_angle.png)  
 
-$\text{Si } \beta < 0^\circ \text{ ou } \alpha < 0^\circ, \text{ alors } \text{erreur : "Impossible de calculer la triangulation pour un angle inférieur à 0°"}$
+![angles beta](./ressources/images/bellow_test_angle.png)  
 
 ##### Recherche de la position
 
 On va à présent rechercher la postion de l'utilisateur en utilisant la trigonomètrie. Pour commencer, définition les variables que l'on possède.
 
-$\alpha=\text{angle depuis la camera gauche}$
-
-$\beta=\text{angle depuis la camera droite}$
-
-$c=\text{distance entre les caméras}$
+![constantes](./ressources/images/constants.png)  
 
 ![triangulation](./ressources/images/triangulation.png)
 
@@ -2120,25 +2114,13 @@ On commence par calculer l'angle gamma.
 
 Selon le [théorème de la somme des angles d'un triangle](https://fr.wikipedia.org/wiki/Somme_des_angles_d%27un_triangle), alors :
 
-$\alpha + \beta + \gamma = 180^\circ$
-
-donc :
-
-$\gamma = 180^\circ - \alpha - \beta$
+![recherche gamma](./ressources/images/recherche_gamma.png)  
 
 On calcule ensuite la distance entre la camera de gauche et l'objet, (représentée par $b$ dans le schéma).
 
 Pour ce faire, on utilise la [loi du sinus](https://fr.wikipedia.org/wiki/Loi_des_sinus). Par conséquent :
 
-$\frac{a}{\sin(\alpha)} = \frac{b}{\sin(\beta)} = \frac{c}{\sin(\gamma)}$
-
-donc :
-
-$b = \frac{\text{c}}{\sin(\gamma)} \cdot \sin(\beta)$
-
-On applique cela à nos variables :
-
-$\text{distance\_camera\_object} = \frac{\text{wall\_length}}{\sin(\gamma)} \cdot \sin(\beta)$
+![Recherche distance camera objet](./ressources/images/distance_camera_object.png)  
 
 À présent que nous avons la distance entre la camera et l'objet, nous avons un triangle rectangle ce qui va nous permettre de connaitre la position y.
 
@@ -2146,35 +2128,21 @@ $\text{distance\_camera\_object} = \frac{\text{wall\_length}}{\sin(\gamma)} \cdo
 
 Pour trouver la position y, on utilise l'angle alpha et la distance entre la camera gauche et la personne pour appliquer le [rapport trigonométrique pour le sinus](https://www.alloprof.qc.ca/fr/eleves/bv/mathematiques/les-identites-trigonometriques-m1357).
 
-$\sin(\alpha) = \frac{\text{opposé}}{\text{hypoténuse}}$
-
-Nous recherchons l'opposé, donc :
-
-$\text{opposé} = \sin(\alpha) \times \text{hypoténuse}$
-
-En appliquant nos variables :
-
-$\text{position\_y} = \text{distance\_camera\_object} \cdot \sin(\alpha)$
+![position y](./ressources/images/position_y.png)  
 
 Pour terminer, en appliquand le [théorème de Pythagore](https://fr.wikipedia.org/wiki/Th%C3%A9or%C3%A8me_de_Pythagore), on peut trouver la position x.
 
-$a = \sqrt{c^2 - b^2}$
-
-donc :
-
-$\text{position\_x} = \sqrt{\text{distance\_camera\_object}^2 - \text{position\_y}^2}$
+![position y](./ressources/images/pythagore.png)  
 
 ##### Invertion des résultats
 
 Le paramètre reverse sert si les caméras sont placés à l'autre bout de la pièce et qu'on recherche la position de la personne comme si elles était captés depuis l'autre bout. Cela est utile quand on recherche à trouver une correspondance entre les position captés par les caméras du haut et les caméras du bas.
 
-![reverse](./ressources/images/reverse.png)
+![reverse](./ressources/images/reverse.png)  
 
 En faisant la différence entre le mur et les position, nous pouvons convertir notre position comme si la personne était vue de l'autre côté.
 
-$\text{position\_x} = \text{wall\_length} - \text{position\_x}$
-
-$\text{position\_y} = \text{wall\_length} - \text{position\_y}$
+![reverse equation](./ressources/images/reverse_equation.png)  
 
 ##### Implémentation
 

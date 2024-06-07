@@ -1,7 +1,7 @@
 ---
 title: Accueil
 created: "2023-06-01T12:00:00Z"
-modified: "2024-06-01T12:00:00Z"
+modified: "2024-06-10T12:00:00Z"
 ---
 
 # Documentation : Système de reconnaissance Spatiale
@@ -17,46 +17,6 @@ Le SRS (Système de Reconnaissance Spatiale) est un projet destiné à localiser
 - **Suiveurs** : 
     - [Christian Zanardi](mailto:Christian.Zanardi@edu.ge.ch)
     - [Laurent Jayr](mailto:edu-jayrl@eduge.ch)
-
-## Architecture
-
-| Composant        | Langage/Technologie | Utilité dans le Projet                                                                                                         |
-|------------------|---------------------|--------------------------------------------------------------------------------------------------------------------------------|
-| [**Caméras Wifi**](./composants/camera-wifi.md) | Python              | Capturer des photos et vidéos en temps réel, sécurisées par JWT, et mettre à disposition les données via des endpoints Flask.  |
-| [**Serveur Central**](./composants/serveur.md)  | Python              | Traite les images (gris, traitement de frames), détecte les positions des corps et les visages, gère les données utilisateurs. |
-| [**Application**](./composants/application.md)    | Python              | Interface utilisateur pour gérer les utilisateurs, afficher les positions, et se connecter au serveur via les ports réseau.    |
-
-### Détails techniques par composant
-
-Pour accèder à la documentation de chaque composant, cliquez sur leurs titres.
-
-#### [1. **Caméras Wifi**](./composants/camera-wifi.md)  
-- **Programmation** : Python
-- **Sécurité** : Serveurs sécurisés avec JWT
-- **Librairies** : OpenCV pour la capture d'images/vidéos, Flask pour les endpoints
-- **Fonctionnalités** :
-  - Capture en temps réel.
-  - Mise à disposition des données des caméras.
-
-#### [2. **Serveur Central**](./composants/serveur.md)
-- **Programmation** : Python
-- **Sécurité** : JWT pour l'authentification
-- **Librairies** : OpenCV, Flask, MariaDB pour la gestion des données, face-recognition pour la reconnaissance faciale, YOLOv5 pour la détection de personnes, Socket.io pour la recherche de ports.
-- **Fonctionnalités** :
-  - Manipulation et traitement d'images
-  - Détecteur de position des corps et reconnaissance faciale
-  - Stockage et gestion des données utilisateur
-  - Recherche automatique de caméras par scan des ports réseau.
-
-#### [3. **Application**](./composants/application.md)  
-- **Programmation** : Python
-- **Interface** : Kivy pour l'interface graphique, Socket.io pour la recherche du serveur.
-- **Fonctionnalités** :
-  - Interface utilisateur graphique
-  - Gestion des utilisateurs
-  - Affichage des positions des utilisateurs dans les locaux
-  - Connexion au serveur par scan des ports réseau
-
 
 ## Rappel du cahier des charges
 
@@ -125,6 +85,46 @@ L'application est l'interface que possède l'utilisateur final avec le système.
 
 ![Diagramme Application](./ressources/diagrams/ApplicationMultiplateforme.png)
 
+
+## Composants du projet
+
+| Composant        | Langage/Technologie | Utilité dans le Projet                                                                                                         |
+|------------------|---------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| [**Caméras Wifi**](./composants/camera-wifi.md) | Python              | Capturer des photos et vidéos en temps réel, sécurisées par JWT, et mettre à disposition les données via des endpoints Flask.  |
+| [**Serveur Central**](./composants/serveur.md)  | Python              | Traite les images (gris, traitement de frames), détecte les positions des corps et les visages, gère les données utilisateurs. |
+| [**Application**](./composants/application.md)    | Python              | Interface utilisateur pour gérer les utilisateurs, afficher les positions, et se connecter au serveur via les ports réseau.    |
+
+### Détails techniques par composant
+
+Pour accèder à la documentation de chaque composant, cliquez sur leurs titres.
+
+#### [1. **Caméras Wifi**](./composants/camera-wifi.md)  
+- **Programmation** : Python
+- **Sécurité** : Serveurs sécurisés avec JWT
+- **Librairies** : OpenCV pour la capture d'images/vidéos, Flask pour les endpoints
+- **Fonctionnalités** :
+  - Capture en temps réel.
+  - Mise à disposition des données des caméras.
+
+#### [2. **Serveur Central**](./composants/serveur.md)
+- **Programmation** : Python
+- **Sécurité** : JWT pour l'authentification
+- **Librairies** : OpenCV, Flask, MariaDB pour la gestion des données, face-recognition pour la reconnaissance faciale, YOLOv5 pour la détection de personnes, Socket.io pour la recherche de ports.
+- **Fonctionnalités** :
+  - Manipulation et traitement d'images
+  - Détecteur de position des corps et reconnaissance faciale
+  - Stockage et gestion des données utilisateur
+  - Recherche automatique de caméras par scan des ports réseau.
+
+#### [3. **Application**](./composants/application.md)  
+- **Programmation** : Python
+- **Interface** : Kivy pour l'interface graphique, Socket.io pour la recherche du serveur.
+- **Fonctionnalités** :
+  - Interface utilisateur graphique
+  - Gestion des utilisateurs
+  - Affichage des positions des utilisateurs dans les locaux
+  - Connexion au serveur par scan des ports réseau
+
 ## Analyse fonctionnelle
 
 Pour l'analyse fonctionnelle, je me suis placé du point de vue de l'utilisateur. L'objectif est de comprendre les différentes fonctionnalités sans rentrer dans les détails techniques.
@@ -133,7 +133,7 @@ Pour l'analyse fonctionnelle, je me suis placé du point de vue de l'utilisateur
 
 L'application est divisée en deux parties, la partie Kivy Python et la partie OpenCV. La partie Kivy s'occupe de la navigation, des formulaires (connexion, ajout d'utilisateurs) et la partie OpenCV sert à afficher les fonctionnalités liées à la reconnaissance spatiale.
 
-![](./ressources/images/application_diagramme.png)  
+![diagramme de l'application](./ressources/images/application_diagramme.png)  
 
 ### Fonctionnalité 1 : Recherche automatique de serveurs
 
@@ -147,13 +147,13 @@ Ce diagramme représente la recherche automatique de serveurs sur un réseau.
 
 1. Cette page démarre automatiquement lorseque l'application est lancée.
 
-![](./ressources/images/look-for-server.png)
+![Look for server](./ressources/images/look-for-server.png)
 
 2. L'application appelle chaque adresse sur le réseau et essaye de communiquer avec le port prévu pour les serveurs SRS.
 3. Interprétation du résultat.
   - Si aucun serveur n'est trouvé, un message d'erreur est affiché et un bouton permet à l'utilisateur d'effectuer une nouvelle recherche.  
 
-![](./ressources/images/server-not-found.png)
+![server_not_found](./ressources/images/server-not-found.png)
 
   - Si un serveur est trouvé, l'utilisateur est redirigé vers la page de connexion.
 
@@ -173,7 +173,7 @@ Ce diagramme représente un administrateur qui se connecte ou qui met en place l
 
 1. La page de recherche détermine si le serveur est initialisé. 
 
-![](./ressources/images/look-for-server.png)
+![look for server](./ressources/images/look-for-server.png)
 
 ##### Route Verte - Le serveur est initialisé : Connexion
 2. L'utilisateur est renvoyé vers la page de connexion. 
@@ -207,17 +207,16 @@ Ce diagramme représente un administrateur qui se connecte ou qui met en place l
 #### Sécurité
 
 L'utilisateur est dans l'obligation de :
-1. Prendre une **photo**.
-2. Entrer un nom **unique**.
-3. Séléctionner un **type de personne**.
-4. Avoir des données faciales valides et être seule sur la photo.
+1. Prendre une **photo**.  
+2. Entrer un nom **unique**.  
+3. Séléctionner un **type de personne**.  
+4. Avoir des données faciales valides et être seule sur la photo.  
 
 ##### Figure 1 : Aucune personne détectée
 
 Ici, je couvre mon visage avec ma main. Le système ne me détectant pas, il lui est impossible de effectuer les étapes necessaires pour m'ajouter dans le système. Par conséquent, un message d'erreur est renvoyé.
 
 ![Personne détécté](./ressources/images/personne_non_detectee.png)
-
 
 
 ##### Figure 2 : Nom dumpliqué
@@ -233,12 +232,70 @@ Ici, l'utilisateur n'a pas entré son nom, par conséquent, le bouton pour ajout
 ![formulaire incomplet](./ressources/images/incomplet_form.png)
 
 
+### Fonctionnalité 4 : Gestion des caméras
 
-### Fonctionnalité 5 : Connectivité et Interaction Application-Serveur
+**Description :** La fonctionnalité gestion des caméras permet de **recherche automatiquement les caméras dans le réseau** et de **choisir leur position dans la pièce**.
 
-**Composantes impliquées :** Serveur Central, Application
+#### Recherche automatique
 
-**Description :** Cette fonctionnalité vise à assurer la connectivité automatique de l'application au serveur lors du démarrage, ainsi que la détection et la connexion aux caméras Wifi présentes sur le réseau.
+La recherche automatique de caméras permet de mettre à jour les caméras dans le système. Si une caméra est allumée, alors elle est trouvé automatiquement et ajoutée à la liste.
+
+Dans les exemples suivants, les ip des caméras sont les suivantes :
+
+| Camera | Adresse ip    |
+|--------|---------------|
+| Gauche | 192.168.1.115 |
+| Droite | 192.168.1.121 |
+
+
+##### Pas de caméra allumée
+
+Dans ce cas, les deux caméras sont éteintes. Elles ne sont donc pas affichés dans la liste.
+
+###### Application
+
+![0 camera](./ressources/images/0-camera.png)  
+
+###### Réel
+
+![0 camera picture](./ressources/images/0-camera-picture.jpg)
+
+#### Une caméra allumée
+
+En entrant dans la page, aucune camera est présente. En allumant la première caméra, on voit qu'elle est ajoutée à la liste.
+
+###### Application
+
+![1 camera](./ressources/images/1-cameraA.png)
+
+###### Réel
+
+![1 camera](./ressources/images/1-cameraA-picture.jpg)
+
+#### Deux caméras
+
+En allumant la seconde camera, elle est ajoutée avec la première dans la liste.
+
+###### Application
+
+![2 cameras](./ressources/images/2-camera.png)
+
+###### Réel
+
+![2 cameras picture](./ressources/images/2-camera-picture.jpg)
+
+#### Une caméra éteinte
+
+En éteignant la première camera, elle est enlevée de la liste en laissant la seconde présente. 
+
+###### Application
+
+![camera eteinte](./ressources/images/1-cameraB.png)
+
+###### Réel
+
+![camera eteinte](./ressources/images/1-camera-picture.jpg)
+
 
 ### Fonctionnalité 6 : Affichage des données sur l'interface utilisateur
 
@@ -268,9 +325,11 @@ Cette séquence permet d'initialiser le serveur si aucun administrateur n'est pr
 
 #### Vérification si le serveur est initialisé
 
-Le serveur vérifie dans sa base de données si la table Admins est vide ou pas. Si c'est le cas, cela veut dire que le serveur n'est pas initialisé.
+Le serveur vérifie dans sa base de données si la table `Admins` est vide ou pas. 
 
-![](./ressources/diagrams/sequences/test_server_intialized.png)
+- Si c'est le cas, cela veut dire que le serveur n'est pas initialisé, il faut donc ajouter l'administrateur.  
+
+![Tests de l'inialisation du serveur](./ressources/diagrams/sequences/test_server_intialized.png)
 
 ##### Application : ServerResearchWindow
 

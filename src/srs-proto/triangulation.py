@@ -56,6 +56,8 @@ class Triangulation:
             print("position x : " + str(position_x))
             print("position y : " + str(position_y))
 
+        print([position_x, position_y])
+
         return True, [position_x, position_y]
 
     @staticmethod

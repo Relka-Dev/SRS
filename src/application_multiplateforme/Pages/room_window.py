@@ -53,8 +53,8 @@ class RoomWindow(Screen):
         camera_urls = [
             f"http://{room.get_bottom_left().ip}:4298/video?token={room.get_bottom_left().jwt}",
             f"http://{room.get_bottom_right().ip}:4298/video?token={room.get_bottom_right().jwt}",
-            f"http://{room.get_top_left().ip}:4298/video?token={room.get_top_left().jwt}",
-            f"http://{room.get_top_right().ip}:4298/video?token={room.get_top_right().jwt}"
+            f"http://{room.get_top_right().ip}:4298/video?token={room.get_top_left().jwt}",
+            f"http://{room.get_top_left().ip}:4298/video?token={room.get_top_right().jwt}"
         ]
             
         self._run_subprocess_script('../srs-proto/srs-face_recognition.py', camera_urls, wall_size, api_link)

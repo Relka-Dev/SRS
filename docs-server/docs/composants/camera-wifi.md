@@ -51,11 +51,13 @@ Le support permet de maintenir les différents composants en place. Il a été r
 ![support1](../ressources/images/support1.jpg)  
 ![support2](../ressources/images/support2.jpg)  
 ![support3](../ressources/images/support3.jpg)  
+
 ### Temps de fonctionnement
 
 Les calcul ci-présents correspondent au temps de fonctionnement en cas d'utilisation intensive et moyenne. Lors du développement, les données s'approchent plus de l'utilisation moyenne. Il faut donc compter une autonomie entre les deux valeurs.
 
-$\text{Temps de fonctionnement (heures)} = \frac{\text{Capacité de la batterie (mAh)}}{\text{Consommation de courant (mA)}}$
+![support3](../ressources/images/temps_de_fonctionnement.png)  
+
 
 | Condition                        | Consommation (W) | Consommation (A) | Capacité de la batterie (mAh) | Temps de fonctionnement (heures) |
 |----------------------------------|------------------|------------------|-------------------------------|-----------------------------------|

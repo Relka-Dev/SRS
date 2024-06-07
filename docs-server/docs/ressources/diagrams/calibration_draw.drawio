@@ -1,0 +1,112 @@
+<mxfile host="Electron" modified="2024-06-07T18:22:42.309Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.4.8 Chrome/124.0.6367.207 Electron/30.0.6 Safari/537.36" etag="in4UyFgltf36iIxpY8BE" version="24.4.8" type="device">
+  <diagram name="Page-1" id="PDwudv7HOdnYkvynh6V7">
+    <mxGraphModel dx="1114" dy="838" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-1" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="160" width="160" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-2" value="" style="endArrow=none;html=1;rounded=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;exitX=0;exitY=0.25;exitDx=0;exitDy=0;" edge="1" parent="1" source="-xzHDc2Zqsi0AwKNAdIc-1" target="-xzHDc2Zqsi0AwKNAdIc-1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="250" y="190" as="sourcePoint" />
+            <mxPoint x="230" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-3" value="Adresse IP" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="275" y="160" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-4" value="Angle de la personne" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="267.5" y="210" width="125" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-5" value="" style="endArrow=none;html=1;rounded=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;exitX=0;exitY=0.75;exitDx=0;exitDy=0;" edge="1" parent="1" source="-xzHDc2Zqsi0AwKNAdIc-1" target="-xzHDc2Zqsi0AwKNAdIc-1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="260" y="203" as="sourcePoint" />
+            <mxPoint x="420" y="203" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-6" value="Taille de la personne" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="267.5" y="260" width="125" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-7" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="410" y="160" width="160" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-8" value="" style="endArrow=none;html=1;rounded=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;exitX=0;exitY=0.25;exitDx=0;exitDy=0;" edge="1" parent="1" source="-xzHDc2Zqsi0AwKNAdIc-7" target="-xzHDc2Zqsi0AwKNAdIc-7">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="410" y="190" as="sourcePoint" />
+            <mxPoint x="390" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-9" value="Adresse IP" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="435" y="160" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-10" value="Angle de la personne" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="427.5" y="210" width="125" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-11" value="" style="endArrow=none;html=1;rounded=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;exitX=0;exitY=0.75;exitDx=0;exitDy=0;" edge="1" parent="1" source="-xzHDc2Zqsi0AwKNAdIc-7" target="-xzHDc2Zqsi0AwKNAdIc-7">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="420" y="203" as="sourcePoint" />
+            <mxPoint x="580" y="203" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-12" value="Taille de la personne" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="427.5" y="260" width="125" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-13" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="290" width="160" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-14" value="" style="endArrow=none;html=1;rounded=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;exitX=0;exitY=0.25;exitDx=0;exitDy=0;" edge="1" parent="1" source="-xzHDc2Zqsi0AwKNAdIc-13" target="-xzHDc2Zqsi0AwKNAdIc-13">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="250" y="320" as="sourcePoint" />
+            <mxPoint x="230" y="420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-15" value="Adresse IP" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="275" y="290" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-16" value="Angle de la personne" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="267.5" y="340" width="125" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-17" value="" style="endArrow=none;html=1;rounded=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;exitX=0;exitY=0.75;exitDx=0;exitDy=0;" edge="1" parent="1" source="-xzHDc2Zqsi0AwKNAdIc-13" target="-xzHDc2Zqsi0AwKNAdIc-13">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="260" y="333" as="sourcePoint" />
+            <mxPoint x="420" y="333" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-18" value="Taille de la personne" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="267.5" y="390" width="125" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-19" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="410" y="290" width="160" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-20" value="" style="endArrow=none;html=1;rounded=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;exitX=0;exitY=0.25;exitDx=0;exitDy=0;" edge="1" parent="1" source="-xzHDc2Zqsi0AwKNAdIc-19" target="-xzHDc2Zqsi0AwKNAdIc-19">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="410" y="320" as="sourcePoint" />
+            <mxPoint x="390" y="420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-21" value="Adresse IP" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="435" y="290" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-22" value="Angle de la personne" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="427.5" y="340" width="125" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-23" value="" style="endArrow=none;html=1;rounded=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;exitX=0;exitY=0.75;exitDx=0;exitDy=0;" edge="1" parent="1" source="-xzHDc2Zqsi0AwKNAdIc-19" target="-xzHDc2Zqsi0AwKNAdIc-19">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="420" y="333" as="sourcePoint" />
+            <mxPoint x="580" y="333" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-24" value="Taille de la personne" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="427.5" y="390" width="125" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-25" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="420" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="-xzHDc2Zqsi0AwKNAdIc-26" value="Moyenne des tailles" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="347.5" y="420" width="125" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

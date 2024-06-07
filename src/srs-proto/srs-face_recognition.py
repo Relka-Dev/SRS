@@ -267,8 +267,10 @@ while True:
                     for point in response.points:
                         i += 1
                         # Redimensionner les positions pour correspondre à la carte
-                        map_x = int((point.value[0] / ROOM_WIDTH) * map_width)
-                        map_y = int((point.value[1] / ROOM_HEIGHT) * map_height)
+                        map_x = int(((ROOM_WIDTH - point.value[0]) / ROOM_WIDTH) * map_width)
+                        map_y = int(((ROOM_HEIGHT - point.value[1]) / ROOM_HEIGHT) * map_height)
+
+
                         # Limiter les coordonnées à l'intérieur de la carte
                         map_x = np.clip(map_x, 0, map_width - 1)
                         map_y = np.clip(map_y, 0, map_height - 1)

@@ -313,29 +313,65 @@ Dans l'exemple ci-dessous, on voit deux personnes dans la vidéo captée par la 
 
 **Description :** Cette fonctionnalité démontre la position d'une seule personne dans un espace en utilisant deux caméras.
 
-**Exigences :** Au moins deux caméras doivent être présentes dans le système.
+**Exigences :** Au moins deux caméras doivent être présentes dans le système. La calibration est optionnelle.
 
 Je définis la distance entre les deux cameras à **3.5 mètres**. Une fois la valeur définie, le programme se lance en appuyant sur le bouton `Deux cameras`.
 
 ![2 camera application](./ressources/images/2-camera-application.png)
 
-### Fonctionnalité 6 : Reconnaissance spatiale avec quatres caméras
+### Fonctionnalité 7 : Reconnaissance spatiale avec quatres caméras
 
 **Description :** Cette fonctionnalité démontre la position d'une seule personne dans un espace en utilisant quatres caméras. Le but est que la personnes captés depuis les caméras du nord et celles du sud.
 
-**Exigences :** Quatres caméras doivent être présentes dans le système.
+**Exigences :** Quatres caméras doivent être présentes dans le système. La calibration est fortement recommandée.
 
 #### Résultat dans l'application
 
 
+### Fonctionnalité 8 : Calibration
 
-### Fonctionnalité 7 : Calibration
+**Description :** L'objectif de la calibration est de mettre les cameras bien en place afin de faire fonctionner correctement les fonctionnalités liés à la reconnaissance spatiale.
+
+**Exigences :** Les cameras ont pas besoin d'êtres toutes configurés, mais c'est recommandés. Il faut que les cameras pointent vers le centre de la pièce. Il est recommandé d'être plusieurs pour l'installation, une personne au centre de la pièce, une qui calibre.
+
+#### Maquette de l'application
+
+Une case est dédiée pour chaque camera et affiche les infomations suivantes :
+
+| Élément                      | Description                                                                                                                                                       |
+|------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Adresse IP**               | Adresse IP de la caméra de la case.                                                                                                                                |
+| **Angle de la personne**     | Affiche l'angle de la personne relative à la caméra. Plus l'angle est proche de 0, plus la personne est au centre. Si l'angle est entre `-1°` et `1°`, l'angle apparaît en vert et la caméra est considérée comme calibrée. |
+| **Taille de la personne**    | Affiche la taille de la personne par rapport à la caméra. L'objectif est que toutes les caméras captent la personne à une hauteur équivalente. Si la hauteur captée par la caméra a une différence inférieure à `10%` par rapport aux autres caméras, elle apparaît en vert.   |
+| **Moyenne de la taille**     | En bas de la page, un label affiche la moyenne de la taille des personnes.                                                                                         |
+
+![Maquette calbration](./ressources/images/calibration_draw.drawio.png)
+
+#### Résultat dans l'application
+
+![calibration](./ressources/images/calibration_final.png)
+
+### Fonctionnalité 9 : Reconnaissance spatiale avec reconnaissance faciale
+
+**Description :** Cette partie est la plus importante du projet, elle reprend les fonctionnalités vues précédament et les intégre dans une seule page.
+
+L'objectif de la reconnaissance spatiale de déterminer la position de plusieurs personnes tout en reconnaissant leurs visages si possible.
+
+**Exigences :** Quatres caméras doivent être présentes dans le système. La calibration est fortement recommandée. Pour la reconnaissance faciale, les données des utilisateurs doivent être dans la base.
+
+Les identité des personnes ainsi que leurs positions sont affichés sur une carte répliquant la pièce.
+
+| Couleur | Type                 |
+|---------|---------------------------|
+| Vert    | Associé                   |
+| Bleu    | Client                    |
+| Rouge   | Dangereux                 |
+| Blanc   | Personne non identifiée   |
 
 
+#### Résultat dans l'application
 
-### Fonctionnalité 8 : Reconnaissance spatiale avec reconnaissance faciale
-
-
+![Space recognition](./ressources/images/space_recognition_func.png)
 
 
 ## Analyse organique

@@ -6346,5 +6346,12 @@ J'ai implémenté les subprocess, cela m'a permis de régler le problème de tem
 
 ## 06.06.2024
 
-#### Bilan de la veille
-Hier 
+## 07.06.2024
+
+## Conclusion
+
+Dans sa globalité, le travail a été effectué. Les deux aspects du projet que sont la reconnaissance spatiale ainsi que la gestion des différents composant de façon automatique sont fonctionnels. Cependant, des aspects d'amélioration peuvent être trouvés. Par exemple, la modification des données faciales. La fonctionnalité est implémentée du côté du serveur mais j'ai pas réussi à la faire fonctionner depuis l'application à cause d'un bug présent dans Kivy. Également, je pense qu'il y a des améliorations possibles au niveau des performances de la reconnaissance spatiale. La librairie face_recognition prend énormément de ressources et trouver une alternative permetterais de rendre le projet plus fluide et par conséquent, plus fiable.
+
+### Bilan personnel
+
+Je suis staisfait du travail que j'ai effectuer. Travailler sur ce projet m'a permis d'apprendre à combiner les technologies avec lesquelle j'ai eu l'occasion de travailler au cours de cette seconde année en tant que technicien ES et je trouve que c'est une bonne conclusion aux travaux que j'ai eu l'occasion de faire. 

@@ -19,23 +19,3 @@ Une fois le serveur et les caméras configurées, chaque caméra envoie les donn
 
 ### Sécurité
 D'un point de vue plus technique, la sécurité des communications se fait par les JWT. Pour l'initialisation, une fois que l'administrateur a rentré les données par défaut, un JWT de 15 min lui permet d'ajouter le premier administrateur. Lors d'une connexion classique, le serveur renvoie un JWT d'une durée de vie de 24 heures permettant à l'administrateur d'accéder aux autres fonctionnalités du projet. Les caméras possèdent également un JWT demandant au serveur des identifiants de connexion, une fois ces derniers vérifiés, les caméras renvoie un JWT d'une durée de vie de 24 heures. Les token sont stockés dans la base et utilisés pour les appels à l'API. À chaque appel, le serveur vérifie la durée de vie des JWT des caméras, si ce dernier est expiré, il le remplace par un nouveau en effectuant une nouvelle connexion.
-
-## English version
-
-### Présentation
-The Space Recognition System (SRS) is a project that aims to secure a room by finding person position and their identity. In order to do that, the system uses artificial intelligence technologies that can identify and find people in an image or a video. 
-
-### Initialisation
-The administrator starts by initialisng the system. He stasrts the application, if a SRS is found, he ask th connect the administrator by using generic credentials given to him in the user manual. Ones the credentials are verified, he can add the first administrator in the system. After inputing their name and a secure password, he's redirected to the login page where it's asked to him to enter the login credentials of the admin. If they are correct, the administrator is redirected to the main page of the application.
-
-### Configuration
-The user stats by adding people in the system, he must enter their name, a picture and the type (dangerous, associate, etc.).
-After that, he places the camera at each corner of the room, then, he must assign them a position, such as north/west for a camera that is at the top left of the room.  
-
-### Space recognition
-
-Ones the server and the camera are configured, the server gets the images captured by the cameras. The system finds the person's positions by using triangulation between the cameras, and if possible, tries to identify the peoples faces using the data in the system. Ones the processing is done, the application displays the person's position and their identity if it has been found.
-
-### Sécurity
-
-From a more technical point of view, the security of the communication uses the json web tokens. For the initialisation, ones the administrator has put the correct default credentials, a JWT with a 15 minute lifespan is generated. With this token, he can add the first admin in the database. Ones the administrator logins, another JWT is generated, this time with a 24 hour lifespan that gives him the rights to access the application functionality. The wifi camera got their JWT as well, when the server wants to get a picture or a video from the camera he has to login using secured credentials. Ones they are verified, a JWT is generated and given to the server. The server proceeds, then by adding this JWT to the camera in the database. For the lifespan of the token, the server will use it to get the pictures or the videos. Ones it is expired, it makes another login and update token in the database.

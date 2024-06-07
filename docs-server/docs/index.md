@@ -297,11 +297,45 @@ En éteignant la première camera, elle est enlevée de la liste en laissant la 
 ![camera eteinte](./ressources/images/1-camera-picture.jpg)
 
 
-### Fonctionnalité 6 : Affichage des données sur l'interface utilisateur
+### Fonctionnalité 5 : Affichage de l'angle de personne
 
-**Composantes impliquées :** Application
+**Description :** Cette fonctionnalité illustre en partie le fonctionnement de la reconnaissance spatiale. La position des personnes est déterminée par rapport à la caméra. Si une personne se trouve au centre de l'image, sa position sera indiquée comme 0. Plus elle se déplace vers la gauche, plus sa position se rapprochera de -31.1. Inversement, plus elle se déplace vers la droite, plus sa position se rapprochera de 31.1.
 
-**Description :** Cette fonctionnalité concerne l'affichage correct des données, notamment les positions détectées, sur l'interface utilisateur de l'application.
+**Exigences :** Au moins une caméra doit être présentes dans le système.
+
+#### Résultat dans l'application
+
+Dans l'exemple ci-dessous, on voit deux personnes dans la vidéo captée par la camera. La personne a gauche a un angle de -3.50° et la personne à droite 12.84°.
+
+![Angle de la camera](./ressources/images/angle_camera_analyse.png)
+
+### Fonctionnalité 6 : Reconnaissance spatiale avec deux caméras
+
+**Description :** Cette fonctionnalité démontre la position d'une seule personne dans un espace en utilisant deux caméras.
+
+**Exigences :** Au moins deux caméras doivent être présentes dans le système.
+
+Je définis la distance entre les deux cameras à **3.5 mètres**. Une fois la valeur définie, le programme se lance en appuyant sur le bouton `Deux cameras`.
+
+![2 camera application](./ressources/images/2-camera-application.png)
+
+### Fonctionnalité 6 : Reconnaissance spatiale avec quatres caméras
+
+**Description :** Cette fonctionnalité démontre la position d'une seule personne dans un espace en utilisant quatres caméras. Le but est que la personnes captés depuis les caméras du nord et celles du sud.
+
+**Exigences :** Quatres caméras doivent être présentes dans le système.
+
+#### Résultat dans l'application
+
+
+
+### Fonctionnalité 7 : Calibration
+
+
+
+### Fonctionnalité 8 : Reconnaissance spatiale avec reconnaissance faciale
+
+
 
 
 ## Analyse organique
@@ -316,11 +350,7 @@ Documentation technique du projet. Son objectif est de documenter les technologi
 
 Cette séquence permet d'initialiser le serveur si aucun administrateur n'est présent dans le système. S'il l'est, la page de connexion s'affiche, sinon, les autres étapes de l'initialisation s'activent.
 
-![](./ressources/diagrams/us1-initialisation-connexion.jpg)
-
-<p align="center">
-  <img src="./ressources/videos/initialize.gif">
-</p>
+![us1 initialisation des caméras](./ressources/diagrams/us1-initialisation-connexion.jpg)
 
 
 #### Vérification si le serveur est initialisé
@@ -641,9 +671,7 @@ La page d'ajout d'utilisateur permet d'ajouter les données d'un individus dans 
 
 #### Interface graphique (app.kv)
 
-<p align="center">
-  <img src="./ressources/videos/addUser.gif">
-</p>
+![ajout de personnes](./ressources/images/applicationajout.png)
 
 ```
 <AddUserWindow>:
@@ -1810,7 +1838,7 @@ On recherche l'angle relatif au centre de l'angle de vue de la camera, par exemp
 
 1. Calcul du centre X
 
-\( \text{center\_x} = \frac{x1 + x2}{2} \)
+![calcul_centre_x](./ressources/images/calcul_centre_x.png)
 
 2. Calcul du centre de l'image
 $\frac{\text{frame.shape}[1]}{2}$
@@ -2439,6 +2467,8 @@ test_triangulation.py .......                                            [100%]
 ### Calibration
 
 L'objectif de la calibration est d'avoir le bon positionnement des caméras afin de rendre la reconnaissance spatiale plus précise.
+
+Pour précisier, cela n'est pas une [calibration de camera](https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html) mais une calibration de la position des camera dans l'espace de la pièce.
 
 #### Explication du modèle
 

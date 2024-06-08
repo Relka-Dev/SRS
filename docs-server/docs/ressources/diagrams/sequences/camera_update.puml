@@ -1,0 +1,24 @@
+@startuml
+
+participant "CameraManagementWindow" as CMW
+participant "ServerClient" as SC
+participant "App"
+participant "DataBaseClient" as DBC
+participant "Database" as DB
+
+CMW -> SC : update_camera(idCamera, idNetwork, idWall)
+activate SC
+SC -> App : Http PUT request: /update_camera\nParams: idCamera, idNetwork, idWall, positionX
+activate App
+App -> DBC : updateCameraByIdCameraAndIdNetwork(idCamera, idNetwork, positionX, idWall)
+activate DBC
+DBC -> DB : SQL Update\nUPDATE Cameras SET positionX = %s, idWall = %s WHERE idCamera = %s AND idNetwork = %s
+activate DB
+DB --> DBC : SQL Response\nSuccess
+deactivate DB
+DBC --> App : Camera updated successfully
+deactivate DBC
+App --> SC : Http Response\nCode: 200\nBody: {"message": "Caméra mise à jour avec succès"}
+deactivate App
+SC --> CMW : Returns: {"message": "Caméra mise à jour avec succès"}
+deactivate SC

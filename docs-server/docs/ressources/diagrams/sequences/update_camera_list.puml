@@ -1,0 +1,81 @@
+@startuml
+
+actor Utilisateur
+
+participant "UI (cameras_management_window.py)" as UI
+participant "Client API (server_client.py)" as ClientAPI
+participant "Serveur (app.py)" as Server
+participant "Base de données (database_client.py)" as Database
+participant "Camera Server Client" as CameraServer
+
+Utilisateur -> UI: Click sur bouton de mise à jour des caméras
+UI -> UI: update_cameras_list()
+
+activate UI
+UI -> UI: change_all_view_input_state(True)
+UI -> UI: update_cameras_list_button.disabled = True
+UI -> UI: cameras_spinner.text = "Loading..."
+
+UI -> UI: ask_camera_update_thread = threading.Thread(target=self.ask_camera_update)
+UI -> UI: ask_camera_update_thread.start()
+
+UI -> ClientAPI: update_camera_list()
+activate ClientAPI
+
+ClientAPI -> ClientAPI: Vérification de l'IP du serveur
+ClientAPI -> ClientAPI: Création des paramètres (token, ip, subnetMask)
+ClientAPI -> ClientAPI: Construction de l'URL de l'endpoint
+
+ClientAPI -> Server: Envoi de la requête GET à /update_camera_list
+activate Server
+
+Server -> Server: Vérification des paramètres de la requête
+Server -> Server: Validation du réseau
+
+Server -> CameraServer: Initialisation de CameraServerClient
+activate CameraServer
+
+Server -> Database: getNetworkIdByIpAndSubnetMask(ip, subnetMask)
+activate Database
+Database -> Server: networkId
+
+Server -> Database: checkIfNetworkExists(ip)
+Database -> Server: True/False
+
+Server -> CameraServer: lookForCameras()
+activate CameraServer
+CameraServer -> CameraServer: Recherche des caméras (async)
+CameraServer -> Server: cameras_in_network
+deactivate CameraServer
+
+Server -> CameraServer: getCamerasTokens()
+CameraServer -> Server: tokens_for_ip
+
+Server -> Database: getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)
+Database -> Server: cameras_in_db
+
+Server -> Server: get_cameras_that_are_not_in_database(tokens_for_ip, cameras_in_db)
+Server -> Server: get_cameras_that_are_not_in_network(cameras_in_network, cameras_in_db)
+
+Server -> Database: addCamerasToNetwork(cameras_to_add, networkId)
+Database -> Server: Success/Failure
+
+Server -> Database: deleteCamerasFromNetwork(cameras_to_remove, networkId)
+Database -> Server: Success/Failure
+deactivate Database
+
+Server -> ClientAPI: cameras from db
+deactivate Server
+
+ClientAPI -> UI: result, response
+deactivate ClientAPI
+
+UI -> UI: Mise à jour de l'interface utilisateur
+UI -> UI: cameras_spinner.values = camera_details
+UI -> UI: cameras_spinner.text = "Cameras found"
+UI -> UI: cameras_spinner.disabled = False
+
+UI -> UI: update_cameras_list_button.disabled = False
+deactivate UI
+
+@enduml

@@ -129,6 +129,8 @@ Pour accèder à la documentation de chaque composant, cliquez sur leurs titres.
 
 Pour l'analyse fonctionnelle, je me suis placé du point de vue de l'utilisateur. L'objectif est de comprendre les différentes fonctionnalités sans rentrer dans les détails techniques.
 
+
+
 ### Architecture de l'application
 
 L'application est divisée en deux parties, la partie Kivy Python et la partie OpenCV. La partie Kivy s'occupe de la navigation, des formulaires (connexion, ajout d'utilisateurs) et la partie OpenCV sert à afficher les fonctionnalités liées à la reconnaissance spatiale.
@@ -138,6 +140,8 @@ L'application est divisée en deux parties, la partie Kivy Python et la partie O
 ### Fonctionnalité 1 : Recherche automatique de serveurs
 
 **Description :** Cette fonctionnalité permet de rechercher automatiquement un serveur SRS actif dans un réseau.
+
+
 
 #### User Story
 
@@ -159,15 +163,15 @@ Ce diagramme représente la recherche automatique de serveurs sur un réseau.
 
 ![](./ressources/images/login.png)  
 
-### Fonctionnalité 2 : Initialisation / Connexion au système
 
+
+### Fonctionnalité 2 : Initialisation / Connexion au système
 
 **Description :** Cette fonctionnalité permet d'initialiser le serveur.
 
 #### User Story
 
 Ce diagramme représente un administrateur qui se connecte ou qui met en place le premier administrateur.
-
 
 ![](./ressources/diagrams/us1-initialisation-connexion.jpg)
 
@@ -196,6 +200,7 @@ Ce diagramme représente un administrateur qui se connecte ou qui met en place l
 ![](./ressources/images/login.png)
 
 5. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
+
 
 
 ### Fonctionnalité 3 : Ajout d'utilisateurs
@@ -230,6 +235,7 @@ Dans ce cas, nous voyons que le nom est déjà présent dans la base de données
 Ici, l'utilisateur n'a pas entré son nom, par conséquent, le bouton pour ajouter l'utilisateur n'est pas activé.
 
 ![formulaire incomplet](./ressources/images/incomplet_form.png)
+
 
 
 ### Fonctionnalité 4 : Gestion des caméras
@@ -297,6 +303,7 @@ En éteignant la première camera, elle est enlevée de la liste en laissant la 
 ![camera eteinte](./ressources/images/1-camera-picture.jpg)
 
 
+
 ### Fonctionnalité 5 : Affichage de l'angle de personne
 
 **Description :** Cette fonctionnalité illustre en partie le fonctionnement de la reconnaissance spatiale. La position des personnes est déterminée par rapport à la caméra. Si une personne se trouve au centre de l'image, sa position sera indiquée comme 0. Plus elle se déplace vers la gauche, plus sa position se rapprochera de -31.1. Inversement, plus elle se déplace vers la droite, plus sa position se rapprochera de 31.1.
@@ -309,6 +316,8 @@ Dans l'exemple ci-dessous, on voit deux personnes dans la vidéo captée par la 
 
 ![Angle de la camera](./ressources/images/angle_camera_analyse.png)
 
+
+
 ### Fonctionnalité 6 : Reconnaissance spatiale avec deux caméras
 
 **Description :** Cette fonctionnalité démontre la position d'une seule personne dans un espace en utilisant deux caméras.
@@ -319,6 +328,8 @@ Je définis la distance entre les deux cameras à **3.5 mètres**. Une fois la v
 
 ![2 camera application](./ressources/images/2-camera-application.png)
 
+
+
 ### Fonctionnalité 7 : Reconnaissance spatiale avec quatres caméras
 
 **Description :** Cette fonctionnalité démontre la position d'une seule personne dans un espace en utilisant quatres caméras. Le but est que la personnes captés depuis les caméras du nord et celles du sud.
@@ -328,6 +339,8 @@ Je définis la distance entre les deux cameras à **3.5 mètres**. Une fois la v
 #### Résultat dans l'application
 
 ![2 camera application](./ressources/images/double_triangulation.png)
+
+
 
 ### Fonctionnalité 8 : Calibration
 
@@ -387,7 +400,6 @@ Documentation technique du projet. Son objectif est de documenter les technologi
 Cette séquence permet d'initialiser le serveur si aucun administrateur n'est présent dans le système. S'il l'est, la page de connexion s'affiche, sinon, les autres étapes de l'initialisation s'activent.
 
 ![us1 initialisation des caméras](./ressources/diagrams/us1-initialisation-connexion.jpg)
-
 
 #### Vérification si le serveur est initialisé
 
@@ -1363,7 +1375,6 @@ class Camera:
 
 ##### Routes (Serveur : app.py)
 
-
 La méthode `cameras` gère les requêtes pour obtenir et gérer les caméras sur un réseau donné. Voici une explication rapide de chaque étape de la méthode :
 
 1. **Validation des paramètres** :
@@ -1474,30 +1485,433 @@ def intialise_network_with_cameras(self, networkip, subnetMask):
     return jsonify(self.db_client.getCamerasByNetworkIpAndSubnetMask(networkip, subnetMask)), 201
 ```
 
-####
-
-
-
-
-
 #### Recherche automatique des cameras
 
-La recherche automatique des camera se passe de la façon suivante.
+1. **Utilisateur clique sur le bouton pour mettre à jour la liste des caméras.**
 
-![Camera network](./ressources/diagrams/sequences/camera_network.png)
+2. **UI appelle `update_cameras_list()`:**
+   1. Change l'état des entrées de l'interface utilisateur et désactive le bouton de mise à jour.
+   2. Met à jour le texte du spinner pour indiquer le chargement.
+   3. Démarre un nouveau thread pour exécuter `ask_camera_update()`.
+
+3. **UI appelle `ask_camera_update()`:**
+   1. ClientAPI envoie une requête au serveur pour mettre à jour la liste des caméras.
+
+4. **ClientAPI appelle `update_camera_list()`:**
+   1. Vérifie l'IP du serveur et crée les paramètres nécessaires.
+   2. Construit l'URL de l'endpoint et envoie une requête GET au serveur.
+
+5. **Server reçoit la requête:**
+   1. Vérifie les paramètres de la requête et valide le réseau.
+   2. Initialise `CameraServerClient`.
+   3. Vérifie si le réseau existe dans la base de données.
+   4. Si le réseau n'existe pas, initialise le réseau avec les caméras.
+   5. Utilise un event loop pour rechercher les caméras de manière asynchrone.
+   6. Récupère les tokens des caméras.
+   7. Récupère les caméras enregistrées dans la base de données.
+   8. Détermine les caméras à ajouter et à retirer.
+   9. Met à jour la base de données en ajoutant et en supprimant les caméras.
+   10. Retourne la liste mise à jour des caméras.
+
+6. **ClientAPI retourne le résultat à l'UI.**
+
+7. **UI met à jour l'interface utilisateur avec les nouvelles informations sur les caméras et réactive le bouton de mise à jour.**
+
+
+![Update Camera list](./ressources/diagrams/sequences/update_camera_list.png)
+
+##### Vue (Application : cameras_management_window.py)
+
+Cette méthode est appelée lorsqu'un utilisateur clique sur le bouton pour mettre à jour la liste des caméras. Elle désactive temporairement les entrées de l'interface utilisateur et le bouton de mise à jour pour éviter les interactions pendant le processus.
+
+```py
+def update_cameras_list(self):
+    self.change_all_view_input_state(True)
+    self.ids.update_cameras_list_button.disabled = True
+    Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'text', self.TEXT_LOADING_CAMERA))
+    self.ask_camera_update_thread = threading.Thread(target=self.ask_camera_update)
+    self.ask_camera_update_thread.start()
+```
+
+Cette méthode est exécutée dans un thread séparé pour ne pas bloquer l'interface utilisateur. Elle appelle la méthode update_camera_list du client serveur et met à jour l'interface utilisateur en fonction du résultat.
+
+```py
+def ask_camera_update(self):
+    result, response = self.server_client.update_camera_list()
+    camera_details = []
+    if result:
+        self.cameras = response
+        for camera in response:
+            display_text = f"IP: {camera.ip} - Wall: {camera.idWall}"
+            camera_details.append(display_text)
+        if not camera_details:
+            Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'values', []))
+            Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'text', self.TEXT_NO_CAMERA_FOUND))
+            Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'disabled', True))
+        else:
+            Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'values', camera_details))
+            Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'text', self.TEXT_CAMERA_FOUND))
+            Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'disabled', False))
+    else:
+        Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'values', []))
+        Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'text', self.TEXT_NO_CAMERA_FOUND))
+        Clock.schedule_once(lambda dt: setattr(self.ids.cameras_spinner, 'disabled', True))
+    
+    self.ids.update_cameras_list_button.disabled = False
+```
+
+##### Client API (Application : server_client.py)
+
+Cette méthode envoie une requête GET au serveur pour obtenir la liste des caméras. Elle construit l'URL de l'endpoint, crée les paramètres nécessaires et traite la réponse du serveur.
+
+
+1. **Vérification de l'IP du serveur**
+   - Vérifie la disponibilité de l'adresse IP du serveur.
+   - Retourne `False` si l'IP n'est pas disponible.
+
+2. **Création des paramètres**
+   - Crée les paramètres pour la requête, incluant le token d'API, l'IP du réseau et le masque de sous-réseau.
+
+3. **Construction de l'URL de l'endpoint**
+   - Construit l'URL de l'endpoint à partir de l'URL du serveur et du chemin de l'endpoint.
+
+4. **Envoi de la requête GET**
+   - Envoie une requête GET à l'endpoint avec les paramètres définis.
+
+5. **Traitement de la réponse**
+   - Si le statut de la réponse est `201` :
+     - Décode les données de la réponse en JSON.
+     - Retourne `False` et un message approprié si aucune caméra n'est trouvée.
+     - Sinon, crée un objet `Camera` pour chaque caméra et l'ajoute à la liste `cameras`.
+     - Retourne `True` et la liste des caméras.
+   - Si le statut de la réponse n'est pas `201`, retourne `False` et la réponse brute du serveur.
+
+```py
+def update_camera_list(self):
+    if not self.server_ip:
+        return False
+    
+    
+    params = {
+        "token": self.API_token,
+        "ip": ServerClient.get_netowk_from_ip(self.server_ip),
+        "subnetMask": 24
+    }
+    
+    endpoint_url = f"{self.server_url}/update_camera_list"
+    response = requests.get(endpoint_url, params=params)
+    if response.status_code == 201:
+        response_data = response.content.decode('utf-8')
+        cameras_data = json.loads(response_data)
+        cameras = []
+        if cameras_data == None:
+            return False, "Aucune caméra trouvée"
+        for camera in cameras_data:
+            cameras.append(Camera(camera[0],camera[1],camera[2],camera[3],camera[4],camera[5],camera[6]))
+        return True, cameras
+    else:
+        return False, response
+```
+
+##### Route (Serveur : app.py)
+
+Cette méthode vérifie les paramètres de la requête, valide le réseau, et utilise des méthodes asynchrones pour rechercher les caméras dans le réseau spécifié.
+
+1. **Vérification des paramètres de la requête**
+   - Vérifie si l'adresse IP et le masque de sous-réseau sont présents dans les paramètres de la requête.
+   - Si l'un des deux manque, retourne une erreur 401 avec un message approprié.
+
+2. **Validation du réseau**
+   - Vérifie si le réseau donné est valide en utilisant la méthode `NetworkScanner.is_network_valid`.
+   - Si le réseau est invalide, retourne une erreur 402.
+
+3. **Initialisation du client serveur de la caméra**
+   - Crée une instance de `CameraServerClient` avec l'IP et le masque de sous-réseau fournis.
+
+4. **Récupération de l'ID du réseau**
+   - Utilise la méthode `self.db_client.getNetworkIdByIpAndSubnetMask` pour obtenir l'ID du réseau correspondant.
+
+5. **Vérification de l'existence du réseau**
+   - Vérifie si le réseau existe déjà dans la base de données.
+   - Si ce n'est pas le cas, initialise le réseau avec les caméras.
+
+6. **Recherche des caméras de manière asynchrone**
+   - Utilise un event loop pour exécuter la recherche des caméras de manière asynchrone avec `cameraServerClient.lookForCameras`.
+
+7. **Récupération des tokens associés aux caméras**
+   - Utilise la méthode `cameraServerClient.getCamerasTokens` pour obtenir les tokens associés aux adresses IP des caméras trouvées.
+
+8. **Récupération des caméras dans la base de données**
+   - Utilise `self.db_client.getCamerasByNetworkIpAndSubnetMask` pour obtenir les caméras enregistrées dans la base de données pour ce réseau.
+
+9. **Détermination des caméras à ajouter et à retirer**
+   - Utilise `ServeurCentral.get_cameras_that_are_not_in_database` pour déterminer les caméras à ajouter.
+   - Utilise `ServeurCentral.get_cameras_that_are_not_in_network` pour déterminer les caméras à retirer.
+
+10. **Mise à jour de la base de données**
+    - Ajoute les nouvelles caméras au réseau avec `self.db_client.addCamerasToNetwork`.
+    - Supprime les caméras qui ne sont plus dans le réseau avec `self.db_client.deleteCamerasFromNetwork`.
+
+11. **Retourne la liste mise à jour des caméras**
+    - Retourne la liste des caméras pour le réseau donné avec un statut 201.
+
+
+```py
+@JwtLibrary.API_token_required
+def update_camera_list(self):
+    ip = request.args.get('ip')
+    subnetMask = request.args.get('subnetMask')
+    if not ip or not subnetMask:
+        return jsonify({'erreur': 'Mauvais paramètres, utilisez (ip, subnetMask) pour l\'ip du réseau et le masque de sous-réseau respectivement.'}), 401
+    if not NetworkScanner.is_network_valid("{n}/{sub}".format(n=ip, sub=subnetMask)):
+        
+        return jsonify({'erreur': 'Le réseau donné est invalide'}), 402
+    cameraServerClient = CameraServerClient(ip, subnetMask)
+    networkId = self.db_client.getNetworkIdByIpAndSubnetMask(ip, subnetMask)
+    if not self.db_client.checkIfNetworkExists(ip):
+        
+        return self.intialise_network_with_cameras(ip, subnetMask)
+    # Utilisation d'un event loop pour exécuter la recherche des caméras de manière asynchrone
+    loop = asyncio.new_event_loop()     
+    asyncio.set_event_loop(loop)
+    cameras_in_network = loop.run_until_complete(cameraServerClient.lookForCameras())
+    loop.close()
+    # Après la récupération des adresses IP des caméras, obtenir les tokens associés
+    tokens_for_ip = cameraServerClient.getCamerasTokens()
+    cameras_in_db = self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)
+    cameras_to_add = ServeurCentral.get_cameras_that_are_not_in_database(tokens_for_ip, cameras_in_db)
+    cameras_to_remove = ServeurCentral.get_cameras_that_are_not_in_network(cameras_in_network, cameras_in_db)
+    if cameras_to_add:
+        self.db_client.addCamerasToNetwork(cameras_to_add, networkId)
+    if cameras_to_remove:
+        self.db_client.deleteCamerasFromNetwork(cameras_to_remove, networkId)
+    return jsonify(self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)), 201
+```
+
+##### Détermination des caméras à ajouter et enlever (Serveur : App.py)
+
+L'objectif de cette fonctionnalité est de mettre à jour les caméras dans le système en comparant celles qui se trouvent dans le réseau sans compremettre les données.
+
+###### Exemple
+
+Dans cette exemple, sur la gauche on voit les caméras dans la base de données, à droite, les caméras présentes dans le réseau.
+
+| Action        | Adresse IP | Couleur        |
+|---------------|-------------|----------------|
+| À garder      | x.104       | Couleur Verte  |
+| À garder      | x.160       | Couleur Verte  |
+| À supprimer   | x.115       | Couleur Rouge  |
+| À ajouter     | x.148       | Couleur Orange |
+
+Premièrement, nous recherchons les caméras à ajouter. Pour ce faire, nous comparons celles présentes dans la base de données avec celles du réseau. Ensuite, nous comparons à nouveau les caméras de la nouvelle liste avec celles du réseau. Toute caméra en trop est retirée. À la fin, nous obtenons la bonne liste sans compromettre les données des caméras non modifiées.
+
+![Camera list](./ressources/images/camera_list.png)
+
+###### Implémentation
+
+La fonction `get_cameras_that_are_not_in_database`, compare deux listes de caméras pour déterminer lesquelles, parmi celles présentes dans le réseau, ne sont pas encore répertoriées dans la base de données. Cette fonction donne la liste des caméras à ajouter.
+
+```py
+@staticmethod
+def get_cameras_that_are_not_in_database(network_cameras, database_cameras):
+    """
+    Cette fonction prend en entrée deux listes : une liste de caméras de réseau et une liste de caméras de base de données.
+    Elle retourne une liste des caméras de réseau qui ne sont pas présentes dans la base de données.
+    :param network_cameras: Liste des caméras de réseau. Chaque caméra est représentée par une liste contenant une adresse IP (IPv4Address) et un token.
+    :param database_cameras: Liste des caméras de la base de données. Chaque caméra est représentée par une liste contenant une adresse IP (IPv4Address) et un token.
+    :return: Liste des caméras de réseau qui ne sont pas dans la base de données. Chaque caméra est représentée par une liste contenant une adresse IP (str) et un token.
+    """
+    result_camera_list = []
+    # Affectation des listes si aucune donnée n'est présente
+    if network_cameras is None:
+        network_cameras = []
+    if database_cameras is None:
+        database_cameras = []
+    # Extraction des tokens des caméras dans la base de données pour les comparer
+    database_camera_tokens = [str(db_camera[1]) for db_camera in database_cameras]
+    for network_camera in network_cameras:
+        ip_address_str = str(network_camera[0])
+        print(f"ip adress network: {ip_address_str}")
+        print(f"database data = {database_camera_tokens}")
+        if ip_address_str not in database_camera_tokens:
+            result_camera_list.append([ip_address_str, network_camera[1]])
+    return result_camera_list
+```
+
+La fonction `get_cameras_that_are_not_in_network`, compare deux listes de caméras pour déterminer lesquelles, parmi celles présentes dans la base de données, ne sont pas détectées dans le réseau actuel. Cette fonction donne la liste des caméras à supprimer.
+
+```py
+@staticmethod
+def get_cameras_that_are_not_in_network(network_cameras, database_cameras):
+    if network_cameras is None:
+        network_cameras = []
+    if database_cameras is None:
+        database_cameras = []
+    
+    result_camera_list = []
+    pattern = r"'(.*?)'"
+    network_cameras = re.findall(pattern, str(network_cameras))
+    for database_camera in database_cameras:
+        if database_camera[1] not in network_cameras:
+            result_camera_list.append(database_camera)
+    return result_camera_list
+```
+
+##### Récupération du token des cameras (Serveur : camera_server_client.py)
+
+La fonction getCamerasTokens est conçue pour récupérer les tokens JWT (JSON Web Tokens) des caméras en se connectant à elles via leurs adresses IP sur leur serveur.
+
+```py
+def getCamerasTokens(self):
+    """
+    Cette fonction permet de récupérer les JWT des caméras en effectuant une connexion sur ces dernières.
+    
+    :return: Une liste de paires [IP de la caméra, token JWT], ou None si aucune IP n'est fournie.
+    """
+    cameraIPs = self.camerasIPs
+    if not cameraIPs:
+        return None
+
+    tokens_for_ip = []
+    for cameraip in cameraIPs:
+        camera_url = f"http://{cameraip}:{self.__CAMERAS_SERVER_PORT}/login"
+        response = requests.get(camera_url, auth=(self.__CLIENT_USERNAME, self.__CLIENT_PASSWORD))
+
+        if response.status_code == 200:
+            tokens_for_ip.append([cameraip, response.json().get('token')])
+        else:
+            print(f"Échec de l'obtention du token JWT pour l'ip : {cameraip}:", response.status_code)
+
+    return tokens_for_ip
+```
+
+##### Query vers la base de données (Serveur : database_client.py)
+
+Les fonctions `addCamerasToNetwork` et `deleteCamerasFromNetwork` gèrent l'ajout et la suppression de caméras dans un réseau au sein d'une base de données.
+
+```py
+def addCamerasToNetwork(self, cameras, idNetwork):
+    try:
+        for camera in cameras:
+            ip = camera[0]
+            token = camera[1]
+            self.cursor.execute("INSERT INTO Cameras (ip, idNetwork, JWT) VALUES (%s, %s, %s);", (ip, idNetwork, token))
+        self.dbConnexion.commit()
+        return True, "Cameras added to network successfully."
+    except Exception as e:
+        print(f"Error adding cameras to the network: {e}")
+        return False, f"Error adding cameras to the network: {e}"
+
+def deleteCamerasFromNetwork(self, cameras, idNetwork):
+    try:
+        for camera_id in cameras:
+            self.cursor.execute("DELETE FROM Cameras WHERE idCamera = %s AND idNetwork = %s", (str(camera_id[0]), str(idNetwork),))
+        self.dbConnexion.commit()
+        return True, "Cameras removed from the network successfully."
+    except Exception as e:
+        print(f"Error removing cameras from the network: {e}")
+        return False, f"Error removing cameras from the network: {e}"
+```
+
 
 #### Mise à jour des données de la camera
 
+La séquence suivante permet de changer les données de la camera, la faire changer de mur dans l'état actuel de l'application.
 
+![camera update](./ressources/diagrams/sequences/camera_update.png)
 
+##### Récupération des données du formulaire (Application : cameras_management_window.py)
 
+Cette fonction est déclenchée lorsqu'un utilisateur tente de mettre à jour les données d'une caméra. Elle récupère les informations nécessaires de la caméra sélectionnée et du mur sélectionné, puis appelle la méthode `update_camera` du client API.
 
+```py
+def update_camera(self):
+    if self.selected_camera and self.selected_wall:
+        idCamera = self.selected_camera.idCamera
+        idNetwork = self.selected_camera.idNetwork
+        idWall = self.selected_wall.idWall
+        result, response = self.server_client.update_camera(idCamera, idNetwork, idWall)
+        
+        if result:
+            self.ids.status_label.text = str(response['message'])
+            print("Camera updated successfully:", response)
+        else:
+            self.ids.status_label.text = str(response)
+            print("Failed to update camera:", response)
+        
+        self.ask_camera_update_thread = threading.Thread(target=self.ask_camera_update)
+        self.ask_camera_update_thread.start()
+    else:
+        print("No camera or wall selected. Please select both before updating.")
+```
 
+##### Client API (Application : server_client.py)
 
+Cette méthode envoie une requête PUT au serveur avec les informations nécessaires pour mettre à jour la caméra. Elle construit l'URL de l'endpoint, crée les paramètres nécessaires et traite la réponse du serveur.
 
-### Gestion des fonctionnalités
+```py
+def update_camera(self, idCamera, idNetwork, idWall):
+    if not self.server_ip:
+        return False, "IP du serveur manquante"
+    params = {
+        "token": self.API_token,
+        "idCamera": idCamera,
+        "idNetwork": idNetwork,
+        "positionX": 0,
+        "idWall": idWall
+    }
+    endpoint_url = f"{self.server_url}/update_camera"
+    response = requests.put(endpoint_url, params=params)
+    if response.status_code == 200:
+        return True, response.json()
+    else:
+        return False, response.json()
+```
 
-Les fonctionnalités sont des script externes accédés depuis l'application par subprocess. Les dépendances externes tel que les liens vers les caméras wifi ou les données faciles sont passés par paramètre.
+##### Route (Serveur : app.py)
+
+Le serveur reçoit la requête PUT à travers cette route. Il vérifie la présence des paramètres requis, puis appelle la méthode du client de la base de données pour effectuer la mise à jour. En cas de succès ou d'erreur, il renvoie une réponse appropriée.
+
+```py
+@JwtLibrary.API_token_required
+def update_camera(self):
+    idCamera = request.args.get('idCamera')
+    idNetwork = request.args.get('idNetwork')
+    positionX = request.args.get('positionX')
+    idWall = request.args.get('idWall')
+
+    if not idCamera or not idNetwork or not positionX or not idWall:
+        return jsonify({'erreur': 'Paramètres manquants, veuillez fournir idCamera, idNetwork, positionX et idWall'}), 400
+
+    result, message = self.db_client.updateCameraByIdCameraAndIdNetwork(idCamera, idNetwork, positionX, idWall)
+
+    if result:
+        return jsonify({'message': message}), 200
+    else:
+        return jsonify({'erreur': message}), 500
+
+```
+
+##### Query vers la base de donnés (Serveur : database_client.py)
+
+Cette méthode exécute la requête SQL pour mettre à jour les informations de la caméra dans la base de données. Elle utilise les paramètres fournis pour trouver et mettre à jour la caméra correspondante.
+
+```py
+def updateCameraByIdCameraAndIdNetwork(self, idCamera, idNetwork, positionX, idWall):
+    try:
+        self.cursor.execute("UPDATE srs.Cameras SET positionX = %s, idWall = %s WHERE idCamera = %s AND idNetwork = %s", (positionX, idWall, idCamera, idNetwork,))
+        self.dbConnexion.commit()
+        return True, "Caméra mise à jour avec succès."
+    except Exception as e:
+        print(f"Erreur lors de la mise à jour de la caméra : {e}")
+        return False, f"Erreur lors de la mise à jour de la caméra : {e}"
+```
+
+### Gestion des subprocess
+
+L'utilisation de subprocess permet de lancer des applications externe depuis une autre application. Pour mon projet, ces application lancés depuis l'application Kivy sont les fonctionnalités liés à la reconnaissance spatiale. Les dépendances externes tel que les liens vers les caméras wifi ou les données faciles sont passés par paramètre.
+
+[Documentation des subprocess](https://www.geeksforgeeks.org/python-subprocess-module/)
 
 #### Emplacement dans le projet
 
@@ -2280,6 +2694,7 @@ Pour trouver la position des personnes, nous suivons les étapes suivantes :
 
 ##### Implémentation
 
+
 ```py
 @staticmethod
 def get_objects_positions(wall_length, objects_angles_from_bot_left, objects_angles_from_bot_right, object_angles_from_top_left, object_angles_from_top_right, tolerence=0.5):
@@ -2582,11 +2997,20 @@ Un diagramme de Gantt est un outil de gestion de projet visuel utilisé pour pla
 
 Le planning prévisionnel a été effectué au début du projet pour définir les étapes et la chronologie des tâches à accomplir.
 
+L'objectif est de développer les composants à la suite, quand un de ces derniers est terminé, alors une release est crée et on passe au composant suivant. 
+
+- v0.1 : Cameras Wifi   
+- v0.2 : Serveur Central  
+- v0.3 : Application multiplateforme  
+- v1.0 : Projet Achevé et testé  
+
 ![Planning Prévisionnel](./ressources/images/PlanningPrevisionnel.png)  
 
 ### Planning effectif
 
 Le planning effectif représente le véritable travail effectué tout au long du projet. Contrairement au planning prévisionnel, il montre les ajustements et les adaptations nécessaires pour répondre aux exigences et contraintes rencontrées.
+
+J'ai commencé par suivre le planning effectif, puis avec l'aide de mes suiveurs, j'ai basculé sur un développement parallèle afin de me concentrer plutot sur les fonctionnalités.
 
 ![Planning effectif](./ressources/images/planning_effectif.png)
 

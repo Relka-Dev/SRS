@@ -1,3 +1,45 @@
+"""
+Script de Surveillance Vidéo Multi-Caméras avec Détection de Personnes utilisant YOLOv5
+
+Auteur : Karel Vilém Svoboda
+Affiliation : [Votre Affiliation]
+Version : 1.0
+Date : [Date]
+
+Description :
+
+
+Configuration :
+- CAMÉRA_URLS : Liste des URL des caméras IP.
+- CAMERA_FOV : Champ de vision (FOV) des caméras en degrés.
+- ROOM_WIDTH : Largeur de la pièce en mètres.
+- ROOM_HEIGHT : Hauteur de la pièce en mètres.
+
+Fonctionnement :
+1. Charge un modèle pré-entrainé YOLOv5 pour la détection de personnes.
+2. Initialise les captures vidéo pour chaque caméra.
+3. Vérifie si les flux vidéo sont accessibles.
+4. Capture et traite les frames de chaque caméra pour détecter les personnes.
+5. Calcule les angles des personnes détectées par rapport au centre de chaque image.
+6. Affiche les angles détectés pour chaque caméra.
+7. Libère les ressources et ferme les fenêtres lorsqu'on appuie sur 'q'.
+
+Dépendances :
+- OpenCV
+- Torch
+- NumPy
+
+Exécution :
+Assurez-vous que les caméras IP sont accessibles aux URL spécifiées et que les dépendances sont installées.
+Exécutez le script dans un environnement où OpenCV et Torch peuvent accéder à une interface graphique (par exemple, un terminal local ou un notebook Jupyter avec support de la GUI).
+
+Notes :
+- Ce script est configuré pour fonctionner avec 4 caméras IP positionnées dans les coins de la pièce.
+- La détection de personnes est basée sur le modèle YOLOv5s pré-entrainé.
+- Les angles calculés peuvent être utilisés pour estimer la position des personnes dans la pièce.
+
+"""
+
 import cv2
 import torch
 import numpy as np
@@ -84,11 +126,11 @@ while True:
         print("Nord Est : " + str(angles_cam4))
         
 
-    # Appuyer sur 'q' pour quitter les fenêtres
+    # Appuyez sur 'q' pour quitter
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-# Libérer les captures vidéo et fermer les fenêtres
+# Libération des données
 cap1.release()
 cap2.release()
 cv2.destroyAllWindows()

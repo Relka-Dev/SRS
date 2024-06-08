@@ -1,7 +1,7 @@
 """
 Auteur      : Karel Vilém Svoboda
 Affiliation : CFPTi - SRS
-Date        : 03.06.2024
+Date        : 08.06.2024
 
 Script      : app.py
 Description : Code pour les cameras Wifi du projet SRS
@@ -52,9 +52,31 @@ def token_required(f):
 @app.route('/ping', methods=['GET'])
 @token_required
 def ping():
+    """
+    Retourne l'adresse mac du serveur
+
+    Returns:
+        Dictionary: 'Mac Adress' : Mac adress
+    """
     return jsonify({'Mac address' : hex(uuid.getnode())}), 200
 
 def gen_frames():
+    """
+    Capture des images de la caméra en temps réel et les génère en tant que flux de trames JPEG.
+
+    Cette fonction utilise OpenCV pour accéder à la caméra par défaut (index 0) et capture en continu
+    les images de la caméra. Chaque image capturée est encodée au format JPEG et envoyée sous forme de
+    flux de trames pouvant être utilisé pour le streaming vidéo via un serveur HTTP.
+
+    Le flux de trames est renvoyé dans un format multipart, où chaque trame est précédée par les en-têtes
+    HTTP appropriés.
+
+    Yield:
+        bytes: Trames d'images encodées en JPEG avec les en-têtes HTTP pour le streaming vidéo.
+
+    Raises:
+        RuntimeError: Si la caméra ne peut pas être lue correctement.
+    """
     camera = cv2.VideoCapture(0)
     while True:
         success, frame = camera.read() 

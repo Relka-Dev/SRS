@@ -2,12 +2,12 @@
 Script de Surveillance Vidéo Multi-Caméras avec Détection de Personnes utilisant YOLOv5
 
 Auteur : Karel Vilém Svoboda
-Affiliation : [Votre Affiliation]
+Affiliation : CFPT Informatique
 Version : 1.0
-Date : [Date]
+Date : 08.06.2024
 
 Description :
-
+ L'objectif de la calibration est de mettre les cameras bien en place afin de faire fonctionner correctement les fonctionnalités liés à la reconnaissance spatiale.
 
 Configuration :
 - CAMÉRA_URLS : Liste des URL des caméras IP.

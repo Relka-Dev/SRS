@@ -1,3 +1,26 @@
+"""
+Détection d'Objets et Reconnaissance Faciale
+
+Auteur : Karel Vilém Svoboda
+Affiliation : CFPT Informatique
+Version : 1.0
+Date : 08.06.2024
+
+Description :
+Ce script utilise OpenCV et YOLOv5 pour détecter des personnes et reconnaître les visages en temps réel 
+à partir d'une caméra. Les encodages des visages sont récupérés d'une base de données MySQL.
+
+Dépendances :
+- OpenCV
+- Torch
+- face_recognition
+- NumPy
+- mysql.connector
+
+Utilisation :
+Exécutez le script avec les dépendances installées et une caméra connectée.
+"""
+
 import os
 import torch
 import cv2

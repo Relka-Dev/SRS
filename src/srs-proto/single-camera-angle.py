@@ -1,3 +1,25 @@
+"""
+Détection d'Angles de Personnes à partir d'une Vidéo
+
+Auteur : Karel Vilém Svoboda
+Affiliation : CFPT Informatique
+Version : 1.0
+Date : 08.06.2024
+
+Description :
+Ce script utilise OpenCV et YOLOv5 pour détecter des personnes et calculer leurs angles par rapport au centre de l'image
+à partir d'un flux vidéo d'une caméra. Les résultats sont affichés en temps réel sur la vidéo.
+
+Dépendances :
+- OpenCV
+- Torch
+
+Utilisation :
+Assurez-vous que la caméra est accessible via l'URL spécifiée et que les dépendances sont installées.
+Exécutez le script en fournissant l'URL du flux vidéo de la caméra.
+"""
+
+
 import cv2
 import torch
 import argparse

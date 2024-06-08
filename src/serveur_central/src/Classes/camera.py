@@ -1,4 +1,18 @@
 class Camera:
+    """
+    Classe représentant une caméra dans le système SRS.
+
+    Attributs:
+        idCamera (int): Identifiant unique de la caméra.
+        ip (str): Adresse IP de la caméra.
+        idNetwork (int): Identifiant du réseau auquel la caméra est connectée.
+        jwt (str): Token JWT pour l'authentification de la caméra.
+        positionX (float): Position X de la caméra sur le mur.
+        idWall (int): Identifiant du mur où la caméra est installée.
+        macAddress (str): Adresse MAC de la caméra.
+        picture (str): Image associée à la caméra.
+        persons_positions (list): Liste des positions des personnes détectées par la caméra.
+    """
 
     def __init__(self, idCamera, ip, idNetwork, jwt, positionX, idWall, macAddress, picture, persons_positions):
         self._idCamera = idCamera

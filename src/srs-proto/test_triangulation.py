@@ -1,3 +1,27 @@
+"""
+Tests Unitaires pour la Classe Triangulation
+
+Auteur : Karel Vilém Svoboda
+Affiliation : CFPT Informatique
+Version : 1.0
+Date : 08.06.2024
+
+Description :
+Ce script contient des tests unitaires pour la classe Triangulation en utilisant pytest.
+Il vérifie les calculs de positions d'objets basés sur les angles fournis, et la triangulation
+des positions avec plusieurs ensembles d'angles provenant de différentes caméras.
+
+Dépendances :
+- pytest
+- math (isclose)
+- Triangulation (Classe à tester)
+- UniquePointList (Classe pour stocker les points uniques)
+
+Utilisation :
+Assurez-vous que pytest et les modules nécessaires sont installés. Exécutez ce script pour valider
+les calculs de la classe Triangulation.
+"""
+
 import pytest
 from math import isclose
 from triangulation import Triangulation

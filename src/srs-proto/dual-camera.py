@@ -1,3 +1,50 @@
+"""
+Script de Surveillance Vidéo Multi-Caméras avec Détection de Personnes utilisant YOLOv5
+
+Auteur : Karel Vilém Svoboda
+Affiliation : CFPT Informatique
+Version : 1.0
+Date : 08.06.2024
+
+Description :
+Ce script utilise OpenCV et YOLOv5 pour capturer et traiter les flux vidéo de deux caméras IP. 
+L'objectif est de détecter les personnes dans chaque flux vidéo et de calculer leurs angles par rapport au centre de chaque image.
+Les angles sont ensuite utilisés pour trianguler et afficher les positions d'une personne dans une carte de la pièce.
+
+Configuration :
+- CAMERA_FOV : Champ de vision (FOV) des caméras en degrés.
+- ROOM_WIDTH : Largeur de la pièce en mètres.
+- ROOM_HEIGHT : Hauteur de la pièce en mètres.
+
+Argumentation :
+- --camera_url1 : URL du flux vidéo de la première caméra.
+- --camera_url2 : URL du flux vidéo de la deuxième caméra.
+
+Fonctionnement :
+1. Charge un modèle pré-entrainé YOLOv5 pour la détection de personnes.
+2. Initialise les captures vidéo pour chaque caméra via les URLs fournies en arguments.
+3. Vérifie si les flux vidéo sont accessibles.
+4. Capture et traite les frames de chaque caméra pour détecter les personnes.
+5. Calcule les angles des personnes détectées par rapport au centre de chaque image.
+6. Triangule les positions des personnes dans la pièce et affiche les résultats sur une carte.
+7. Libère les ressources et ferme les fenêtres lorsqu'on appuie sur 'q'.
+
+Dépendances :
+- OpenCV
+- Torch
+- NumPy
+
+Exécution :
+Assurez-vous que les caméras IP sont accessibles aux URL spécifiées et que les dépendances sont installées.
+Exécutez le script en ligne de commande avec les URLs des flux vidéo des caméras :
+    python script.py --camera_url1 <URL_CAMERA_1> --camera_url2 <URL_CAMERA_2>
+
+Notes :
+- Ce script est configuré pour fonctionner avec deux caméras IP positionnées de manière à couvrir la pièce.
+- La détection de personnes est basée sur le modèle YOLOv5s pré-entrainé.
+- Les angles calculés peuvent être utilisés pour estimer la position des personnes dans la pièce.
+
+"""
 import cv2
 import torch
 import argparse
@@ -18,7 +65,7 @@ args = parser.parse_args()
 CAMERA_URL1 = args.camera_url1
 CAMERA_URL2 = args.camera_url2
 
-# Charger le modèle YOLOv5 pré-entrainé et déplacer le modèle sur le GPU
+# Chargement de modèle YOLOv5 pré-entrainé et déplacer le modèle sur le GPU
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True).to(device)
 
@@ -40,7 +87,7 @@ def process_frame(frame, model, fov):
     angles = []
     for det in results.xyxy[0].cpu().numpy():
         x1, y1, x2, y2, conf, cls = det
-        if cls == 0:  # Détecter les personnes uniquement
+        if cls == 0:
             center_x = (x1 + x2) / 2
             angle = (center_x - frame.shape[1] / 2) / frame.shape[1] * fov
             angles.append(angle)
@@ -76,8 +123,8 @@ while True:
         if result:
             map_frame = np.zeros((map_height, map_width, 3), dtype=np.uint8)
             # Redimensionner les positions pour correspondre à la carte
-            map_x = int((response[0] / ROOM_WIDTH) * map_width)
-            map_y = int((response[1] / ROOM_HEIGHT) * map_height)
+            map_x = int(((ROOM_WIDTH - response[0]) / ROOM_WIDTH) * map_width)
+            map_y = int(((ROOM_HEIGHT - response[1]) / ROOM_HEIGHT) * map_height)
             # Limiter les coordonnées à l'intérieur de la carte
             map_x = np.clip(map_x, 0, map_width - 1)
             map_y = np.clip(map_y, 0, map_height - 1)

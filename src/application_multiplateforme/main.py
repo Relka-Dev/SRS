@@ -24,9 +24,6 @@ from Classes.camera import Camera
 class WindowManager(ScreenManager):
     pass
 
-# Chargement du fichier KV
-
-
 # Définition de l'application principale
 class MyMainApp(App):
     server_ip = None

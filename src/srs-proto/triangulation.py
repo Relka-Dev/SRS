@@ -1,3 +1,27 @@
+"""
+Détection d'Objets et Triangulation avec plusieurs caméras
+
+Auteur : Karel Vilém Svoboda
+Affiliation : CFPT Informatique
+Version : 1.0
+Date : 08.06.2024
+
+Description :
+Ce script utilise OpenCV et YOLOv5 pour capturer et traiter les flux vidéo de quatre caméras IP.
+Il détecte les personnes et reconnaît les visages pour trianguler leurs positions dans une pièce.
+
+Dépendances :
+- OpenCV
+- Torch
+- face_recognition
+- NumPy
+- requests
+
+Utilisation :
+Assurez-vous que les caméras sont accessibles via les URLs spécifiées et que les dépendances sont installées.
+Exécutez le script en fournissant les URLs des flux vidéo des caméras et le lien vers l'API des utilisateurs.
+"""
+
 import math
 from two_camera_point import TwoCameraPoint
 from four_camera_point import FourCameraPoint

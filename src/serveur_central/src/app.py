@@ -4,8 +4,8 @@ Affiliation : CFPTi - SRS
 Date        : 02.05.2024
 
 Script      : app.py
-Description : Serveur central du projet SRS
-            : Routes pour l'API
+Description : Serveur central du projet SRS. Ce script définit les routes pour l'API et gère les interactions
+              avec la base de données, les caméras et le réseau.
 Version     : 0.2
 """
 
@@ -46,6 +46,9 @@ class ServeurCentral:
         self.initialize_routes()
     
     def initialize_routes(self):
+        """
+        Initialise les routes pour l'API.
+        """
         self.db_client = DatabaseClient(self.DB_HOST, self.DB_NAME, self.DB_USER, self.DB_PASSWORD)
 
         # Routes ping
@@ -75,6 +78,9 @@ class ServeurCentral:
 
     
     def ping(self):
+        """
+        Vérifie que le serveur est en ligne.
+        """
         return jsonify({'Ping Success': 'SRS server'}), 200
     
     def is_set_up(self):
@@ -217,6 +223,19 @@ class ServeurCentral:
     
     @JwtLibrary.API_token_required
     def cameras(self):
+        """
+        Gère les caméras sur le réseau spécifié.
+
+        Cette méthode vérifie la validité des paramètres, la disponibilité du réseau, et gère les caméras sur le réseau spécifié.
+        Si le réseau n'existe pas, il l'initialise avec les caméras trouvées. Elle vérifie également si les tokens des caméras
+        doivent être mis à jour et actualise la base de données en conséquence.
+
+        Args:
+            Aucun. Les paramètres sont passés via les arguments de la requête HTTP.
+
+        Returns:
+            Response: JSON contenant les données des caméras ou des messages d'erreur appropriés.
+        """
         ip = request.args.get('ip')
         subnetMask = request.args.get('subnetMask')
 

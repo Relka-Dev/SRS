@@ -1,19 +1,66 @@
+"""
+Détection d'Objets et Triangulation avec plusieurs caméras
+
+Auteur : Karel Vilém Svoboda
+Affiliation : CFPT Informatique
+Version : 1.0
+Date : 08.06.2024
+
+Description :
+Ce script utilise OpenCV et YOLOv5 pour capturer et traiter les flux vidéo de quatre caméras IP.
+Il détecte les personnes dans chaque flux, calcule leurs angles, et utilise ces angles pour trianguler
+leurs positions dans une pièce.
+
+Configuration :
+- CAMERA_URLS : Liste des URL des caméras IP.
+- CAMERA_FOV : Champ de vision des caméras en degrés.
+- ROOM_WIDTH : Largeur de la pièce en mètres.
+- ROOM_HEIGHT : Hauteur de la pièce en mètres.
+
+Arguments :
+- --camera_url1 : URL de la première caméra.
+- --camera_url2 : URL de la deuxième caméra.
+- --camera_url3 : URL de la troisième caméra.
+- --camera_url4 : URL de la quatrième caméra.
+- --wall_size : Taille des murs (largeur et hauteur de la pièce).
+
+Dépendances :
+- OpenCV
+- Torch
+- NumPy
+
+Utilisation :
+Assurez-vous que les caméras sont accessibles et que les dépendances sont installées.
+Exécutez le script avec les URLs des caméras et la taille des murs spécifiées.
+"""
+
+
 import cv2
 import torch
 import numpy as np
 from triangulation import Triangulation
+import argparse
 
-# Configuration
+parser = argparse.ArgumentParser(description="Object Detection and Triangulation with multiple cameras")
+parser.add_argument('--camera_url1', type=str, required=True, help='URL of the first camera')
+parser.add_argument('--camera_url2', type=str, required=True, help='URL of the second camera')
+parser.add_argument('--camera_url3', type=str, required=True, help='URL of the third camera')
+parser.add_argument('--camera_url4', type=str, required=True, help='URL of the fourth camera')
+parser.add_argument('--wall_size', type=str, required=True, help='Size of the walls')
+args = parser.parse_args()
+
 CAMERA_URLS = [
-    "http://192.168.1.115:4298/video",
-    "http://192.168.1.121:4298/video",
-    "http://192.168.1.118:4298/video",
-    "http://192.168.1.114:4298/video"
+    args.camera_url1,
+    args.camera_url2,
+    args.camera_url3,
+    args.camera_url4
 ]
 
+wall_size = float(args.wall_size)
+
 CAMERA_FOV = 62.2  # Angle de vue de la caméra en degrés
-ROOM_WIDTH = 4  # Largeur de la pièce en mètres
-ROOM_HEIGHT = 4  # Hauteur de la pièce en mètres
+ROOM_WIDTH = wall_size  # Largeur de la pièce en mètres
+ROOM_HEIGHT = wall_size  # Hauteur de la pièce en mètres
 
 # Charger le modèle YOLOv5 pré-entrainé et déplacer le modèle sur le GPU
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

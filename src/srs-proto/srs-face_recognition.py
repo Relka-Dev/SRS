@@ -1,3 +1,27 @@
+"""
+Détection d'Objets et Triangulation avec plusieurs caméras
+
+Auteur : Karel Vilém Svoboda
+Affiliation : CFPT Informatique
+Version : 1.0
+Date : 08.06.2024
+
+Description :
+Ce script utilise OpenCV et YOLOv5 pour capturer et traiter les flux vidéo de quatre caméras IP.
+Il détecte les personnes et reconnaît les visages pour trianguler leurs positions dans une pièce.
+
+Dépendances :
+- OpenCV
+- Torch
+- face_recognition
+- NumPy
+- requests
+
+Utilisation :
+Assurez-vous que les caméras sont accessibles via les URLs spécifiées et que les dépendances sont installées.
+Exécutez le script en fournissant les URLs des flux vidéo des caméras et le lien vers l'API des utilisateurs.
+"""
+
 import cv2
 import torch
 import numpy as np
@@ -6,7 +30,6 @@ import face_recognition
 from triangulation import Triangulation
 import json
 import base64
-import argparse
 import requests
 
 # Récupération des arguments
@@ -19,7 +42,6 @@ parser.add_argument('--wall_size', type=str, required=True, help='Size of the wa
 parser.add_argument('--api_link', type=str, required=True, help='Link to the users API')
 parser.add_argument('--headless', action='store_true', help='Run in headless mode without GUI')
 args = parser.parse_args()
-
 
 # Configuration
 CAMERA_URLS = [
@@ -269,7 +291,6 @@ while True:
                         # Redimensionner les positions pour correspondre à la carte
                         map_x = int(((ROOM_WIDTH - point.value[0]) / ROOM_WIDTH) * map_width)
                         map_y = int(((ROOM_HEIGHT - point.value[1]) / ROOM_HEIGHT) * map_height)
-
 
                         # Limiter les coordonnées à l'intérieur de la carte
                         map_x = np.clip(map_x, 0, map_width - 1)

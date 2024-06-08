@@ -2573,3 +2573,35 @@ def getCameraImage(ip, jwt):
         print(f"Failed to get image from camera: {response.status_code}")
         return False, None
 ```
+
+## Plannings
+
+Un diagramme de Gantt est un outil de gestion de projet visuel utilisé pour planifier, coordonner et suivre des tâches spécifiques au sein d'un projet.
+
+### Planning prévisionnel
+
+Le planning prévisionnel a été effectué au début du projet pour définir les étapes et la chronologie des tâches à accomplir.
+
+![Planning Prévisionnel](./ressources/images/PlanningPrevisionnel.png)  
+
+### Planning effectif
+
+Le planning effectif représente le véritable travail effectué tout au long du projet. Contrairement au planning prévisionnel, il montre les ajustements et les adaptations nécessaires pour répondre aux exigences et contraintes rencontrées.
+
+![Planning effectif](./ressources/images/planning_effectif.png)
+
+### Comparaison des plannings
+
+J'ai dû m'adapter afin de mieux faire correspondre le planning à mon projet. J'avais commencé par développer chaque composant à la suite. Mais je me suis vite rendu compte qu'il était préférable de développer par fonctionnalité. C'est pour cette raison que j'ai commencé un développement parallèle entre l'application et le serveur.
+
+Ensuite, j'ai travaillé sur la partie liée à la reconnaissance spatiale sans forcément l'intégrer au système. L'objectif était d'intégrer les principes mathématiques que j'avais effectués sur papier et de les implémenter dans une architecture plus simple qu'OpenCV.
+
+Pour conclure, la prochaine fois que je planifie un projet qui tourne autant autour d'une fonctionnalité, la développer en premier serait une meilleure solution que ce que j'ai fait lors de mon planning prévisionnel.
+
+## Conclusion
+
+Dans sa globalité, le travail a été effectué. Les deux aspects du projet que sont la reconnaissance spatiale ainsi que la gestion des différents composant de façon automatique sont fonctionnels. Cependant, des aspects d'amélioration peuvent être trouvés. Par exemple, la modification des données faciales. La fonctionnalité est implémentée du côté du serveur mais j'ai pas réussi à la faire fonctionner depuis l'application à cause d'un bug présent dans Kivy. Également, je pense qu'il y a des améliorations possibles au niveau des performances de la reconnaissance spatiale. La librairie face_recognition prend énormément de ressources et trouver une alternative permetterais de rendre le projet plus fluide et par conséquent, plus fiable.
+
+### Bilan personnel
+
+Je suis staisfait du travail que j'ai effectuer. Travailler sur ce projet m'a permis d'apprendre à combiner les technologies avec lesquelle j'ai eu l'occasion de travailler au cours de cette seconde année en tant que technicien ES et je trouve que c'est une bonne conclusion aux travaux que j'ai eu l'occasion de faire. 

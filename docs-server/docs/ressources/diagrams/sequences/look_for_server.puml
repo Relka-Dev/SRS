@@ -1,0 +1,43 @@
+@startuml
+participant "ServerResearchWindow" as SRW
+participant "NetworkScanner" as NS
+participant "ServerClient" as SC
+participant "App" as App
+
+SRW -> NS: run_network_scan()
+
+activate SRW
+SRW -> NS: Initialiser NetworkScanner
+activate NS
+SRW -> NS: async_scan_ips(SERVER_PORT)
+
+NS -> NS: scan_ips(port)
+NS -> NS: check_port(ip, port, timeout)
+NS -> NS: Vérifier les ports des IPs
+NS -> SC: ping_srs_server()
+SC -> Server: GET /ping
+Server -> SC: 200 OK
+
+alt Serveur trouvé
+    NS -> SRW: IP du serveur trouvée
+    SRW -> App: set_server_ip(ip_serveur)
+    SRW -> App: set_server_client(ServerClient(ip_serveur))
+    SRW -> SC: Initialiser ServerClient(ip_serveur)
+    SRW -> SC: is_server_set_up()
+    
+    alt Serveur configuré
+        SC -> SRW: Oui
+        SRW -> SRW: self.manager.current = "login"
+    else Serveur non configuré
+        SC -> SRW: Non
+        SRW -> SRW: self.manager.current = "initializeLogin"
+    end
+else Aucun serveur trouvé
+    NS -> SRW: Aucun serveur trouvé
+    SRW -> SRW: Afficher erreur
+    SRW -> SRW: Activer retry_button
+end
+
+deactivate NS
+deactivate SRW
+@enduml

@@ -226,8 +226,6 @@ class ServerClient:
         if not self.server_ip:
             return False
         
-        print(self.server_ip)
-        
         params = {
             "token": self.API_token,
             "ip": ServerClient.get_netowk_from_ip(self.server_ip),
@@ -318,11 +316,13 @@ class ServerClient:
         else:
             return False, response.json().get('error', 'Failed to retrieve the camera image')
         
-    def get_calibration(self, idNetwork):
-        endpoint_url = f"{self.server_url}/calibration?idNetwork={idNetwork}"
+    def get_calibration(self):
+        endpoint_url = f"{self.server_url}/calibration"
 
         params = {
-            'token': self.API_token
+            "token": self.API_token,
+            "ip": ServerClient.get_netowk_from_ip(self.server_ip),
+            "subnetMask": 24
         }
 
         response = requests.get(endpoint_url, params=params)

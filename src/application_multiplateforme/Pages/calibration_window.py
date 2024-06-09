@@ -11,7 +11,7 @@ class CalibrationWindow(Screen):
         self.api_call_loop = Clock.schedule_interval(self.update, 1)
 
     def update(self, dt):
-        result, cameras_angles = self.server_client.get_calibration(44)
+        result, cameras_angles = self.server_client.get_calibration()
         sizes = []
     
         if result:
@@ -82,8 +82,6 @@ class CalibrationWindow(Screen):
                 label.color = (1, 0, 0, 1)
             else:
                 label.color = (0, 1, 0, 1)
-
-
     
     def on_leave(self):
         self.api_call_loop.cancel()

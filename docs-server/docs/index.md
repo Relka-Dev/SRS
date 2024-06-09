@@ -1,6 +1,6 @@
 ---
 title: Accueil
-created: "2023-06-01T12:00:00Z"
+created: "2024-27-03T12:00:00Z"
 modified: "2024-06-10T12:00:00Z"
 ---
 
@@ -141,7 +141,7 @@ L'application est divisée en deux parties, la partie Kivy Python et la partie O
 
 **Description :** Cette fonctionnalité permet de rechercher automatiquement un serveur SRS actif dans un réseau.
 
-
+![Diagramme recherche serveur](./ressources/images/diagramme-app-recherche-serveur.png)
 
 #### User Story
 
@@ -163,11 +163,11 @@ Ce diagramme représente la recherche automatique de serveurs sur un réseau.
 
 ![](./ressources/images/login.png)  
 
-
-
 ### Fonctionnalité 2 : Initialisation / Connexion au système
 
 **Description :** Cette fonctionnalité permet d'initialiser le serveur.
+
+![Initiliation](./ressources/images/initialisation-diag.png)
 
 #### User Story
 
@@ -207,7 +207,7 @@ Ce diagramme représente un administrateur qui se connecte ou qui met en place l
 
 **Description :** Cette fonctionnalité concerne l'ajout des utilisateurs dans la base de données. Permetttant de stocker les nom, le type et les encodages faciaux des utilisateurs.
 
-![ajout de personnes](./ressources/images/applicationajout.png)
+![diag add user](./ressources/images/add-user-diag.png)
 
 #### Sécurité
 
@@ -216,6 +216,8 @@ L'utilisateur est dans l'obligation de :
 2. Entrer un nom **unique**.  
 3. Séléctionner un **type de personne**.  
 4. Avoir des données faciales valides et être seule sur la photo.  
+
+![ajout de personnes](./ressources/images/applicationajout.png)
 
 ##### Figure 1 : Aucune personne détectée
 
@@ -237,14 +239,15 @@ Ici, l'utilisateur n'a pas entré son nom, par conséquent, le bouton pour ajout
 ![formulaire incomplet](./ressources/images/incomplet_form.png)
 
 
-
 ### Fonctionnalité 4 : Gestion des caméras
 
 **Description :** La fonctionnalité gestion des caméras permet de **recherche automatiquement les caméras dans le réseau** et de **choisir leur position dans la pièce**.
 
 #### Recherche automatique
 
-La recherche automatique de caméras permet de mettre à jour les caméras dans le système. Si une caméra est allumée, alors elle est trouvé automatiquement et ajoutée à la liste.
+**Description :** La recherche automatique de caméras permet de mettre à jour les caméras dans le système. Si une caméra est allumée, alors elle est trouvé automatiquement et ajoutée à la liste.
+
+![Diagrame recherche auto](./ressources/images/camera-management-diag.png)
 
 Dans les exemples suivants, les ip des caméras sont les suivantes :
 
@@ -310,13 +313,13 @@ En éteignant la première camera, elle est enlevée de la liste en laissant la 
 
 **Exigences :** Au moins une caméra doit être présentes dans le système.
 
+![camera angle](./ressources/images/camera-angle-diag.png)
+
 #### Résultat dans l'application
 
 Dans l'exemple ci-dessous, on voit deux personnes dans la vidéo captée par la camera. La personne a gauche a un angle de -3.50° et la personne à droite 12.84°.
 
 ![Angle de la camera](./ressources/images/angle_camera_analyse.png)
-
-
 
 ### Fonctionnalité 6 : Reconnaissance spatiale avec deux caméras
 
@@ -324,11 +327,15 @@ Dans l'exemple ci-dessous, on voit deux personnes dans la vidéo captée par la 
 
 **Exigences :** Au moins deux caméras doivent être présentes dans le système. La calibration est optionnelle.
 
+![dual camera](./ressources/images/dual-cam-diag.png)
+
+#### Résultat dans l'application
+
 Je définis la distance entre les deux cameras à **3.5 mètres**. Une fois la valeur définie, le programme se lance en appuyant sur le bouton `Deux cameras`.
 
 ![2 camera application](./ressources/images/2-camera-application.png)
 
-
+![Dual camera](./ressources/images/dual-camera-result.png)
 
 ### Fonctionnalité 7 : Reconnaissance spatiale avec quatres caméras
 
@@ -339,7 +346,6 @@ Je définis la distance entre les deux cameras à **3.5 mètres**. Une fois la v
 #### Résultat dans l'application
 
 ![2 camera application](./ressources/images/double_triangulation.png)
-
 
 
 ### Fonctionnalité 8 : Calibration
@@ -369,6 +375,8 @@ Une case est dédiée pour chaque camera et affiche les infomations suivantes :
 
 **Description :** Cette partie est la plus importante du projet, elle reprend les fonctionnalités vues précédament et les intégre dans une seule page.
 
+![reconnaissance spatiale](./ressources/images/space_recongition-diag.png)
+
 L'objectif de la reconnaissance spatiale de déterminer la position de plusieurs personnes tout en reconnaissant leurs visages si possible.
 
 **Exigences :** Quatres caméras doivent être présentes dans le système. La calibration est fortement recommandée. Pour la reconnaissance faciale, les données des utilisateurs doivent être dans la base.
@@ -394,6 +402,215 @@ Documentation technique du projet. Son objectif est de documenter les technologi
 ### Base de données
 
 ![diagramme bdd](./ressources/diagrams/bdd.png)
+
+### Recherche automatique de serveur
+
+Cette séquence permet de rechercher automatiquement un serveur SRS et de s'y connecter.
+
+![](./ressources/diagrams/us2-recherche-serveurs.jpg)
+
+1. **User**: L'utilisateur ouvre l'application, déclenchant l'appel à la méthode `on_enter()` de `ServerResearchWindow`.
+2. **ServerResearchWindow**:
+    1. `on_enter()`: Appelle directement `run_network_scan()`.
+    2. `run_network_scan()`: Initialise `NetworkScanner` et appelle directement `async_scan_ips(port)`.
+3. **NetworkScanner**:
+    1. `async_scan_ips(port)`: Utilise `scan_ips(port)` pour vérifier les ports des IPs du réseau.
+    2. `scan_ips(port)`: Pour chaque IP, vérifie si le port est ouvert via `check_port(ip, port, timeout)` et appelle `ping_srs_server()` de `ServerClient` pour vérifier si l'IP correspond au serveur SRS.
+4. **ServerClient**:
+    1. `ping_srs_server()`: Envoie une requête GET à l'endpoint `/ping` du serveur.
+    2. Si la réponse est 200 OK, retourne vrai.
+5. **Condition**:
+    1. Si un serveur est trouvé, configure l'application avec l'IP du serveur et initialise `ServerClient`.
+    2. Vérifie si le serveur est configuré via `is_server_set_up()`.
+        - Si oui, passe à l'écran de connexion.
+        - Sinon, passe à l'écran d'initialisation de connexion.
+    3. Si aucun serveur n'est trouvé, affiche un message d'erreur et réactive le bouton de réessai.
+
+
+![look for server](./ressources/diagrams/sequences/look_for_server.png)
+
+#### Implémentation graphique (app.kv)
+
+![](./ressources/images/look-for-server.png)
+
+```
+<ServerResearchWindow>
+    name: "research"
+    
+    GridLayout:
+        cols: 1
+        
+        Label:
+            text: "Recherche de serveur"
+            font_size: '24sp' 
+            bold: True
+        Image:
+            source: 'Ressources/logo.png'
+        Label:
+            id: state_label
+            text: "Veuillez patienter"
+        
+        Button:
+            id: retry_button
+            size_hint: 0.5, 0.5
+            font_size: '15sp' 
+            text: "Réessayer"
+            on_release: root.retry()
+            disabled: True
+```
+
+
+#### Vue (Application : server_research_window.py)
+
+```py
+from kivy.app import App
+from kivy.uix.screenmanager import ScreenManager, Screen 
+from kivy.clock import Clock
+from Classes.network_scanner import NetworkScanner
+from Classes.server_client import ServerClient
+
+class ServerResearchWindow(Screen):     
+    SERVER_PORT = 4299
+
+    def on_enter(self):
+        Clock.schedule_once(self.run_network_scan)
+        
+
+    def retry(self):
+        self.ids.retry_button.disabled = True
+        self.ids.state_label.text = "Recherche en cours"
+        self.ids.state_label.color = (1, 1, 1, 1) 
+        self.run_network_scan(None)
+ 
+    def run_network_scan(self, dt):
+        self.networkScanner = NetworkScanner()
+        Clock.schedule_once(lambda dt: self.async_scan_ips(self.SERVER_PORT), 0)
+
+    def async_scan_ips(self, port):
+        """
+        Effectue une analyse asynchrone des IPs sur le réseau pour trouver un serveur SRS.
+    
+        Args:
+            port (int): Le port sur lequel scanner les IPs pour trouver le serveur.
+    
+        Description:
+            Cette méthode utilise la classe NetworkScanner pour analyser les IPs sur le réseau local
+            afin de trouver une adresse IP où un serveur SRS est en cours d'exécution sur le port spécifié.
+            Si une adresse IP de serveur est trouvée, elle configure l'application avec cette adresse IP
+            et crée un client serveur. Ensuite, elle vérifie si le serveur est correctement configuré.
+            En fonction du résultat de cette vérification, elle navigue soit vers l'écran de connexion
+            soit vers l'écran d'initialisation de connexion. Si aucun serveur n'est trouvé, elle affiche
+            un message d'erreur et réactive le bouton de réessai.
+    
+        Returns:
+            None
+        """
+        ip_serveur = self.networkScanner.scan_ips(port)  # Utilise le scanner de réseau pour trouver l'IP du serveur sur le port spécifié
+        self.app = App.get_running_app()  # Récupère l'instance de l'application Kivy en cours d'exécution
+    
+        if ip_serveur:
+            # Si une IP de serveur est trouvée, configure l'application avec cette IP
+            self.app.set_server_ip(ip_serveur)
+            self.app.set_server_client(ServerClient(ip_serveur))  # Crée un client serveur avec l'IP trouvée
+    
+            serverClient = ServerClient(ip_serveur)  # Crée une instance de ServerClient
+    
+            # Vérifie si le serveur est correctement configuré
+            if serverClient.is_server_set_up():
+                # Si le serveur est configuré, passe à l'écran de connexion
+                self.manager.current = "login"
+            else:
+                # Sinon, passe à l'écran d'initialisation de connexion
+                self.manager.current = "initializeLogin"
+        else:
+            # Si aucune IP de serveur n'est trouvée, affiche un message d'erreur
+            self.ids.state_label.text = "Erreur: Aucun serveur SRS trouvé sur votre réseau."
+            self.ids.state_label.color = (1, 0, 0, 1)  # Change la couleur du texte en rouge
+            self.ids.retry_button.disabled = False  # Active le bouton de réessai
+```
+
+#### Scan des ips (Application : network_scanner.py)
+
+⚠️ Dans la fonction : `get_local_network` l'ip est écrite en dûr. C'est éviter que l'application se connecte sur un réseau différent de celui du serveur. Si on remplace l'ip écrite en dur et la variable `ip` dans le return et que l'ordinateur se situe dans le même réseau que le serveurs et les caméras, elle fonctionne. ⚠️
+
+```py
+import socket
+import ipaddress
+import socket
+
+from Classes.server_client import ServerClient
+
+class NetworkScanner:
+    def __init__(self, network=None):
+        if network is None:
+            self.network = ipaddress.IPv4Network(self.get_local_network())
+        else:
+            self.network = ipaddress.IPv4Network(network)
+
+    def scan_ips(self, port,  timeout=0.01):
+        
+        ip_with_port_open = []
+        for ip in self.network.hosts():
+            if self.check_port(ip, port, timeout):
+                if ServerClient(ip).ping_srs_server():
+                    ip_with_port_open.append(str(ip))
+
+        if len(ip_with_port_open) == 0:
+            return ip_with_port_open
+        return ip_with_port_open[0]
+
+    def check_port(self, ip, port, timeout):
+        """
+        Vérifie si un port spécifié sur une adresse IP donnée est ouvert.
+
+        Args:
+            ip (str): L'adresse IP à tester.
+            port (int): Le numéro de port à vérifier.
+            timeout (float): Le temps maximum en secondes à attendre pour une réponse.
+
+        Returns:
+            bool: Renvoie True si le port est ouvert, sinon False.
+        """
+        try:
+            # Vérification de l'ouverture du port
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(timeout)
+                s.connect((str(ip), port))
+                return True
+        except (socket.timeout, socket.error):
+            return False
+    
+    @staticmethod
+    def get_local_network():
+        ip = socket.gethostbyname(socket.gethostname())
+        # à remplacer, ceci est uniquement pour éviter les bugs si le pc est utilisé avec un autre réseau
+        return '192.168.1.0/24'
+```
+
+#### Ping du serveur (Application : server_client.py)
+
+Cette fonction permet de vérifier si l'ip du port correspondant au serveur SRS est véritablement ce dit serveur.
+
+```py
+def ping_srs_server(self):
+    if not self.server_ip:
+        return False
+    
+    response = requests.get(f"{self.server_url}/ping")
+    if response.status_code == 200:
+        return True
+    else:
+        return False
+```
+
+#### Route (Serveur : app.py)
+
+Le serveur retourne une résponse `200` au client. Notez que cette route n'est pas protégée par un token JWT.
+
+```py
+def ping(self):
+    return jsonify({'Ping Success': 'SRS server'}), 200
+```
 
 ### Initialisation / Connexion
 
@@ -2692,8 +2909,7 @@ Pour trouver la position des personnes, nous suivons les étapes suivantes :
 
 ![tolerence](./ressources/images/tolerence.png)
 
-##### Implémentation
-
+##### Récupération de la postion des objets (srs-proto : triangulation.py)
 
 ```py
 @staticmethod
@@ -2719,6 +2935,8 @@ def get_objects_positions(wall_length, objects_angles_from_bot_left, objects_ang
     return True, unique_point_list
 ```
 
+##### Stockage d'une position captée par deux caméras (srs-proto : twoCameraPoint.py)
+
 ```py
 class TwoCameraPoint:
     def __init__(self, angle_gauche, angle_droit, value):
@@ -2738,6 +2956,8 @@ class TwoCameraPoint:
     def value(self):
         return self._value
 ```
+
+##### Stockage d'une position captée par quatres caméras (srs-proto : fourCameraPoint.py)
 
 ```py
 from two_camera_point import TwoCameraPoint
@@ -2770,6 +2990,7 @@ class FourCameraPoint:
         
         return False
 ```
+##### Stookage de la liste de points uniques (srs-proto : uniquePointList.py)
 
 ```py
 from four_camera_point import FourCameraPoint
@@ -2895,27 +3116,281 @@ Pour la calibration de l'angle, les quatres caméras sont pointés vers le milie
 
 Pour la calibration de la distance, l'objetif est d'avoir la hauteur de la bbox (bounding box) de l'utilisateur similaire sur chaque camera. Cela permettra de savoir que toutes les caméras sont à une distance similaire de la personne. 
 
+La calibration est à part du reste des fonctionnalités car elle a été implémentée en premier, avant le choix du changement d'architecture.
+
 ![Calibration](./ressources/images/calibration.png)
 
-##### Récupération des données des caméras (Serveur central : database_client.py)
+#### Séquence
 
-Récupération des données des caméras depuis la base.
+La séquence suivante explique la logique derrière la calibration.
 
-```py
-def getCamerasByIdNetwork(self, id_network):
-    try:
-        self.cursor.execute("SELECT * FROM Cameras WHERE idNetwork = %s", (id_network,))
-        results = self.cursor.fetchall()
-        if results:
-            return True, results
-        else:
-            return False, None
-    except Exception as e:
-        print(f"Error: {e}")
-        return False
+1. **User Initiates Calibration**
+
+    L'utilisateur démarre le processus de calibration en interagissant avec l'application cliente (`AppClient`).
+
+2. **AppClient Requests Calibration Data**
+
+    L'application cliente (`AppClient`) envoie une requête au `ServerClient` pour obtenir les données de calibration.
+
+3. **ServerClient Calls API Server**
+
+    Le `ServerClient` appelle le serveur API (`ApiServer`) en envoyant une requête GET à l'endpoint `/calibration`.
+
+4. **API Server Retrieves Network ID**
+
+    Le `ApiServer` interroge la base de données (`Database`) pour obtenir l'ID du réseau en fonction de l'IP et du masque de sous-réseau fournis.
+
+5. **API Server Retrieves Cameras List**
+
+    Le `ApiServer` demande à la base de données la liste des caméras associées à l'ID du réseau récupéré.
+
+6. **For Each Camera**
+
+    Le `ApiServer` boucle sur chaque caméra récupérée :
+    - Demande une image au `CameraServerClient`.
+    - Le `CameraServerClient` fait une requête à la caméra pour obtenir une image.
+    - La caméra retourne l'image au `CameraServerClient`.
+    - Le `CameraServerClient` retourne l'image au `ApiServer`.
+    - Le `ApiServer` appelle le `SpaceRecognition` pour obtenir les angles et les tailles des personnes détectées dans l'image.
+    - Le `SpaceRecognition` retourne les angles et les tailles.
+    - Le `ApiServer` ajoute ces informations à la réponse.
+
+7. **Return Calibration Data**
+
+    Le `ApiServer` retourne les données de calibration au `ServerClient`.
+
+8. **Update UI**
+
+    Le `ServerClient` retourne les données de calibration à l'application cliente (`AppClient`).
+    L'application cliente met à jour les labels d'angle, de taille, et de taille moyenne, et ajuste les couleurs des labels en fonction des données reçues.
+
+
+![séquence calibration](./ressources/diagrams/sequences/calibration.png)
+
+#### Implémentation graphique (Application : app.kv)
+
+![Calibration app](./ressources/images/calibration_final.png)
+
+```
+<CalibrationWindow>:
+    name: "calibration"
+
+    FloatLayout:
+        GridLayout:
+            cols: 3
+            size_hint: 1, 0.1
+            pos_hint: {'top': 1}
+
+            Button:
+                text: "<- Retour"
+                on_release:
+                    app.root.current = "main"
+                    root.manager.transition.direction = "right"
+
+            Label:
+                text: "Système de reconnaissance spatiale"
+                bold: True
+
+            Image:
+                source: 'Ressources/logo.png'
+        
+        GridLayout:
+            cols: 1
+            size_hint_y: 0.9
+
+            GridLayout:
+                cols: 2
+
+                GridLayout:
+                    cols: 1
+
+                    Label:
+                        id: camera1_name_label
+                        text: "Camera : 1 (en attente)"
+                        size_hint_y: 0.5
+
+                    Label:
+                        id: camera1_data_label
+                        size_hint_y: 1.0
+
+                    Label:
+                        id: camera1_size_label
+                        text: "Size : (en attente)"
+                        size_hint_y: 0.5
+
+                GridLayout:
+                    cols: 1
+
+                    Label:
+                        id: camera2_name_label
+                        text: "Camera : 2 (en attente)"
+                        size_hint_y: 0.5
+
+                    Label:
+                        id: camera2_data_label
+                        size_hint_y: 1.0
+
+                    Label:
+                        id: camera2_size_label
+                        text: "Size : (en attente)"
+                        size_hint_y: 0.5
+                        
+            GridLayout:
+                cols: 2
+
+                GridLayout:
+                    cols: 1
+
+                    Label:
+                        id: camera3_name_label
+                        text: "Camera : 3 (en attente)"
+                        size_hint_y: 0.5
+
+                    Label:
+                        id: camera3_data_label
+                        size_hint_y: 1.0
+
+                    Label:
+                        id: camera3_size_label
+                        text: "Size : (en attente)"
+                        size_hint_y: 0.5
+
+                GridLayout:
+                    cols: 1
+
+                    Label:
+                        id: camera4_name_label
+                        text: "Camera : 4 (en attente)"
+                        size_hint_y: 0.5
+
+                    Label:
+                        id: camera4_data_label
+                        size_hint_y: 1.0
+
+                    Label:
+                        id: camera4_size_label
+                        text: "Size : (en attente)"
+                        size_hint_y: 0.5
+
+            Label:
+                id: average_size_label
+                text: "Average Size Y: (en attente)"
+                size_hint_y: 0.5
+                pos_hint: {'center_x': 0.5}
 ```
 
-##### Route (Serveur central : app.py)
+#### Vue (Application : calibration_window.py)
+
+Le script a été prévu pour fonctionner peu importe le nombre de caméras présentes dans le système.
+
+```py
+from kivy.app import App
+from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.clock import Clock
+
+class CalibrationWindow(Screen):
+
+    def on_enter(self):
+        super().on_enter()
+        self.app = App.get_running_app()
+        self.server_client = self.app.get_server_client()
+        self.api_call_loop = Clock.schedule_interval(self.update, 1)
+
+    def update(self, dt):
+        result, cameras_angles = self.server_client.get_calibration()
+        sizes = []
+    
+        if result:
+            if len(cameras_angles) > 0:
+                camera1_data = cameras_angles[0]
+                camera1_ip = camera1_data['camera_ip']
+                camera1_angles_and_sizes = camera1_data['angles_and_sizes']
+                angles1 = [item['angle'] for item in camera1_angles_and_sizes]
+                size1 = camera1_angles_and_sizes[0]['size_y'] if camera1_angles_and_sizes else 0
+                sizes.append(size1)
+                self.update_angle_label(self.ids.camera1_data_label, angles1)
+                self.update_size_label(self.ids.camera1_size_label, size1)
+                self.ids.camera1_name_label.text = f"Camera : {camera1_ip}"
+            if len(cameras_angles) > 1:
+                camera2_data = cameras_angles[1]
+                camera2_ip = camera2_data['camera_ip']
+                camera2_angles_and_sizes = camera2_data['angles_and_sizes']
+                angles2 = [item['angle'] for item in camera2_angles_and_sizes]
+                size2 = camera2_angles_and_sizes[0]['size_y'] if camera2_angles_and_sizes else 0
+                sizes.append(size2)
+                self.update_angle_label(self.ids.camera2_data_label, angles2)
+                self.update_size_label(self.ids.camera2_size_label, size2)
+                self.ids.camera2_name_label.text = f"Camera : {camera2_ip}"
+            if len(cameras_angles) > 2:
+                camera3_data = cameras_angles[2]
+                camera3_ip = camera3_data['camera_ip']
+                camera3_angles_and_sizes = camera3_data['angles_and_sizes']
+                angles3 = [item['angle'] for item in camera3_angles_and_sizes]
+                size3 = camera3_angles_and_sizes[0]['size_y'] if camera3_angles_and_sizes else 0
+                sizes.append(size3)
+                self.update_angle_label(self.ids.camera3_data_label, angles3)
+                self.update_size_label(self.ids.camera3_size_label, size3)
+                self.ids.camera3_name_label.text = f"Camera : {camera3_ip}"
+            if len(cameras_angles) > 3:
+                camera4_data = cameras_angles[3]
+                camera4_ip = camera4_data['camera_ip']
+                camera4_angles_and_sizes = camera4_data['angles_and_sizes']
+                angles4 = [item['angle'] for item in camera4_angles_and_sizes]
+                size4 = camera4_angles_and_sizes[0]['size_y'] if camera4_angles_and_sizes else 0
+                sizes.append(size4)
+                self.update_angle_label(self.ids.camera4_data_label, angles4)
+                self.update_size_label(self.ids.camera4_size_label, size4)
+                self.ids.camera4_name_label.text = f"Camera : {camera4_ip}"
+    
+            if sizes:
+                average_size = sum(sizes) / len(sizes)
+                self.update_average_size_label(self.ids.average_size_label, average_size)
+                self.update_label_colors([self.ids.camera1_size_label, self.ids.camera2_size_label, self.ids.camera3_size_label, self.ids.camera4_size_label], sizes, average_size)
+    
+    def update_angle_label(self, label, values):
+        if values:
+            value = values[0]
+            label.text = str(value)
+            if -1 <= value <= 1:
+                label.color = (0, 1, 0, 1)
+            else:
+                label.color = (1, 0, 0, 1)
+    
+    def update_size_label(self, label, size):
+        label.text = f"Size: {size:.2f}"
+    
+    def update_average_size_label(self, label, average_size):
+        label.text = f"Average Size Y: {average_size:.2f}"
+    
+    def update_label_colors(self, labels, sizes, average_size):
+        for label, size in zip(labels, sizes):
+            if abs(size - average_size) > 20:
+                label.color = (1, 0, 0, 1)
+            else:
+                label.color = (0, 1, 0, 1)
+    
+    def on_leave(self):
+        self.api_call_loop.cancel()
+```
+
+#### Client API (Application : server_client.py)
+
+```py
+def get_calibration(self):
+    endpoint_url = f"{self.server_url}/calibration"
+    params = {
+        "token": self.API_token,
+        "ip": ServerClient.get_netowk_from_ip(self.server_ip),
+        "subnetMask": 24
+    }
+    response = requests.get(endpoint_url, params=params)
+    if response.status_code == 200:
+        return True, response.json()
+    else:
+        return False, response.json()
+```
+
+#### Route (Serveur central : app.py)
 
 La route est sécurisée par la fonction décoratrice `@JwtLibrary.API_token_required`.
 
@@ -2927,9 +3402,13 @@ La route est sécurisée par la fonction décoratrice `@JwtLibrary.API_token_req
 ```py
 @JwtLibrary.API_token_required
 def calibration(self):
-    idNetwork = request.args.get('idNetwork')
+    ip = request.args.get('ip')
+    subnetMask = request.args.get('subnetMask')
+    idNetwork = self.db_client.getNetworkIdByIpAndSubnetMask(ip, subnetMask)
     if not idNetwork:
+        print("id Network manquant")
         return jsonify({'error': 'Network ID is required'}), 400
+        
     response = []
     result, response = self.db_client.getCamerasByIdNetwork(idNetwork)
     if not result:
@@ -2947,7 +3426,26 @@ def calibration(self):
     return jsonify(cameras_angles), 200
 ```
 
-##### Récupération de l'angle des personnes dans l'image avec la taille des personnes (Serveur Central : space_recognition.py)
+#### Récupération des données des caméras (Serveur central : database_client.py)
+
+Récupération des données des caméras depuis la base.
+
+```py
+def getCamerasByIdNetwork(self, id_network):
+    try:
+        self.cursor.execute("SELECT * FROM Cameras WHERE idNetwork = %s", (id_network,))
+        results = self.cursor.fetchall()
+        if results:
+            return True, results
+        else:
+            return False, None
+    except Exception as e:
+        print(f"Error: {e}")
+        return False
+```
+
+
+#### Récupération de l'angle des personnes dans l'image avec la taille des personnes (Serveur Central : space_recognition.py)
 
 1. Retourne une la liste des position et des tailles des personnes dans les frame des caméras.
     - Pour les tailles, on calcule la différence entre le point **y2** et **y1**.
@@ -2968,7 +3466,8 @@ def get_persons_angles_with_size(self, frame, fov):
     return angles_and_sizes
 ```
 
-##### Récupération des images capturés par les caméras (Serveur central : camera_server_client.py)
+
+#### Récupération des images capturés par les caméras (Serveur central : camera_server_client.py)
 
 ```py
 @staticmethod

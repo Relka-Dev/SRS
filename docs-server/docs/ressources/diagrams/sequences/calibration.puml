@@ -1,0 +1,37 @@
+@startuml
+
+participant AppClient as "Client App"
+participant ServerClient as "Server Client"
+participant ApiServer as "API Server"
+participant Database as "Database"
+participant CameraServerClient as "Camera Server Client"
+participant Camera as "Camera"
+participant SpaceRecognition as "Space Recognition"
+
+AppClient -> ServerClient : get_calibration()
+ServerClient -> ApiServer : GET /calibration
+
+ApiServer -> Database : getNetworkIdByIpAndSubnetMask(ip, subnetMask)
+Database -> ApiServer : idNetwork
+
+ApiServer -> Database : getCamerasByIdNetwork(idNetwork)
+Database -> ApiServer : Camera List
+
+alt Camera Found
+    loop for each Camera
+        ApiServer -> CameraServerClient : getCameraImage(ip, jwt)
+        CameraServerClient -> Camera : Request Image
+        Camera -> CameraServerClient : Return Image
+        CameraServerClient -> ApiServer : Return Image
+        ApiServer -> SpaceRecognition : get_persons_angles_with_size(image, 62.2)
+        SpaceRecognition -> ApiServer : angles_and_sizes
+        ApiServer -> ApiServer : Add angles_and_sizes to response
+    end
+    ApiServer -> ServerClient : Return cameras_angles
+else Camera Not Found
+    ApiServer -> ServerClient : Return Error
+end
+
+ServerClient -> AppClient : Return cameras_angles
+
+@enduml

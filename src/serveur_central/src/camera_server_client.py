@@ -69,9 +69,11 @@ class CameraServerClient:
         Returns:
             list: Une liste de tuples contenant l'adresse IP de la caméra et son token d'authentification.
         """
-        cameraIPs = self.camerasIPs
-        if not cameraIPs:
+
+        if not self.camerasIPs:
             return None
+        
+        cameraIPs = self.camerasIPs
     
         tokens_for_ip = []
         for cameraip in cameraIPs:

@@ -22,7 +22,7 @@ nav:
     - 0.1 : 'supports/srs-support-0.1.stl'   
   - Tests Fonctionnels : 'tests-fonctionnels.md'
   - Abstracts:
-    - Français / Anglais: 'abstracts/abstract.md'
+    - Français: 'abstracts/abstract-french.md'
     - Anglais: 'abstracts/abstract-english.md'
     - Version PDF (anglais): 'abstracts/abstract.pdf'
   - Journal de bord : 'jdb.md'

@@ -6342,9 +6342,27 @@ J'ai appliqué les subprocess à d'autres script me permettant de montrer quelqu
 
 J'ai implémenté les subprocess, cela m'a permis de régler le problème de temps et les éventuels défis liés à l'intégration opencv dans kivy.
 
-## 05.06.2024
+## 05.06.2024, 06.06.2024 et 07.06.2024
 
-## 06.06.2024
+#### Bilan de la veille
 
-## 07.06.2024
+Hier j'ai implémenté les subprocess, ce qui m'a permis de lancer mes fonctionalités depuis mon application Kivy.
 
+#### Objectif du jours
+L'objectif des jours qui restent est de préparer le rendu final afin qu'il soit le plus complet et sérieux possible.
+
+
+### Regroupement des trois derniers jours
+
+Je me suis permis de regrouper les 3 derniers jours de travail car je ne compte plus vraiment toucher au code. Je recherche uniquement à terminer ma documentation, commenter le code etc. Par conséquent, travailler avec le journal de bord serait, selon moi, contreproductif.
+
+### Utilisation de ChatGPT dans la documentation
+
+Je trouve que utiliser des intelligence artifielle dans la documentation peut faire gagner du temps sans pour autant perdre en qualité (qui est selon moi, le plus gros défault de l'ia en ce moment) si l'on utilise pour effectuer des diagrammes plant UML. La logique a été élaborée par moi, par conséquent, si c'est contrôlé, je ne vois pas de problèmes.
+
+Pour des question de transparence, je préfère indiquer ici que j'ai utilisé ChatGPT pour les documentation suivants :
+1. Commentaires en début de script.  
+2. Diagrammes de séquences plant UML.  
+
+### Conclusion
+J'ai terminé la documentation dans les temps, je suis satisfait du travail que j'ai accomplis lors ce travail de diplôme.

@@ -60,7 +60,14 @@ ROOM_HEIGHT = 3.5 # Hauteur de la pièce en mètres
 parser = argparse.ArgumentParser(description='Script de détection d\'angles de personnes à partir de deux vidéos.')
 parser.add_argument('--camera_url1', type=str, required=True, help='URL du flux vidéo de la première caméra')
 parser.add_argument('--camera_url2', type=str, required=True, help='URL du flux vidéo de la deuxième caméra')
+parser.add_argument('--wall_size', type=str, required=True, help='Distance entre les deux cameras')
 args = parser.parse_args()
+
+wall_size = float(args.wall_size)
+
+CAMERA_FOV = 62.2  # Angle de vue de la caméra en degrés
+ROOM_WIDTH = wall_size  # Largeur de la pièce en mètres
+ROOM_HEIGHT = wall_size  # Hauteur de la pièce en mètres
 
 CAMERA_URL1 = args.camera_url1
 CAMERA_URL2 = args.camera_url2

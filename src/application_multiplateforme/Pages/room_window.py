@@ -1,11 +1,12 @@
 from kivy.app import App
-from kivy.uix.screenmanager import ScreenManager, Screen 
+from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.popup import Popup
+from kivy.uix.label import Label
 import os
 import subprocess
 from Classes.room import Room
 
 class RoomWindow(Screen):
-
 
     def on_enter(self):
         super().on_enter()
@@ -14,31 +15,52 @@ class RoomWindow(Screen):
         result, self.cameras = self.server_client.get_cameras()
 
     def run_angle_camera(self):
+        if len(self.cameras) < 1:
+            self.show_popup("Erreur", "Pas assez de caméras disponibles.")
+            return
         camera_url = f"http://{self.cameras[0].ip}:4298/video?token={self.cameras[0].jwt}"  # Remplacez ceci par l'URL de votre caméra
         self._run_subprocess_script('../srs-proto/single-camera-angle.py', [camera_url])
     
-    def run_face_recognition(self):# Remplacez ceci par l'URL de votre caméra
+    def run_face_recognition(self):
+        if len(self.cameras) < 1:
+            self.show_popup("Erreur", "Pas assez de caméras disponibles.")
+            return
         self._run_subprocess_script('../srs-proto/reconnaissance_faciale.py')
 
     def run_two_cameras(self):
-        camera_url1 = f"http://{self.cameras[0].ip}:4298/video?token={self.cameras[0].jwt}"
-        camera_url2 = f"http://{self.cameras[1].ip}:4298/video?token={self.cameras[1].jwt}"
-        self._run_subprocess_script('../srs-proto/dual-camera.py', [camera_url1, camera_url2])
+        if len(self.cameras) < 2:
+            self.show_popup("Erreur", "Pas assez de caméras disponibles.")
+            return
+        wall_size = self.ids.size_textInput.text
+
+        if not self.is_float(wall_size):
+            self.show_popup("Erreur", "La taille du mur doit être un nombre flottant.")
+            return
+
+        # Vérifiez si les caméras sont en bas à gauche et en bas à droite
+        bottom_left_camera = next((camera for camera in self.cameras if camera.idWall == 3), None)
+        bottom_right_camera = next((camera for camera in self.cameras if camera.idWall == 4), None)
+
+        if not bottom_left_camera or not bottom_right_camera:
+            self.show_popup("Erreur", "Deux caméras sont nécessaires : une en bas à gauche et une en bas à droite.")
+            return
+        
+        camera_url1 = f"http://{bottom_left_camera.ip}:4298/video?token={bottom_left_camera.jwt}"
+        camera_url2 = f"http://{bottom_right_camera.ip}:4298/video?token={bottom_right_camera.jwt}"
+        self._run_subprocess_script('../srs-proto/dual-camera.py', [camera_url1, camera_url2], wall_size)
 
     def run_four_cameras(self):
-        cameras_urls = []
-
-        for i in range(4):
-            cameras_urls.append(f"http://{self.cameras[i+1].ip}:4298/video?token={self.cameras[i+1].jwt}")
-
-        self._run_subprocess_script('../srs-proto/quad-camera.py', cameras_urls)
-
-    def run_spatial_recognition_system(self):
+        if len(self.cameras) < 4:
+            self.show_popup("Erreur", "Pas assez de caméras disponibles.")
+            return
         wall_size = self.ids.size_textInput.text
+        if not self.is_float(wall_size):
+            self.show_popup("Erreur", "La taille du mur doit être un nombre flottant.")
+            return
+
         room = Room()
 
-        api_link = self.server_client.get_users_link()
-
+        # Assigner les caméras aux murs correspondants
         for camera in self.cameras:
             match camera.idWall:
                 case 1:
@@ -50,11 +72,55 @@ class RoomWindow(Screen):
                 case 4:
                     room.set_bottom_right(camera)
 
+        # Vérifiez si toutes les positions murales sont couvertes
+        if not room.get_bottom_left() or not room.get_bottom_right() or not room.get_top_left() or not room.get_top_right():
+            self.show_popup("Erreur", "Quatre caméras sont nécessaires : une sur chaque mur.")
+            return
+
+        cameras_urls = [
+            f"http://{room.get_bottom_left().ip}:4298/video?token={room.get_bottom_left().jwt}",
+            f"http://{room.get_bottom_right().ip}:4298/video?token={room.get_bottom_right().jwt}",
+            f"http://{room.get_top_left().ip}:4298/video?token={room.get_top_left().jwt}",
+            f"http://{room.get_top_right().ip}:4298/video?token={room.get_top_right().jwt}"
+        ]
+
+        self._run_subprocess_script('../srs-proto/quad-camera.py', cameras_urls, wall_size)
+
+    def run_spatial_recognition_system(self):
+        if len(self.cameras) < 4:
+            self.show_popup("Erreur", "Pas assez de caméras disponibles.")
+            return
+        wall_size = self.ids.size_textInput.text
+        if not self.is_float(wall_size):
+            self.show_popup("Erreur", "La taille du mur doit être un nombre flottant.")
+            return
+
+        room = Room()
+
+        api_link = self.server_client.get_users_link()
+
+        # Assigner les caméras aux murs correspondants
+        for camera in self.cameras:
+            match camera.idWall:
+                case 1:
+                    room.set_top_left(camera)
+                case 2:
+                    room.set_top_right(camera)
+                case 3:
+                    room.set_bottom_left(camera)
+                case 4:
+                    room.set_bottom_right(camera)
+
+        # Vérifiez si toutes les positions murales sont couvertes
+        if not room.get_bottom_left() or not room.get_bottom_right() or not room.get_top_left() or not room.get_top_right():
+            self.show_popup("Erreur", "Quatre caméras sont nécessaires : une sur chaque mur.")
+            return
+
         camera_urls = [
             f"http://{room.get_bottom_left().ip}:4298/video?token={room.get_bottom_left().jwt}",
             f"http://{room.get_bottom_right().ip}:4298/video?token={room.get_bottom_right().jwt}",
-            f"http://{room.get_top_right().ip}:4298/video?token={room.get_top_left().jwt}",
-            f"http://{room.get_top_left().ip}:4298/video?token={room.get_top_right().jwt}"
+            f"http://{room.get_top_left().ip}:4298/video?token={room.get_top_left().jwt}",
+            f"http://{room.get_top_right().ip}:4298/video?token={room.get_top_right().jwt}"
         ]
             
         self._run_subprocess_script('../srs-proto/srs-face_recognition.py', camera_urls, wall_size, api_link)
@@ -90,3 +156,16 @@ class RoomWindow(Screen):
                 print(f"Erreur lors de l'exécution du script : {e}")
         else:
             print("Le fichier spécifié n'existe pas.")
+
+    def show_popup(self, title, message):
+        popup = Popup(title=title,
+                      content=Label(text=message),
+                      size_hint=(None, None), size=(400, 200))
+        popup.open()
+
+    def is_float(self, value):
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False

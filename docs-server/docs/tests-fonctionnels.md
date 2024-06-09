@@ -228,3 +228,8 @@ La reconnaissance faciale est moins efficace que la détection de la position de
 1. [Test de la reconnaissance faciale](https://youtu.be/IvVYjrRSz2s?si=TsdDVFazKivi8Gjx)
 1. [Tests de la reconnaissance faciale à deux](https://www.youtube.com/watch?v=TRsDz8WGZxw)
 3. [Tests complet de l'application](https://www.youtube.com/watch?v=RFYBNXF6DCQ)
+
+## Version finale
+
+1. [Détection d'une personne](https://youtu.be/D_h5Oz1jtTw)  
+2. [Détection de plusieurs personnes](https://youtu.be/BCp5BdsaDNw)

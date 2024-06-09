@@ -1,12 +1,12 @@
 """
 Auteur      : Karel Vilém Svoboda
 Affiliation : CFPTi - SRS
-Date        : 02.05.2024
+Date        : 09.06.2024
 
 Script      : app.py
-Description : Serveur central du projet SRS. Ce script définit les routes pour l'API et gère les interactions
-              avec la base de données, les caméras et le réseau.
-Version     : 0.2
+Description : Serveur central du projet SRS
+            : Routes pour l'API
+Version     : 1
 """
 
 from flask import Flask, jsonify, request, json, Response
@@ -46,9 +46,6 @@ class ServeurCentral:
         self.initialize_routes()
     
     def initialize_routes(self):
-        """
-        Initialise les routes pour l'API.
-        """
         self.db_client = DatabaseClient(self.DB_HOST, self.DB_NAME, self.DB_USER, self.DB_PASSWORD)
 
         # Routes ping
@@ -78,9 +75,6 @@ class ServeurCentral:
 
     
     def ping(self):
-        """
-        Vérifie que le serveur est en ligne.
-        """
         return jsonify({'Ping Success': 'SRS server'}), 200
     
     def is_set_up(self):
@@ -223,19 +217,6 @@ class ServeurCentral:
     
     @JwtLibrary.API_token_required
     def cameras(self):
-        """
-        Gère les caméras sur le réseau spécifié.
-
-        Cette méthode vérifie la validité des paramètres, la disponibilité du réseau, et gère les caméras sur le réseau spécifié.
-        Si le réseau n'existe pas, il l'initialise avec les caméras trouvées. Elle vérifie également si les tokens des caméras
-        doivent être mis à jour et actualise la base de données en conséquence.
-
-        Args:
-            Aucun. Les paramètres sont passés via les arguments de la requête HTTP.
-
-        Returns:
-            Response: JSON contenant les données des caméras ou des messages d'erreur appropriés.
-        """
         ip = request.args.get('ip')
         subnetMask = request.args.get('subnetMask')
 
@@ -287,7 +268,6 @@ class ServeurCentral:
         networkId = self.db_client.getNetworkIdByIpAndSubnetMask(ip, subnetMask)
 
         if not self.db_client.checkIfNetworkExists(ip):
-            
             return self.intialise_network_with_cameras(ip, subnetMask)
 
         # Utilisation d'un event loop pour exécuter la recherche des caméras de manière asynchrone
@@ -302,8 +282,6 @@ class ServeurCentral:
         cameras_in_db = self.db_client.getCamerasByNetworkIpAndSubnetMask(ip, subnetMask)
 
         cameras_to_add = ServeurCentral.get_cameras_that_are_not_in_database(tokens_for_ip, cameras_in_db)
-
-
 
         cameras_to_remove = ServeurCentral.get_cameras_that_are_not_in_network(cameras_in_network, cameras_in_db)
 
@@ -447,9 +425,15 @@ class ServeurCentral:
 
     @JwtLibrary.API_token_required
     def calibration(self):
-        idNetwork = request.args.get('idNetwork')
+        ip = request.args.get('ip')
+        subnetMask = request.args.get('subnetMask')
+
+        idNetwork = self.db_client.getNetworkIdByIpAndSubnetMask(ip, subnetMask)
+
         if not idNetwork:
+            print("id Network manquant")
             return jsonify({'error': 'Network ID is required'}), 400
+            
 
         response = []
         result, response = self.db_client.getCamerasByIdNetwork(idNetwork)

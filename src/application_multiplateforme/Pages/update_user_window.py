@@ -1,3 +1,37 @@
+"""
+Classe UpdateUserWindow
+
+Auteur : Karel Vilém Svoboda
+Affiliation : CFPT Informatique
+Version : 1.0
+Date : 09.01.2024
+
+Important:
+CETTE PAGE N'EST PAS UTILISÉE DANS LE PROJET FINAL
+
+Description :
+Cette classe permet de gérer la mise à jour des utilisateurs dans une application Kivy. Elle inclut des méthodes pour
+récupérer et afficher les utilisateurs et les types de personnes depuis un serveur, mettre à jour les informations
+de l'utilisateur sélectionné, et supprimer des utilisateurs.
+
+Attributs :
+- selected_user : Utilisateur actuellement sélectionné pour la mise à jour ou la suppression.
+
+Méthodes :
+- on_enter : Méthode appelée lorsque l'écran est affiché, récupère les utilisateurs et les types de personnes.
+- update_user_spinner : Met à jour les valeurs du spinner des utilisateurs.
+- update_person_type_spinner : Met à jour les valeurs du spinner des types de personnes.
+- user_changed : Méthode appelée lorsque l'utilisateur sélectionné change, met à jour les détails de l'utilisateur.
+- get_type_name_by_id : Récupère le nom du type de personne en fonction de l'ID du type.
+- delete_user : Supprime l'utilisateur sélectionné après confirmation.
+- refresh_user_list : Rafraîchit la liste des utilisateurs après une mise à jour ou une suppression.
+- show_delete_confirmation : Affiche une popup de confirmation avant la suppression de l'utilisateur.
+
+Utilisation :
+Cette classe est conçue pour être utilisée dans une application Kivy pour gérer les utilisateurs, en leur permettant
+de mettre à jour leurs informations ou de supprimer des comptes.
+"""
+
 from kivy.app import App
 from kivy.uix.popup import Popup
 from kivy.uix.boxlayout import BoxLayout

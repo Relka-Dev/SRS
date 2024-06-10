@@ -12,7 +12,17 @@ class NetworkScanner:
             self.network = ipaddress.IPv4Network(network)
 
     def scan_ips(self, port,  timeout=0.01):
-        
+        """
+        Scanne les adresses IP du réseau pour un port spécifié et vérifie la connectivité au serveur SRS.
+    
+        Args:
+        port (int): Le numéro de port à vérifier sur chaque adresse IP.
+        timeout (float): Le délai d'attente pour chaque vérification de port, par défaut 0.01 seconde.
+    
+        Returns:
+        str or list: Si aucune adresse IP n'a le port ouvert ou n'est pas connectée au serveur SRS, une liste vide est renvoyée.
+                     Sinon, la première adresse IP ayant le port ouvert et connectée au serveur SRS est renvoyée.
+        """
         ip_with_port_open = []
         for ip in self.network.hosts():
             if self.check_port(ip, port, timeout):
@@ -46,6 +56,12 @@ class NetworkScanner:
     
     @staticmethod
     def get_local_network():
+        """
+        Obtient le réseau local de l'hôte.
+    
+        Returns:
+        str: Une chaîne représentant le réseau local en notation CIDR.
+        """
         ip = socket.gethostbyname(socket.gethostname())
         # à remplacer, ceci est uniquement pour éviter les bugs si le pc est utilisé avec un autre réseau
         return '192.168.1.0/24'

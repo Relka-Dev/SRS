@@ -1,7 +1,7 @@
 site_name: Système de Reconnaissance Spatiale
 site_author: Karel Vilém Svoboda
 site_description: Documentation technique du Système de Reconnaissance Spatiale
-copyright: Copyright &copy; 2023 - 2024 Karel Vilém Svoboda / CFPT Informatique
+copyright: Copyright &copy; 2024 Karel Vilém Svoboda / CFPT Informatique
 
 theme:
   name: 'material'

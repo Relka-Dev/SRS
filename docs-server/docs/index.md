@@ -22,6 +22,8 @@ Le SRS (Système de Reconnaissance Spatiale) est un projet destiné à localiser
 
 Cette partie vise à résumer le cahier des charges effectué lors du travail de semestre au cours des deux premiers trimestres de ma seconde année en technicien.
 
+<div class="page-break"></div>
+
 ### Diagramme complet du projet
 
 ![Diagramme complet](./ressources/diagrams/DiagrammeComplet.png)
@@ -64,6 +66,8 @@ Le projet n'utilise pas la triangulation ni la reconnaissance faciale avec la li
 
 [Dépôt Github](https://github.com/hafidh561/multi-camera-people-tracking)
 
+<div class="page-break"></div>
+
 ### Composant 1 : Caméras Wifi
 
 Le système vise à mettre en place des caméras WiFi compactes et personnalisables pour la surveillance ou pour d'autres applications nécessitant la capture et la diffusion en temps réel de flux vidéo. Le cœur du système, un Raspberry Pi Zero 2 W, exécute un serveur Python Flask.
@@ -78,6 +82,8 @@ Le système de serveur central vise à centraliser la surveillance en recevant e
 La sécurité de l'API se fera par le système d'utilisateur de la base de données. Quand un utilisateur se connecte, tous les appels à l'API se font avec son nom d'utilisateur et son mot de passe chiffré en SHA256. Ensuite, un JWT est crée pour la durée de la session puis détruit lors de la déconnexion.
 
 ![Diagramme Serveur Central](./ressources/diagrams/serveur.png)
+
+<div class="page-break"></div>
 
 #### Composant 3 : Application
 
@@ -137,11 +143,15 @@ L'application est divisée en deux parties, la partie Kivy Python et la partie O
 
 ![diagramme de l'application](./ressources/images/application_diagramme.png)  
 
+<div class="page-break"></div>
+
 ### Fonctionnalité 1 : Recherche automatique de serveurs
 
 **Description :** Cette fonctionnalité permet de rechercher automatiquement un serveur SRS actif dans un réseau.
 
 ![Diagramme recherche serveur](./ressources/images/diagramme-app-recherche-serveur.png)
+
+<div class="page-break"></div>
 
 #### User Story
 
@@ -149,9 +159,13 @@ Ce diagramme représente la recherche automatique de serveurs sur un réseau.
 
 ![us2](./ressources/diagrams/us2-recherche-serveurs.jpg)
 
+<div class="page-break"></div>
+
 1. Cette page démarre automatiquement lorseque l'application est lancée.
 
 ![Look for server](./ressources/images/look-for-server.png)
+
+<div class="page-break"></div>
 
 2. L'application appelle chaque adresse sur le réseau et essaye de communiquer avec le port prévu pour les serveurs SRS.
 3. Interprétation du résultat.
@@ -159,9 +173,13 @@ Ce diagramme représente la recherche automatique de serveurs sur un réseau.
 
 ![server_not_found](./ressources/images/server-not-found.png)
 
+<div class="page-break"></div>
+
   - Si un serveur est trouvé, l'utilisateur est redirigé vers la page de connexion.
 
 ![](./ressources/images/login.png)  
+
+<div class="page-break"></div>
 
 ### Fonctionnalité 2 : Initialisation / Connexion au système
 
@@ -169,15 +187,22 @@ Ce diagramme représente la recherche automatique de serveurs sur un réseau.
 
 ![Initiliation](./ressources/images/initialisation-diag.png)
 
+
+<div class="page-break"></div>
+
 #### User Story
 
 Ce diagramme représente un administrateur qui se connecte ou qui met en place le premier administrateur.
 
 ![](./ressources/diagrams/us1-initialisation-connexion.jpg)
 
+<div class="page-break"></div>
+
 1. La page de recherche détermine si le serveur est initialisé. 
 
 ![look for server](./ressources/images/look-for-server.png)
+
+<div class="page-break"></div>
 
 ##### Route Verte - Le serveur est initialisé : Connexion
 2. L'utilisateur est renvoyé vers la page de connexion. 
@@ -186,10 +211,14 @@ Ce diagramme représente un administrateur qui se connecte ou qui met en place l
 
 3. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
 
+<div class="page-break"></div>
+
 ##### Route Bleue - Le serveur est initialisé : Intialisation
 2. L'utilisateur est renvoyé vers la page de connexion avec les identifiants par défault (présents dans le manuel ou dans la documentation).  
 
 ![](./ressources/images/intialize.png)  
+
+<div class="page-break"></div>
 
 3. Si les identifiants sont corrects, il est redirigié vers la page lui permettant d'ajouter les premier identifiants d'administrateurs.  
 
@@ -197,17 +226,21 @@ Ce diagramme représente un administrateur qui se connecte ou qui met en place l
 
 4. Si les identifiants du premier administrateurs sont acceptés, il est redirigé vers la page de connexion d'administrateur.  
 
+<div class="page-break"></div>
+
 ![](./ressources/images/login.png)
 
 5. Si ses identifiants de connexion correspondent à ceux présents dans le système, il est redirigé vers le reste de l'application.
 
-
+<div class="page-break"></div>
 
 ### Fonctionnalité 3 : Ajout d'utilisateurs
 
 **Description :** Cette fonctionnalité concerne l'ajout des utilisateurs dans la base de données. Permetttant de stocker les nom, le type et les encodages faciaux des utilisateurs.
 
 ![diag add user](./ressources/images/add-user-diag.png)
+
+<div class="page-break"></div>
 
 #### Sécurité
 
@@ -219,12 +252,15 @@ L'utilisateur est dans l'obligation de :
 
 ![ajout de personnes](./ressources/images/applicationajout.png)
 
+<div class="page-break"></div>
+
 ##### Figure 1 : Aucune personne détectée
 
 Ici, je couvre mon visage avec ma main. Le système ne me détectant pas, il lui est impossible de effectuer les étapes necessaires pour m'ajouter dans le système. Par conséquent, un message d'erreur est renvoyé.
 
 ![Personne détécté](./ressources/images/personne_non_detectee.png)
 
+<div class="page-break"></div>
 
 ##### Figure 2 : Nom dumpliqué
 
@@ -232,12 +268,15 @@ Dans ce cas, nous voyons que le nom est déjà présent dans la base de données
 
 ![Nom déjà pris](./ressources/images/already_taken_name.png)
 
+<div class="page-break"></div>
+
 ##### Figure 3 : Formulaire incomplet
 
 Ici, l'utilisateur n'a pas entré son nom, par conséquent, le bouton pour ajouter l'utilisateur n'est pas activé.
 
 ![formulaire incomplet](./ressources/images/incomplet_form.png)
 
+<div class="page-break"></div>
 
 ### Fonctionnalité 4 : Gestion des caméras
 
@@ -2256,7 +2295,9 @@ Les autres fonctionnalités ont un schema de fonctionnement similaire mais avec 
 
 ```py
 from kivy.app import App
-from kivy.uix.screenmanager import ScreenManager, Screen 
+from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.popup import Popup
+from kivy.uix.label import Label
 import os
 import subprocess
 from Classes.room import Room
@@ -2270,31 +2311,52 @@ class RoomWindow(Screen):
         result, self.cameras = self.server_client.get_cameras()
 
     def run_angle_camera(self):
+        if len(self.cameras) < 1:
+            self.show_popup("Erreur", "Pas assez de caméras disponibles.")
+            return
         camera_url = f"http://{self.cameras[0].ip}:4298/video?token={self.cameras[0].jwt}"  # Remplacez ceci par l'URL de votre caméra
         self._run_subprocess_script('../srs-proto/single-camera-angle.py', [camera_url])
     
-    def run_face_recognition(self):# Remplacez ceci par l'URL de votre caméra
+    def run_face_recognition(self):
+        if len(self.cameras) < 1:
+            self.show_popup("Erreur", "Pas assez de caméras disponibles.")
+            return
         self._run_subprocess_script('../srs-proto/reconnaissance_faciale.py')
 
     def run_two_cameras(self):
-        camera_url1 = f"http://{self.cameras[0].ip}:4298/video?token={self.cameras[0].jwt}"
-        camera_url2 = f"http://{self.cameras[1].ip}:4298/video?token={self.cameras[1].jwt}"
-        self._run_subprocess_script('../srs-proto/dual-camera.py', [camera_url1, camera_url2])
+        if len(self.cameras) < 2:
+            self.show_popup("Erreur", "Pas assez de caméras disponibles.")
+            return
+        wall_size = self.ids.size_textInput.text
+
+        if not self.is_float(wall_size):
+            self.show_popup("Erreur", "La taille du mur doit être un nombre flottant.")
+            return
+
+        # Vérifiez si les caméras sont en bas à gauche et en bas à droite
+        bottom_left_camera = next((camera for camera in self.cameras if camera.idWall == 3), None)
+        bottom_right_camera = next((camera for camera in self.cameras if camera.idWall == 4), None)
+
+        if not bottom_left_camera or not bottom_right_camera:
+            self.show_popup("Erreur", "Deux caméras sont nécessaires : une en bas à gauche et une en bas à droite.")
+            return
+        
+        camera_url1 = f"http://{bottom_left_camera.ip}:4298/video?token={bottom_left_camera.jwt}"
+        camera_url2 = f"http://{bottom_right_camera.ip}:4298/video?token={bottom_right_camera.jwt}"
+        self._run_subprocess_script('../srs-proto/dual-camera.py', [camera_url1, camera_url2], wall_size)
 
     def run_four_cameras(self):
-        cameras_urls = []
-
-        for i in range(4):
-            cameras_urls.append(f"http://{self.cameras[i+1].ip}:4298/video?token={self.cameras[i+1].jwt}")
-
-        self._run_subprocess_script('../srs-proto/quad-camera.py', cameras_urls)
-
-    def run_spatial_recognition_system(self):
+        if len(self.cameras) < 4:
+            self.show_popup("Erreur", "Pas assez de caméras disponibles.")
+            return
         wall_size = self.ids.size_textInput.text
+        if not self.is_float(wall_size):
+            self.show_popup("Erreur", "La taille du mur doit être un nombre flottant.")
+            return
+
         room = Room()
 
-        api_link = self.server_client.get_users_link()
-
+        # Assigner les caméras aux murs correspondants
         for camera in self.cameras:
             match camera.idWall:
                 case 1:
@@ -2306,6 +2368,50 @@ class RoomWindow(Screen):
                 case 4:
                     room.set_bottom_right(camera)
 
+        # Vérifiez si toutes les positions murales sont couvertes
+        if not room.get_bottom_left() or not room.get_bottom_right() or not room.get_top_left() or not room.get_top_right():
+            self.show_popup("Erreur", "Quatre caméras sont nécessaires : une sur chaque mur.")
+            return
+
+        cameras_urls = [
+            f"http://{room.get_bottom_left().ip}:4298/video?token={room.get_bottom_left().jwt}",
+            f"http://{room.get_bottom_right().ip}:4298/video?token={room.get_bottom_right().jwt}",
+            f"http://{room.get_top_left().ip}:4298/video?token={room.get_top_left().jwt}",
+            f"http://{room.get_top_right().ip}:4298/video?token={room.get_top_right().jwt}"
+        ]
+
+        self._run_subprocess_script('../srs-proto/quad-camera.py', cameras_urls, wall_size)
+
+    def run_spatial_recognition_system(self):
+        if len(self.cameras) < 4:
+            self.show_popup("Erreur", "Pas assez de caméras disponibles.")
+            return
+        wall_size = self.ids.size_textInput.text
+        if not self.is_float(wall_size):
+            self.show_popup("Erreur", "La taille du mur doit être un nombre flottant.")
+            return
+
+        room = Room()
+
+        api_link = self.server_client.get_users_link()
+
+        # Assigner les caméras aux murs correspondants
+        for camera in self.cameras:
+            match camera.idWall:
+                case 1:
+                    room.set_top_left(camera)
+                case 2:
+                    room.set_top_right(camera)
+                case 3:
+                    room.set_bottom_left(camera)
+                case 4:
+                    room.set_bottom_right(camera)
+
+        # Vérifiez si toutes les positions murales sont couvertes
+        if not room.get_bottom_left() or not room.get_bottom_right() or not room.get_top_left() or not room.get_top_right():
+            self.show_popup("Erreur", "Quatre caméras sont nécessaires : une sur chaque mur.")
+            return
+
         camera_urls = [
             f"http://{room.get_bottom_left().ip}:4298/video?token={room.get_bottom_left().jwt}",
             f"http://{room.get_bottom_right().ip}:4298/video?token={room.get_bottom_right().jwt}",
@@ -2316,6 +2422,7 @@ class RoomWindow(Screen):
         self._run_subprocess_script('../srs-proto/srs-face_recognition.py', camera_urls, wall_size, api_link)
 
     def _run_subprocess_script(self, script_path, cameras=None, wall_size=None, api_link=None):
+        # Construire le chemin absolu pour le script
         abs_script_path = os.path.abspath(script_path)
         
         print(f"Tentative d'exécution du script : {abs_script_path} avec les paramètres : {cameras}")
@@ -2345,6 +2452,19 @@ class RoomWindow(Screen):
                 print(f"Erreur lors de l'exécution du script : {e}")
         else:
             print("Le fichier spécifié n'existe pas.")
+
+    def show_popup(self, title, message):
+        popup = Popup(title=title,
+                      content=Label(text=message),
+                      size_hint=(None, None), size=(400, 200))
+        popup.open()
+
+    def is_float(self, value):
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
 ```
 
 ### Système de reconnaissance spatiale 

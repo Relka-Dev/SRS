@@ -6,21 +6,28 @@ L'application sert d'interface au projet SRS. C'est ce composant qui est contact
 ![](../ressources/diagrams/application.png)
 
 ## Informations sur l'ordinateur de développement
-`lsb_release -a `
+
+### Distribution
+
 ```
 Distributor ID: Ubuntu
-Description:    Ubuntu 23.10
-Release:        23.10
-Codename:       mantic
+Description:    Ubuntu 24.04 LTS
+Release:        24.04
+Codename:       noble
 ```
 
-## Dépendances externes
+### Hardware
 
-⚠️ à ajouter ⚠️
+```
+product: AD107 [GeForce RTX 4060]
+memory      24GiB System memory
+processor   AMD Ryzen 5 3600 6-Core Processor
+```
 
 ## Architecture de l'application
 
 ##### Légende
+
 | Couleur | Type de page            | Description                                            |
 |---------|-------------------------|--------------------------------------------------------|
 | Violet  | Page de connexion       | Sert à s'authentifier pour le système                   |
@@ -36,7 +43,3 @@ Codename:       mantic
 ##### Diagramme UML
 
 ![Architercture de l'application](../ressources/diagrams/applicationuml.png)
-
-
-
-

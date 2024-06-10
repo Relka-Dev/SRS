@@ -2,12 +2,22 @@
 Le serveur sert de logique, de base de données ainsi que de API pour le projet SRS. Il reçoit les données des cameras les interprête et les mets à disposition grâce à des endpoints dédiés.
 
 ## Informations sur le serveur
-`lsb_release -a `
+
+### Distribution
+
 ```
 Distributor ID: Ubuntu
-Description:    Ubuntu 23.10
-Release:        23.10
-Codename:       mantic
+Description:    Ubuntu 24.04 LTS
+Release:        24.04
+Codename:       noble
+```
+
+### Hardware
+
+```
+product: AD107 [GeForce RTX 4060]
+memory      24GiB System memory
+processor   AMD Ryzen 5 3600 6-Core Processor
 ```
 
 ## Dépendances externes
@@ -94,7 +104,7 @@ Voici la procédure étape par étape afin de bien installer le projet sur votre
 git clone https://gitlab.ictge.ch/karel-svbd/srs.git
 ```
 
-2. Naviguez jusqu'au projet des cameras.
+2. Naviguez jusqu'au projet du serveur.
 
 ```shell
 cd ./src/serveur/src/

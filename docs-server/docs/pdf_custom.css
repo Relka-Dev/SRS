@@ -25,3 +25,7 @@ img {
 .katex .katex-mathml {
   display: none;
 }
+
+.page-break {
+  page-break-before: always;
+}

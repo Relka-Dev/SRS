@@ -18,9 +18,6 @@ VERSION="11 (bullseye)"
 VERSION_CODENAME=bullseye
 ID=raspbian
 ID_LIKE=debian
-HOME_URL="http://www.raspbian.org/"
-SUPPORT_URL="http://www.raspbian.org/RaspbianForums"
-BUG_REPORT_URL="http://www.raspbian.org/RaspbianBugs"
 ```
 
 ## Hardware
@@ -43,7 +40,7 @@ Le support permet de maintenir les différents composants en place. Il a été r
 
 | Logiciel   | Imprimante         | Durée d'impression | Utilisation de fil |
 |------------|--------------------|--------------------|--------------------|
-| Cura       | Creality CR20 Pro  | 12h                | 90g |
+| Cura       | Creality CR20 Pro  | 8h                | 90g |
 
 ![Cura](../ressources/images/cura_support.png)
 
@@ -61,8 +58,8 @@ Les calcul ci-présents correspondent au temps de fonctionnement en cas d'utilis
 
 | Condition                        | Consommation (W) | Consommation (A) | Capacité de la batterie (mAh) | Temps de fonctionnement (heures) |
 |----------------------------------|------------------|------------------|-------------------------------|-----------------------------------|
-| Maximale                         | 3W               | 0.6 A            | 2600 mAh                      | $\frac{2600 \text{ mAh}}{600 \text{ mA}} = 4,33$  |
-| Moyenne (Serveur Flask)          | 1.5W             | 0.3 A            | 2600 mAh                      | $\frac{2600 \text{ mAh}}{300 \text{ mA}} = 8,67$ |
+| Maximale                         | 3W               | 0.6 A            | 2600 mAh                      | ![](../ressources/images/equation-batterie.png)  |
+| Moyenne (Serveur Flask)          | 1.5W             | 0.3 A            | 2600 mAh                      | ![](../ressources/images/equation.png)  |
 
 ## Dépendances externes
 
@@ -74,7 +71,59 @@ Les calcul ci-présents correspondent au temps de fonctionnement en cas d'utilis
 
 ## Installation
 
-Voici la procédure étape par étape afin de bien installer le projet sur votre serveur.
+### Impression du support
+
+Le support permet de maintenir les composants en place.
+
+#### Détails
+
+- Temps d'impréssion : Environ 8 heures
+- Imprimante 3D : Creality CR20PRO
+- Carte mémoire requise.
+
+#### Étapes pour l'impression
+
+1. Installation de CURA.
+    1. Téléchargez le fichier d'installation depuis [le site d'ultimaker](https://ultimaker.com/de/software/ultimaker-cura/).
+    2. Démarrez CURA
+    3. Ajoutez votre imprimante, sois par réseau, sois en ajoutant manuellement votre modèle. Puis appuyez sur next.
+    4. Continez sans changer les paramètres et terminez l'installation.
+2. Ajoutez le fichier `.std` à CURA.
+    1. Dans CURA, appuyez sur **Files > Open File(S)**
+    2. Naviguez jusqu'au fichier `std`. Son lien dans le projet est `./docs-server/docs/supports/srs-support-0.2.stl`.
+3. Démarrer l'impression.
+    1. Cliquez sur le support présent dans l'espace 3D.
+    2. Appuyez sur `Scale(s)`
+    3. Passez la valeur `y` à **50**.
+    4. Appuyez sur `Slice`.
+    5. Appuyez sur `Save to disk`.
+5. Lancez l'impression.
+    1. Mettez la **carte mémoire** dans l'imprimante et lancez l'impression.
+
+### Installtion des Raspberry
+
+Ce chapitre explique l'installation logicielle des Rapberry.
+
+1. Installation de Pi Imager
+    1. Installer l'application depuis [le site de Raspberry](https://www.raspberrypi.com/software/).
+
+#### Installation de l'OS
+
+1. Insérez la carte mémoire dans le lecteur.
+2. Cliquez sur `Choose a device`.
+    1. Cliquez sur `Raspberry Zero W 2`
+3. Cliquez sur `Choose à OS`.
+    1. Séléctionnez `Raspberry Pi OS (other)`
+    2. Cliquez sur `Raspberry Pi OS (Legacy), 64 bits`, assurez vous que ce soit la version Bulleseye.
+4. Cliquez sur `Choose storage`.
+    1. Cliquez sur votre support d'installation.
+5. Cliquez sur `Next`.
+    1. Sur la fenêtre `Use OS calibration`, cliquez sur `Edit Settings`.
+    2. Dans `General Settings`, définissez un nom d'utilisateur et un mot de passe. Puis, ajoutez les données du réseau Wifi.
+    3. Dans `Service`, activez `ssh`.
+
+#### Installation de l'environnement
+
 
 1. Activez la fonctionnalité `legacy camera`
 ```
@@ -83,39 +132,22 @@ Interface Options -> Enable Legacy Camera -> Yes -> Reboot
 ```
 
 2. Clonez le projet sur le serveur
-
 ```
+sudo apt install git
 git clone https://gitlab.ictge.ch/karel-svbd/srs.git
 ```
 
 3. Naviguez jusqu'au projet des cameras.
-
 ```shell
 cd srs/src/cameras_wifi/src/
 ```
 
 4. Créez un environnement virtuel et activez le.
-
 ```shell
+sudo apt install python3-venv
 python -m venv venv
 source venv/bin/activate
 ```
-
-5. Installez les dépendances.
-
-```shell
-pip install -r requirements.txt
-```
-
-6. Installation des librairies vidéo
-
-```shell
-sudo apt-get update && sudo apt-get install ffmpeg libsm6 libxext6  -y
-```
-
-7. Démarrez le serveur.
-```shell
-python3 ./app.py
 ```
 
 ### Lancement automatique et passage en service

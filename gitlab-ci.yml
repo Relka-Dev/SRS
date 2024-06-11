@@ -1,0 +1,42 @@
+image: python:3.10
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+before_script:
+  - 'python3 -m venv venv'
+  - 'source venv/bin/activate'
+  - 'pip install --upgrade pip'
+  - 'pip install -r requirements.txt'
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - '.cache/pip'
+
+# build:
+  # stage: build
+  # variables:
+  #   ENABLE_PDF_EXPORT: 1
+  # script:
+  #   - 'mkdocs build --verbose --site-dir build'
+  #   - 'cp build/pdf/document.pdf documentation.pdf'
+  # artifacts:
+  #   when: on_success
+  #   paths:
+  #     - 'documentation.pdf'
+
+pages:
+  stage: deploy
+  variables:
+    ENABLE_PDF_EXPORT: 1
+  script:
+    - 'cd docs-server'
+    - 'source venv/bin/activate'
+    - 'mkdocs build --verbose --site-dir public'
+  artifacts:
+    when: on_success
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH

@@ -22,10 +22,11 @@ pages:
     - 'source venv/bin/activate'
     - 'cd docs-server'
     - 'mkdocs build --verbose --site-dir public'
-    - 'ls -la public'  # Debugging line to check contents
+    - 'cd ..'  # Go back to the root directory
+    - 'ls -la docs-server/public'  # Debugging line to check contents
   artifacts:
     when: on_success
     paths:
-      - public
+      - docs-server/public
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH

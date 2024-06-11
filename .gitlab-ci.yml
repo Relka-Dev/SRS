@@ -14,26 +14,14 @@ cache:
   paths:
     - '.cache/pip'
 
-# build:
-  # stage: build
-  # variables:
-  #   ENABLE_PDF_EXPORT: 1
-  # script:
-  #   - 'mkdocs build --verbose --site-dir build'
-  #   - 'cp build/pdf/document.pdf documentation.pdf'
-  # artifacts:
-  #   when: on_success
-  #   paths:
-  #     - 'documentation.pdf'
-
 pages:
   stage: deploy
   variables:
     ENABLE_PDF_EXPORT: 1
   script:
     - 'source venv/bin/activate'
-    - 'cd docs-server'
     - 'mkdocs build --verbose --site-dir public'
+    - 'ls -la public'  # Debugging line to check contents
   artifacts:
     when: on_success
     paths:

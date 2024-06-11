@@ -21,12 +21,13 @@ pages:
   script:
     - 'source venv/bin/activate'
     - 'cd docs-server'
-    - 'mkdocs build --verbose --site-dir public'
+    - 'mkdocs build --verbose --site-dir ../public'  # Generate site in ../public
     - 'cd ..'  # Go back to the root directory
-    - 'ls -la docs-server/public'  # Debugging line to check contents
+    - 'ls -la public'  # Debugging line to check contents
   artifacts:
-    when: on_success
     paths:
-      - docs-server/public
+      - public
   rules:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+  publish:
+    - public  # Specify the public directory for GitLab Pages

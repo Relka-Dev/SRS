@@ -20,6 +20,7 @@ pages:
     ENABLE_PDF_EXPORT: 1
   script:
     - 'source venv/bin/activate'
+    - 'cd docs-server'
     - 'mkdocs build --verbose --site-dir public'
     - 'ls -la public'  # Debugging line to check contents
   artifacts:

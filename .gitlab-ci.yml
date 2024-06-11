@@ -34,7 +34,6 @@ pages:
     - 'source venv/bin/activate'
     - 'cd docs-server'
     - 'mkdocs build --verbose --site-dir public'
-    - 'cd ..'
   artifacts:
     when: on_success
     paths:

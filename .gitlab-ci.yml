@@ -4,11 +4,10 @@ variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
 before_script:
-  - 'cd docs-server'
   - 'python3 -m venv venv'
   - 'source venv/bin/activate'
   - 'pip install --upgrade pip'
-  - 'pip install -r requirements.txt'
+  - 'pip install -r ./docs-server/requirements.txt'
 
 cache:
   key: "$CI_COMMIT_REF_SLUG"
@@ -33,7 +32,9 @@ pages:
     ENABLE_PDF_EXPORT: 1
   script:
     - 'source venv/bin/activate'
+    - 'cd docs-server'
     - 'mkdocs build --verbose --site-dir public'
+    - 'cd ..'
   artifacts:
     when: on_success
     paths:

@@ -31,8 +31,8 @@ pages:
   variables:
     ENABLE_PDF_EXPORT: 1
   script:
-    - 'cd docs-server'
     - 'source venv/bin/activate'
+    - 'cd docs-server'
     - 'mkdocs build --verbose --site-dir public'
   artifacts:
     when: on_success
